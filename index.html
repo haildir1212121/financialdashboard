@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OT/DMT/DLX</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        body { font-family: 'Nunito', sans-serif; background-color: #121212; color: #e5e5e5; }
+        
+        /* Components */
+        .bg-card { background-color: #1e1e1e; border: 1px solid #333; border-radius: 12px; }
+        .bg-card:hover { border-color: #444; }
+        
+        .custom-scroll::-webkit-scrollbar { width: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #121212; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #444; border-radius: 10px; }
+
+        .sidebar-btn { transition: all 0.2s; color: #888; border-right: 3px solid transparent; }
+        .sidebar-btn:hover { color: #fff; background: rgba(255,255,255,0.05); }
+        .sidebar-btn.active { color: #fff; border-right-color: #3b82f6; background: linear-gradient(90deg, rgba(59,130,246,0.1) 0%, transparent 100%); }
+        
+        .fade-in { animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; transform: translateY(20px); }
+        @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden text-sm">
+
+    <aside class="w-64 bg-[#181818] flex-shrink-0 flex flex-col border-r border-[#2a2a2a] z-20">
+        <div class="h-20 flex items-center px-6 border-b border-[#2a2a2a]">
+            <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-900/50">
+                <i class="ph ph-taxi text-xl"></i>
+            </div>
+            <div class="ml-3">
+                <div class="text-lg font-bold text-white leading-none">OT<span class="text-blue-500">/DMT/</span><span class="text-lg font-bold text-white leading-none">DLX</span></div>
+                <div class="text-[10px] text-gray-500 font-mono mt-1">Financial Dashboard</div>
+            </div>
+        </div>
+
+        <div class="flex-1 overflow-y-auto custom-scroll py-6 flex flex-col gap-1">
+            <div class="px-6 mb-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Views</div>
+            <button onclick="switchView('dashboard')" id="nav-dashboard" class="sidebar-btn w-full text-left px-6 py-3 flex items-center gap-3 active">
+                <i class="ph-bold ph-squares-four text-xl"></i><span class="font-semibold">Dashboard</span>
+            </button>
+            <button onclick="switchView('costs')" id="nav-costs" class="sidebar-btn w-full text-left px-6 py-3 flex items-center gap-3">
+                <i class="ph-bold ph-receipt text-xl"></i><span class="font-semibold">Costs</span>
+            </button>
+            <button onclick="switchView('efficiency')" id="nav-efficiency" class="sidebar-btn w-full text-left px-6 py-3 flex items-center gap-3">
+                <i class="ph-bold ph-gauge text-xl"></i><span class="font-semibold">Efficiency</span>
+            </button>
+            <button onclick="switchView('analysis')" id="nav-analysis" class="sidebar-btn w-full text-left px-6 py-3 flex items-center gap-3">
+                <i class="ph-bold ph-trend-up text-xl"></i><span class="font-semibold">Analysis</span>
+            </button>
+        </div>
+
+        <div class="p-4 border-t border-[#2a2a2a] bg-[#151515]">
+            <div class="flex justify-between items-center mb-3 px-2">
+                <div class="text-[10px] font-bold text-gray-500 uppercase">Filters</div>
+                <button onclick="resetFilters()" class="text-[10px] text-blue-500 hover:text-blue-400">Reset</button>
+            </div>
+            <div id="location-toggles" class="space-y-1 max-h-48 overflow-y-auto custom-scroll">
+                <div class="text-xs text-gray-600 italic px-2">Upload 'Test.csv'...</div>
+            </div>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col relative h-full overflow-hidden bg-[#121212]">
+        
+        <header class="h-20 px-8 flex items-center justify-between border-b border-[#2a2a2a] bg-[#181818]/95 backdrop-blur z-10">
+            <div>
+                <h1 class="text-2xl font-bold text-white tracking-tight" id="page-title">Overview</h1>
+                <div class="flex items-center text-xs text-gray-500 mt-1 gap-2">
+                    <span id="date-range" class="font-mono text-blue-400">No Data</span>
+                    <span class="w-1 h-1 rounded-full bg-gray-600"></span>
+                    <span id="record-count">0 Weeks</span>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-4">
+                <div class="flex items-center bg-[#252525] rounded-lg p-1 border border-[#333]">
+                    <button onclick="changeWeek(-1)" class="p-2 hover:bg-[#333] rounded text-gray-400 hover:text-white transition-colors"><i class="ph-bold ph-caret-left"></i></button>
+                    <div class="px-4 text-center min-w-[140px]">
+                        <div class="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Current View</div>
+                        <div id="current-week-display" class="text-sm font-bold text-white">All Time</div>
+                    </div>
+                    <button onclick="changeWeek(1)" class="p-2 hover:bg-[#333] rounded text-gray-400 hover:text-white transition-colors"><i class="ph-bold ph-caret-right"></i></button>
+                </div>
+
+                <div class="h-8 w-[1px] bg-[#333]"></div>
+
+                <button onclick="resetZoom()" class="bg-[#252525] hover:bg-[#333] text-gray-300 px-3 py-2 rounded-lg text-xs font-bold border border-[#333] flex items-center gap-2 hidden" id="btn-reset-zoom">
+                    <i class="ph-bold ph-magnifying-glass-minus"></i> Reset Zoom
+                </button>
+                <label class="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-xs font-bold transition-all shadow-lg shadow-blue-900/20 flex items-center gap-2">
+                    <i class="ph-bold ph-upload-simple text-lg"></i>
+                    <span>Upload CSV</span>
+                    <input type="file" id="fileInput" hidden accept=".csv">
+                </label>
+            </div>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-8 custom-scroll" id="main-scroll">
+            
+            <div id="empty-state" class="flex flex-col items-center justify-center h-[60vh] text-center fade-in">
+                <div class="w-24 h-24 bg-[#1e1e1e] rounded-full flex items-center justify-center border border-[#333] mb-6 shadow-2xl">
+                    <i class="ph-fill ph-file-csv text-4xl text-gray-600"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-white mb-2">Load Financial Data</h2>
+                <p class="text-gray-500 max-w-md mb-8">Upload <strong>Test.csv</strong> to view financial performance, trends, and efficiency metrics.</p>
+                <button onclick="document.getElementById('fileInput').click()" class="text-blue-400 hover:text-blue-300 font-bold text-sm underline underline-offset-4">Browse Files</button>
+            </div>
+
+            <div id="dashboard-content" class="hidden space-y-6">
+                
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                    <div class="bg-card p-5 relative overflow-hidden group">
+                        <div class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Revenue</div>
+                        <div class="text-2xl font-bold text-white tracking-tight" id="kpi-rev">$0</div>
+                        <div class="absolute bottom-0 left-0 w-full h-1 bg-green-500 opacity-50"></div>
+                    </div>
+                    <div class="bg-card p-5 relative overflow-hidden group">
+                        <div class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Expenses</div>
+                        <div class="text-2xl font-bold text-white tracking-tight" id="kpi-exp">$0</div>
+                        <div class="absolute bottom-0 left-0 w-full h-1 bg-red-500 opacity-50"></div>
+                    </div>
+                    <div class="bg-card p-5 relative overflow-hidden group">
+                        <div class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Net Margin</div>
+                        <div class="text-2xl font-bold text-white tracking-tight" id="kpi-margin">$0</div>
+                        <div class="absolute bottom-0 left-0 w-full h-1 bg-blue-500 opacity-50"></div>
+                    </div>
+                    <div class="bg-card p-5 relative overflow-hidden group">
+                        <div class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Cost Ratio</div>
+                        <div class="text-2xl font-bold text-white tracking-tight" id="kpi-ratio">0%</div>
+                        <div class="absolute bottom-0 left-0 w-full h-1 bg-orange-500 opacity-50"></div>
+                    </div>
+                    <div class="bg-card p-5 relative overflow-hidden group">
+                        <div class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Rev / Hour</div>
+                        <div class="text-2xl font-bold text-white tracking-tight" id="kpi-efficiency">$0</div>
+                        <div class="absolute bottom-0 left-0 w-full h-1 bg-purple-500 opacity-50"></div>
+                    </div>
+                </div>
+
+                <div id="view-dashboard" class="space-y-6 fade-in">
+                    <div class="bg-card p-6 h-[400px] flex flex-col relative group">
+                        <div class="flex justify-between items-center mb-4">
+                            <div>
+                                <h3 class="text-white font-bold text-lg">Financial Trend</h3>
+                                <p class="text-xs text-gray-500">Scroll to zoom • Drag to pan</p>
+                            </div>
+                            <div class="flex gap-4 text-xs font-bold text-gray-500">
+                                <span class="flex items-center"><span class="w-2 h-2 rounded-full bg-blue-500 mr-2"></span>Rev</span>
+                                <span class="flex items-center"><span class="w-2 h-2 rounded-full bg-red-500 mr-2"></span>Exp</span>
+                                <span class="flex items-center"><span class="w-2 h-2 rounded-full bg-green-500 mr-2"></span>Margin</span>
+                            </div>
+                        </div>
+                        <div class="flex-grow relative w-full h-full">
+                            <canvas id="chartTrend"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="bg-card p-6 h-80 flex flex-col">
+                            <h3 class="text-white font-bold mb-4">Cost Structure</h3>
+                            <div class="flex-grow relative w-full h-full">
+                                <canvas id="chartCostStack"></canvas>
+                            </div>
+                        </div>
+                        <div class="bg-card p-6 h-80 flex flex-col">
+                            <h3 class="text-white font-bold mb-4">Performance by Location</h3>
+                            <div class="flex-grow relative w-full h-full">
+                                <canvas id="chartLocBar"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="view-costs" class="hidden space-y-6 fade-in">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="bg-card p-6 h-80 flex flex-col">
+                            <h3 class="text-white font-bold mb-4">Expense Categories</h3>
+                            <div class="flex-grow relative w-full h-full">
+                                <canvas id="chartExpCats"></canvas>
+                            </div>
+                        </div>
+                        <div class="bg-card p-6 h-80 flex flex-col">
+                            <h3 class="text-white font-bold mb-4">Total Expenses Trend</h3>
+                            <div class="flex-grow relative w-full h-full">
+                                <canvas id="chartExpTrend"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-card flex flex-col overflow-hidden">
+                        <div class="p-4 border-b border-[#2e2e2e] bg-[#1a1a1a] flex justify-between items-center">
+                            <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Detailed Expense Breakdown</h3>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-gray-400">
+                                <thead class="text-[10px] font-bold uppercase bg-[#151515] text-gray-500">
+                                    <tr>
+                                        <th class="p-4">Category</th>
+                                        <th class="p-4 text-right">Total Amount</th>
+                                        <th class="p-4 text-right">% of Total</th>
+                                        <th class="p-4 text-right">Avg / Week</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-expenses" class="text-sm divide-y divide-[#2a2a2a]">
+                                    </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="view-efficiency" class="hidden space-y-6 fade-in">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="bg-card p-6 h-80 flex flex-col">
+                            <h3 class="text-white font-bold mb-4">Revenue per Hour</h3>
+                            <div class="flex-grow relative w-full h-full"><canvas id="chartRevHour"></canvas></div>
+                        </div>
+                        <div class="bg-card p-6 h-80 flex flex-col">
+                            <h3 class="text-white font-bold mb-4">Revenue per Driver</h3>
+                            <div class="flex-grow relative w-full h-full"><canvas id="chartRevDriver"></canvas></div>
+                        </div>
+                    </div>
+                    <div class="bg-card p-6 h-80 flex flex-col">
+                        <h3 class="text-white font-bold mb-4">Driver Count Trend</h3>
+                        <div class="flex-grow relative w-full h-full"><canvas id="chartDrivers"></canvas></div>
+                    </div>
+                </div>
+
+                <div id="view-analysis" class="hidden space-y-6 fade-in">
+                    <div class="bg-card p-6 h-[400px] flex flex-col">
+                        <h3 class="text-white font-bold mb-4">Profitability Heatmap (Margin %)</h3>
+                        <div class="flex-grow relative w-full h-full"><canvas id="chartMarginPct"></canvas></div>
+                    </div>
+                    
+                    <div class="bg-card flex flex-col overflow-hidden">
+                        <div class="p-4 border-b border-[#2e2e2e] bg-[#1a1a1a] flex justify-between items-center">
+                            <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Weekly Detail</h3>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-gray-400">
+                                <thead class="text-[10px] font-bold uppercase bg-[#151515] text-gray-500">
+                                    <tr>
+                                        <th class="p-4">Week Ending</th>
+                                        <th class="p-4 text-right">Revenue</th>
+                                        <th class="p-4 text-right">Expenses</th>
+                                        <th class="p-4 text-right">Margin</th>
+                                        <th class="p-4 text-right">Margin %</th>
+                                        <th class="p-4 text-right">Drivers</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-body" class="text-sm divide-y divide-[#2a2a2a]">
+                                    </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // --- CONFIG ---
+        Chart.defaults.font.family = "'Nunito', sans-serif";
+        Chart.defaults.color = '#737373';
+        Chart.defaults.scale.grid.color = '#262626';
+        Chart.defaults.scale.beginAtZero = true;
+
+        const STATE = {
+            rawData: [],
+            activeSites: new Set(),
+            weeks: [],
+            currentWeekIndex: -1,
+            view: 'dashboard'
+        };
+
+        const CUSTOM_SITES = {
+            'COAST': 'Coast (XCC)', 'EUGENE': 'DLX-EUG', 'RBG': 'RBG (Roseburg)', 
+            'ROSEBURG': 'RBG (Roseburg)', 'OREGON TAXI': 'Oregon Taxi', 'OT': 'Oregon Taxi',
+            'DMT': 'DMT', 'OAKRIDGE': 'Oakridge', 'ALBANY': 'Albany', 'SALEM': 'Salem',
+            'ADMINISTRATIVE': 'Administrative'
+        };
+        const TARGET_ORDER = ['Administrative', 'Albany', 'Coast (XCC)', 'DMT', 'DLX-EUG', 'Oakridge', 'Oregon Taxi', 'RBG (Roseburg)', 'Salem'];
+        const FMT = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+        const CLEAN = (v) => { if(!v)return 0; const s=v.toString(); const n=parseFloat(s.replace(/[^0-9.]/g,''))||0; return s.includes('(')||s.includes('-')?-n:n; };
+
+        // --- UPLOAD ---
+        document.getElementById('fileInput').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if(!file) return;
+            Papa.parse(file, { header: false, skipEmptyLines: true, complete: (res) => processData(res.data) });
+        });
+
+        // --- PROCESSING ---
+        function processData(rows) {
+            STATE.rawData = [];
+            STATE.activeSites.clear();
+            STATE.weeks = [];
+            
+            let hIdx = -1;
+            for(let i=0; i<Math.min(rows.length, 25); i++) {
+                if(JSON.stringify(rows[i]).includes('Payroll Exp')) { hIdx=i; break; }
+            }
+            if(hIdx===-1) return alert("Invalid file structure.");
+
+            for(let i=hIdx+1; i<rows.length; i++) {
+                const r = rows[i];
+                const dateRaw = r[0]||r[1];
+                if(!dateRaw || !dateRaw.toString().includes('20')) continue;
+
+                const rawLoc = (r[5]||'Unknown').trim();
+                if(rawLoc==='Total'||rawLoc==='nan') continue;
+
+                let site = CUSTOM_SITES[rawLoc.toUpperCase()] || rawLoc;
+                
+                const pay = CLEAN(r[8]);
+                const fuel = CLEAN(r[9]);
+                const ins = CLEAN(r[10]);
+                const maint = CLEAN(r[11]);
+                const office = CLEAN(r[12]);
+                const rent = CLEAN(r[13]);
+                const tech = CLEAN(r[14]);
+                const bill = CLEAN(r[15]);
+                
+                const rev = CLEAN(r[17]);
+                const drivers = CLEAN(r[6]);
+                const hours = CLEAN(r[7]);
+
+                const adminCost = ins + office + rent + tech + bill;
+                const opsCost = pay + fuel + maint;
+
+                // Create Ops Record
+                STATE.rawData.push({
+                    date: moment(dateRaw).format('YYYY-MM-DD'),
+                    site: site, type: 'Ops',
+                    rev, exp: opsCost, margin: rev - opsCost,
+                    drivers, hours,
+                    detail: { payroll: pay, fuel, maint }
+                });
+
+                // Create Admin Record
+                if(adminCost > 0) {
+                    STATE.rawData.push({
+                        date: moment(dateRaw).format('YYYY-MM-DD'),
+                        site: 'Administrative', type: 'Admin',
+                        rev: 0, exp: adminCost, margin: -adminCost,
+                        drivers: 0, hours: 0,
+                        detail: { admin: adminCost, insurance: ins, office, rent, tech, billbacks: bill }
+                    });
+                }
+            }
+
+            // Init Weeks
+            const uniqueWeeks = [...new Set(STATE.rawData.map(d => d.date))].sort();
+            STATE.weeks = uniqueWeeks;
+            STATE.currentWeekIndex = -1; // Default All Time
+
+            TARGET_ORDER.forEach(s => STATE.activeSites.add(s));
+            document.getElementById('empty-state').classList.add('hidden');
+            document.getElementById('dashboard-content').classList.remove('hidden');
+            renderFilters();
+            updateDashboard();
+        }
+
+        // --- WEEK NAVIGATION ---
+        function changeWeek(direction) {
+            if (STATE.weeks.length === 0) return;
+            
+            let newIndex = STATE.currentWeekIndex + direction;
+            
+            // Bounds logic
+            if (newIndex < -1) newIndex = STATE.weeks.length - 1; // Wrap to last week
+            if (newIndex >= STATE.weeks.length) newIndex = -1; // Wrap to All Time
+            
+            STATE.currentWeekIndex = newIndex;
+            updateDashboard();
+        }
+
+        // --- FILTERS & NAV ---
+        function renderFilters() {
+            const el = document.getElementById('location-toggles');
+            el.innerHTML = '';
+            TARGET_ORDER.forEach(s => {
+                const active = STATE.activeSites.has(s);
+                el.innerHTML += `<div onclick="toggleSite('${s}')" class="flex justify-between items-center px-3 py-2 rounded-lg cursor-pointer ${active?'bg-[#252525] text-white':'text-gray-600'}"><div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full ${active?'bg-blue-500':'bg-gray-700'}"></div><span class="text-xs font-semibold">${s}</span></div>${active?'<i class="ph-bold ph-check text-blue-500 text-xs"></i>':''}</div>`;
+            });
+        }
+        function toggleSite(s) { if(STATE.activeSites.has(s)) STATE.activeSites.delete(s); else STATE.activeSites.add(s); renderFilters(); updateDashboard(); }
+        function resetFilters() { TARGET_ORDER.forEach(s=>STATE.activeSites.add(s)); renderFilters(); updateDashboard(); }
+
+        function switchView(view) {
+            STATE.view = view;
+            document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('nav-'+view).classList.add('active');
+            ['dashboard', 'costs', 'efficiency', 'analysis'].forEach(v => {
+                const el = document.getElementById('view-'+v);
+                if(v === view) el.classList.remove('hidden'); else el.classList.add('hidden');
+            });
+            updateDashboard(); // Re-render charts
+        }
+
+        // --- UPDATE ---
+        function updateDashboard() {
+            // 1. Base Data (Site Filter)
+            let data = STATE.rawData.filter(d => STATE.activeSites.has(d.site));
+            
+            // 2. Week Filter
+            if (STATE.currentWeekIndex !== -1) {
+                const weekDate = STATE.weeks[STATE.currentWeekIndex];
+                data = data.filter(d => d.date === weekDate);
+                document.getElementById('current-week-display').innerText = moment(weekDate).format('MMM D, YYYY');
+            } else {
+                document.getElementById('current-week-display').innerText = "All Time";
+            }
+
+            // KPIs
+            const rev = data.reduce((a,b)=>a+b.rev,0);
+            const exp = data.reduce((a,b)=>a+b.exp,0);
+            const drivers = data.reduce((a,b)=>a+b.drivers,0);
+            const hours = data.reduce((a,b)=>a+b.hours,0);
+            const margin = rev - exp;
+
+            document.getElementById('kpi-rev').innerText = FMT.format(rev);
+            document.getElementById('kpi-exp').innerText = FMT.format(exp);
+            document.getElementById('kpi-margin').innerText = FMT.format(margin);
+            document.getElementById('kpi-ratio').innerText = rev ? ((exp/rev)*100).toFixed(1)+'%' : '0%';
+            document.getElementById('kpi-efficiency').innerText = hours ? FMT.format(rev/hours) : '$0';
+
+            const dates = [...new Set(data.map(d=>d.date))].sort();
+            document.getElementById('record-count').innerText = dates.length + " Weeks";
+            if(dates.length) document.getElementById('date-range').innerText = moment(dates[0]).format('MMM YYYY') + ' - ' + moment(dates[dates.length-1]).format('MMM YYYY');
+
+            renderCharts(data, dates);
+            if(STATE.view === 'analysis') renderTable(data, dates);
+            if(STATE.view === 'costs') renderCostTable(data);
+        }
+
+        // --- CHARTS ---
+        let charts = {};
+        function renderCharts(data, dates) {
+            Object.values(charts).forEach(c => c.destroy());
+            const ctx = (id) => document.getElementById(id);
+
+            // Aggregators
+            const agg = {};
+            dates.forEach(d => agg[d] = {rev:0, exp:0, mar:0, drv:0, hrs:0, pay:0, fuel:0, admin:0});
+            data.forEach(d => {
+                const k = d.date;
+                agg[k].rev += d.rev; agg[k].exp += d.exp; agg[k].mar += d.margin;
+                agg[k].drv += d.drivers; agg[k].hrs += d.hours;
+                if(d.detail) {
+                    agg[k].pay += (d.detail.payroll||0);
+                    agg[k].fuel += (d.detail.fuel||0);
+                    agg[k].admin += (d.detail.admin||0);
+                }
+            });
+            const dLabels = dates.map(d => moment(d).format('MMM D'));
+
+            // 1. MAIN TREND (Zoomable)
+            if(ctx('chartTrend')) {
+                const config = {
+                    type: STATE.currentWeekIndex === -1 ? 'line' : 'bar', // Switch to bar if single week
+                    data: {
+                        labels: dLabels,
+                        datasets: [
+                            { label:'Revenue', data: dates.map(d=>agg[d].rev), borderColor:'#3b82f6', backgroundColor:'rgba(59,130,246,0.1)', fill:true, tension:0.4, pointRadius:0 },
+                            { label:'Expenses', data: dates.map(d=>agg[d].exp), borderColor:'#ef4444', borderWidth:2, pointRadius:0 },
+                            { label:'Margin', data: dates.map(d=>agg[d].mar), borderColor:'#10b981', borderDash:[4,4], borderWidth:2, pointRadius:0 }
+                        ]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        interaction: { mode: 'index', intersect: false },
+                        scales: { x: { grid: { display: false } }, y: { grid: { color: '#262626' } } },
+                        plugins: {
+                            legend: { display: false },
+                            zoom: {
+                                zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: 'x' },
+                                pan: { enabled: true, mode: 'x' }
+                            }
+                        }
+                    }
+                };
+                charts.trend = new Chart(ctx('chartTrend'), config);
+                
+                const chart = charts.trend;
+                chart.options.plugins.zoom.zoom.onZoom = () => document.getElementById('btn-reset-zoom').classList.remove('hidden');
+            }
+
+            // 2. COST STACK
+            if(ctx('chartCostStack')) {
+                charts.cost = new Chart(ctx('chartCostStack'), {
+                    type: 'bar',
+                    data: {
+                        labels: dLabels,
+                        datasets: [
+                            { label:'Payroll', data:dates.map(d=>agg[d].pay), backgroundColor:'#3b82f6' },
+                            { label:'Fuel', data:dates.map(d=>agg[d].fuel), backgroundColor:'#ef4444' },
+                            { label:'Admin', data:dates.map(d=>agg[d].admin), backgroundColor:'#f59e0b' }
+                        ]
+                    },
+                    options: { responsive:true, maintainAspectRatio:false, scales:{x:{stacked:true, grid:{display:false}}, y:{stacked:true, grid:{color:'#262626'}}}, plugins:{legend:{labels:{color:'#aaa'}}} }
+                });
+            }
+
+            // 3. LOC BAR
+            if(ctx('chartLocBar')) {
+                const siteAgg = {};
+                data.forEach(d => {
+                    if(!siteAgg[d.site]) siteAgg[d.site]={r:0, m:0};
+                    siteAgg[d.site].r += d.rev; siteAgg[d.site].m += d.margin;
+                });
+                const sites = Object.keys(siteAgg).sort((a,b)=>siteAgg[b].r - siteAgg[a].r);
+                charts.loc = new Chart(ctx('chartLocBar'), {
+                    type: 'bar',
+                    data: {
+                        labels: sites,
+                        datasets: [
+                            { label:'Revenue', data:sites.map(s=>siteAgg[s].r), backgroundColor:'#333' },
+                            { label:'Margin', data:sites.map(s=>siteAgg[s].m), backgroundColor:'#10b981' }
+                        ]
+                    },
+                    options: { responsive:true, maintainAspectRatio:false, scales:{x:{grid:{display:false}}, y:{grid:{color:'#262626'}}} }
+                });
+            }
+
+            // 4. EFFICIENCY CHARTS
+            if(STATE.view === 'efficiency') {
+                charts.revHour = new Chart(ctx('chartRevHour'), {
+                    type: 'line',
+                    data: { labels: dLabels, datasets: [{ label:'Rev/Hour', data: dates.map(d=>agg[d].hrs ? agg[d].rev/agg[d].hrs : 0), borderColor:'#8b5cf6', tension:0.4 }] },
+                    options: { responsive:true, maintainAspectRatio:false, scales:{x:{grid:{display:false}}, y:{grid:{color:'#262626'}}} }
+                });
+                charts.revDriver = new Chart(ctx('chartRevDriver'), {
+                    type: 'line',
+                    data: { labels: dLabels, datasets: [{ label:'Rev/Driver', data: dates.map(d=>agg[d].drv ? agg[d].rev/agg[d].drv : 0), borderColor:'#ec4899', tension:0.4 }] },
+                    options: { responsive:true, maintainAspectRatio:false, scales:{x:{grid:{display:false}}, y:{grid:{color:'#262626'}}} }
+                });
+                charts.drivers = new Chart(ctx('chartDrivers'), {
+                    type: 'bar',
+                    data: { labels: dLabels, datasets: [{ label:'Drivers', data: dates.map(d=>agg[d].drv), backgroundColor:'#eab308' }] },
+                    options: { responsive:true, maintainAspectRatio:false, scales:{x:{grid:{display:false}}, y:{grid:{color:'#262626'}}} }
+                });
+            }
+
+            // 5. ANALYSIS
+            if(STATE.view === 'analysis') {
+                charts.marginPct = new Chart(ctx('chartMarginPct'), {
+                    type: 'line',
+                    data: { 
+                        labels: dLabels, 
+                        datasets: [{ 
+                            label:'Margin %', 
+                            data: dates.map(d=>agg[d].rev ? (agg[d].mar/agg[d].rev)*100 : 0), 
+                            borderColor:'#10b981', backgroundColor: (ctx) => {
+                                const v = ctx.raw; return v < 0 ? '#ef4444' : '#10b981';
+                            },
+                            pointBackgroundColor: (ctx) => ctx.raw < 0 ? '#ef4444' : '#10b981',
+                            segment: { borderColor: ctx => ctx.p0.parsed.y < 0 ? '#ef4444' : '#10b981' }
+                        }] 
+                    },
+                    options: { responsive:true, maintainAspectRatio:false, scales:{x:{grid:{display:false}}, y:{grid:{color:'#262626'}}} }
+                });
+            }
+
+            // 6. COSTS
+            if(STATE.view === 'costs') {
+                // Prepare Categories
+                const cats = { 'Payroll':0, 'Fuel':0, 'Maint':0, 'Admin':0, 'Rent':0, 'Ins':0, 'Tech':0, 'Bill':0 };
+                data.forEach(d => {
+                    if(d.detail) {
+                        cats.Payroll += (d.detail.payroll||0) + (d.detail.office||0);
+                        cats.Fuel += d.detail.fuel||0;
+                        cats.Maint += d.detail.maint||0;
+                        cats.Rent += d.detail.rent||0;
+                        cats.Ins += d.detail.insurance||0;
+                        cats.Tech += d.detail.tech||0;
+                        cats.Bill += d.detail.billbacks||0;
+                    }
+                });
+                const l = Object.keys(cats), val = Object.values(cats);
+
+                charts.expCats = new Chart(ctx('chartExpCats'), {
+                    type: 'bar',
+                    data: { labels: l, datasets: [{ label:'Cost', data: val, backgroundColor:'#ef4444', borderRadius:4 }] },
+                    options: { responsive:true, maintainAspectRatio:false, scales:{x:{grid:{display:false}}, y:{grid:{color:'#262626'}}} }
+                });
+
+                charts.expTrend = new Chart(ctx('chartExpTrend'), {
+                    type: 'line',
+                    data: { labels: dLabels, datasets: [{ label:'Total Exp', data: dates.map(d=>agg[d].exp), borderColor:'#f59e0b', fill:true, backgroundColor:'rgba(245,158,11,0.1)' }] },
+                    options: { responsive:true, maintainAspectRatio:false, scales:{x:{grid:{display:false}}, y:{grid:{color:'#262626'}}} }
+                });
+            }
+        }
+
+        function renderTable(data, dates) {
+            const tbody = document.getElementById('table-body');
+            const agg = {};
+            dates.forEach(d => agg[d] = {rev:0, exp:0, mar:0, drv:0});
+            data.forEach(d => {
+                agg[d.date].rev += d.rev; agg[d.date].exp += d.exp; agg[d.date].mar += d.margin; agg[d.date].drv += d.drivers;
+            });
+            
+            // Reverse chronological
+            const sorted = dates.slice().reverse();
+            tbody.innerHTML = sorted.map(d => {
+                const row = agg[d];
+                const pct = row.rev ? ((row.mar/row.rev)*100).toFixed(1)+'%' : '0%';
+                return `
+                    <tr class="hover:bg-[#1a1a1a] border-b border-[#2a2a2a]">
+                        <td class="p-4 font-mono text-gray-500">${moment(d).format('MMM D, YYYY')}</td>
+                        <td class="p-4 text-right font-bold text-white">${FMT.format(row.rev)}</td>
+                        <td class="p-4 text-right text-gray-400">${FMT.format(row.exp)}</td>
+                        <td class="p-4 text-right font-bold ${row.mar>=0?'text-green-500':'text-red-500'}">${FMT.format(row.mar)}</td>
+                        <td class="p-4 text-right text-xs ${parseFloat(pct)<0?'text-red-400':'text-green-400'}">${pct}</td>
+                        <td class="p-4 text-right text-xs text-gray-500">${row.drv.toLocaleString()}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function renderCostTable(data) {
+            const tbody = document.getElementById('table-expenses');
+            const cats = {};
+            let total = 0;
+            data.forEach(d => {
+                if(d.detail) {
+                    const c = d.detail;
+                    cats['Driver Payroll'] = (cats['Driver Payroll']||0) + (c.payroll||0);
+                    cats['Fuel'] = (cats['Fuel']||0) + (c.fuel||0);
+                    cats['Maintenance'] = (cats['Maintenance']||0) + (c.maint||0);
+                    cats['Insurance'] = (cats['Insurance']||0) + (c.insurance||0);
+                    cats['Office Payroll'] = (cats['Office Payroll']||0) + (c.office||0);
+                    cats['Rent'] = (cats['Rent']||0) + (c.rent||0);
+                    cats['Tech'] = (cats['Tech']||0) + (c.tech||0);
+                    cats['Billbacks'] = (cats['Billbacks']||0) + (c.billbacks||0);
+                }
+            });
+            total = Object.values(cats).reduce((a,b)=>a+b,0);
+            const weeks = [...new Set(data.map(d=>d.date))].length || 1;
+
+            tbody.innerHTML = Object.entries(cats).sort((a,b)=>b[1]-a[1]).map(([k,v]) => `
+                <tr class="hover:bg-[#1a1a1a] border-b border-[#2a2a2a]">
+                    <td class="p-4 font-bold text-white">${k}</td>
+                    <td class="p-4 text-right font-mono text-gray-300">${FMT.format(v)}</td>
+                    <td class="p-4 text-right text-xs text-gray-500">${((v/total)*100).toFixed(1)}%</td>
+                    <td class="p-4 text-right font-mono text-gray-500">${FMT.format(v/weeks)}</td>
+                </tr>
+            `).join('');
+        }
+
+        function resetZoom() {
+            if(charts.trend) charts.trend.resetZoom();
+            document.getElementById('btn-reset-zoom').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
