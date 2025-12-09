@@ -222,7 +222,6 @@
     </main>
 
     <script>
-        // --- 1. CONFIGURATION ---
         const DBX_TOKEN = 'sl.u.AGKgTnOGNfZoAK0UvKSWGB33W8QHmr_edLkfVhGRjDYaNJObGKeDlZMIkaK12DcEuC6KpG_9_YKgqvvtV_22v-9m5KzurIkybboPeJJq01sly3y79yeDYTfhScW2ZW_uUCRPpbPfwL0jjt-XnrKwBvbKHK0u3eB5F4-_081mRSV_1Lg_LUICI8jOBVrTmYDA4t1727WybnEN469A_Triqo0MEo4KwdVHEcrFnqZktnISNld-aaMO6l9rjgtUex_hIazMbyNSU52Dtvjh_wU5xP630ypN8MAzlk6bkVelpasdjIHpMKYemYpsPUp-mKhIS0hYNtbuXTYc1gHMZlQ1Rh2simyKS5RkW--aNn9pl9rMgDlPSxuqmGtUPZ7JHaNHb-zvLhtkadJ_be4pQoMhp2nO-VzdJxfy8_1vuNU0Vq0-yby3MO-pI-mWtiJUOWQqT3mQbR0l9E2dF8isT7AvDpkjKs0PlIAtCzbvvkz1fJFk-R4J6YmBDwAqHLl_rUMmZjJ6ur57fDVGevVrPbib1nS2Lvyc5JcBSONqwkVtwxYetIle1-6S2B5f9gu2EidT6PnayaEZpGqBGCd0UHr0ucSRYyB9EtqcXEVvd3VTAtF8phsX9zYnA6B3GdyLn-AeLOCdqPvhuLw89VbT2NO1HLbWWwjuslwoZkP1auKtrK-1n_P0DXonz9RT-L-GURZ4S6bHx9JoHXj-RX6ozHhg-phnVBXQXtq2rOAfGEPXtE-f4BF01G9KCSN1IQmROp30EmDOB5cMk4EK9IDOwEtoLYqFJ25tm_ALRyukwCxfojkttiq4Cj3cNDsS4RF224BKSJnPeZKgNpkF9UCzpTC6-q4X7_f-7rTJJyb1lhRHYOs7KvXhjLKctQmOdx-v4BAgU-ZbUM4g6rHBW9rz1oFTfKmat5wR28YFR4vyNOjhlnUC9-yXsAeVZqnkzdlBNRVz7gEbu8QVXoHbNuCMg129zDB6qPi9p4iTD1qHvnIQiIj3NZUPnB2wTb0PVV_YiJBBNyZ9Gk7dQgE8tRV3FqPWt-y3ohFOKY4DLEUgh5AGppA0rQ24of3w7om9aHIn6vWo0A0NLAQ_igMlR7lIw4doEEJ-nrCsmSf3EFTxHFGZ9SkGeJBknJpcV3mcTj8BRL0hSKUMa4TD1i8GruCtUpX9G2cuPk5KUM3BVlIEre44ZnJBJGGEsfkocTjDZQBVMRqRARYvRLN2uixgKRh_vLB7yPHvA0Cw5bm5XNL7IfgMhX9FGAyO6UXKuHoET0KfX4i8nqRF5VVAfZRqvD6S3pg54XSJCkmDdmhUQ9owVkKAy3UXAvfY40F0IrjNGjtp_UnpG-W3pkJudIksyYPx8oRD7fDf_HnrI2vBBsCR6RPPJEjCFiXdFBi6VuOQSBIMZ-TlqmMVJDTdW3e8-LbrZbd8aoFEVin_BjTM2KReeGMtux1gBo4DQXftLq0pLH0APVu4zgw'; 
         
         const DROPBOX_CONFIG = [
@@ -230,7 +229,6 @@
             { company: 'DMT',    link: 'https://www.dropbox.com/scl/fi/4ua44lgj7vqm0nrb15qfz/DMT-Test-File.xlsx?rlkey=ccnfs1etglvkesn16gjhlh60v&st=hgtjmhiv&dl=0', type: 'finance' },
             { company: 'TripLog', link: 'https://www.dropbox.com/scl/fi/3x76us3schnyezkcfrefs/Margin-Reports-11.1.25-11.30.25-Repaired-Comb.csv?rlkey=0cp03zv5ib5nhb6ku7rzz5zf6&st=7psysp6j&dl=0', type: 'triplog' } // NEW
         ];
-
         // --- DASHBOARD SETTINGS ---
         const FMT = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
         Chart.defaults.font.family = "'Nunito', sans-serif"; Chart.defaults.color = '#888'; Chart.defaults.borderColor = '#2a2a2a'; Chart.register(ChartDataLabels);
