@@ -3,669 +3,585 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OT/DMT/DLX</title>
+    <title>Financial Dashboard v18 (Comb Data)</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
-    
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
-
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://npmcdn.com/flatpickr/dist/themes/dark.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800&display=swap" rel="stylesheet">
 
     <style>
         body { font-family: 'Nunito', sans-serif; background-color: #121212; color: #e5e5e5; }
-        
-        /* Components */
-        .bg-card { background-color: #1e1e1e; border: 1px solid #333; border-radius: 12px; }
-        .bg-card:hover { border-color: #444; }
-        
-        .custom-scroll::-webkit-scrollbar { width: 6px; }
+        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
         .custom-scroll::-webkit-scrollbar-track { background: #121212; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #444; border-radius: 10px; }
-
-        .sidebar-btn { transition: all 0.2s; color: #888; border-right: 3px solid transparent; }
-        .sidebar-btn:hover { color: #fff; background: rgba(255,255,255,0.05); }
-        .sidebar-btn.active { color: #fff; border-right-color: #3b82f6; background: linear-gradient(90deg, rgba(59,130,246,0.1) 0%, transparent 100%); }
-        
-        .fade-in { animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; transform: translateY(20px); }
+        .bg-card { background-color: #1e1e1e; border: 1px solid #333; border-radius: 12px; display: flex; flex-direction: column; }
+        .nav-item { transition: all 0.2s; cursor: pointer; border-left: 3px solid transparent; }
+        .nav-item:hover { background: rgba(255,255,255,0.05); color: #fff; }
+        .nav-item.active { background: linear-gradient(90deg, rgba(59,130,246,0.1) 0%, transparent 100%); border-left-color: #3b82f6; color: #3b82f6; font-weight: 700; }
+        details > summary { list-style: none; outline: none; cursor: pointer; transition: 0.2s; }
+        details > summary::-webkit-details-marker { display: none; }
+        details[open] > summary .arrow { transform: rotate(180deg); }
+        .arrow { transition: transform 0.2s; }
+        .fade-in { animation: fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; transform: translateY(10px); }
         @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden text-sm">
 
     <aside class="w-64 bg-[#181818] flex-shrink-0 flex flex-col border-r border-[#2a2a2a] z-20">
-        <div class="h-20 flex items-center px-6 border-b border-[#2a2a2a]">
-            <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-900/50">
-                <i class="ph ph-taxi text-xl"></i>
+        <div class="h-16 flex items-center px-6 border-b border-[#2a2a2a]">
+            <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white shadow-lg shadow-blue-900/50">
+                <i class="ph-bold ph-chart-polar"></i>
             </div>
             <div class="ml-3">
-                <div class="text-lg font-bold text-white leading-none">OT<span class="text-blue-500">/DMT/</span><span class="text-lg font-bold text-white leading-none">DLX</span></div>
-                <div class="text-[10px] text-gray-500 font-mono mt-1">Financial Dashboard</div>
+                <div class="text-base font-bold text-white leading-none">Financial DB</div>
+                <div class="text-[10px] text-gray-500 font-mono mt-1">v18 Comb View</div>
             </div>
         </div>
 
-        <div class="flex-1 overflow-y-auto custom-scroll py-6 flex flex-col gap-1">
-            <div class="px-6 mb-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Views</div>
-            <button onclick="switchView('dashboard')" id="nav-dashboard" class="sidebar-btn w-full text-left px-6 py-3 flex items-center gap-3 active">
-                <i class="ph-bold ph-squares-four text-xl"></i><span class="font-semibold">Dashboard</span>
-            </button>
-            <button onclick="switchView('costs')" id="nav-costs" class="sidebar-btn w-full text-left px-6 py-3 flex items-center gap-3">
-                <i class="ph-bold ph-receipt text-xl"></i><span class="font-semibold">Costs</span>
-            </button>
-            <button onclick="switchView('efficiency')" id="nav-efficiency" class="sidebar-btn w-full text-left px-6 py-3 flex items-center gap-3">
-                <i class="ph-bold ph-gauge text-xl"></i><span class="font-semibold">Efficiency</span>
-            </button>
-            <button onclick="switchView('analysis')" id="nav-analysis" class="sidebar-btn w-full text-left px-6 py-3 flex items-center gap-3">
-                <i class="ph-bold ph-trend-up text-xl"></i><span class="font-semibold">Analysis</span>
-            </button>
+        <div class="flex-1 overflow-y-auto custom-scroll p-3 space-y-2">
+            <div class="px-3 mb-1 text-[10px] font-bold text-gray-500 uppercase tracking-wider">Dashboards</div>
+            
+            <div onclick="switchContext('ALL', 'Overview', 'Overview')" id="nav-all" class="nav-item active flex items-center gap-3 px-3 py-2 rounded text-gray-400">
+                <i class="ph-bold ph-squares-four text-lg"></i><span>Overview (All)</span>
+            </div>
+
+            <div onclick="switchContext('TRIPLOG', 'TripLog', 'TripLog')" id="nav-triplog" class="nav-item flex items-center gap-3 px-3 py-2 rounded text-gray-400">
+                <i class="ph-bold ph-road-horizon text-lg"></i><span>TripLog (Comb)</span>
+            </div>
+
+            <div class="px-3 mt-4 mb-1 text-[10px] font-bold text-gray-500 uppercase tracking-wider">Financial Areas</div>
+            <div id="accordion-container" class="space-y-1 mt-1">
+                <div class="text-xs text-gray-600 italic px-3 pt-2 text-center">Import Excel files...</div>
+            </div>
         </div>
 
-        <div class="p-4 border-t border-[#2a2a2a] bg-[#151515]">
-            <div class="flex justify-between items-center mb-3 px-2">
-                <div class="text-[10px] font-bold text-gray-500 uppercase">Filters</div>
-                <button onclick="resetFilters()" class="text-[10px] text-blue-500 hover:text-blue-400">Reset</button>
-            </div>
-            <div id="location-toggles" class="space-y-1 max-h-48 overflow-y-auto custom-scroll">
-                <div class="text-xs text-gray-600 italic px-2">Upload 'Test.csv'...</div>
-            </div>
+        <div class="p-4 border-t border-[#2a2a2a] bg-[#151515] text-[10px] text-gray-600">
+            <div class="flex justify-between"><span>Status:</span><span id="status-indicator" class="text-red-500 font-bold">No Data</span></div>
+            <div class="flex justify-between mt-1"><span>Areas:</span><span id="sheet-count" class="text-gray-300">0</span></div>
         </div>
     </aside>
 
     <main class="flex-1 flex flex-col relative h-full overflow-hidden bg-[#121212]">
         
-        <header class="h-20 px-8 flex items-center justify-between border-b border-[#2a2a2a] bg-[#181818]/95 backdrop-blur z-10">
+        <header class="h-16 px-6 flex items-center justify-between border-b border-[#2a2a2a] bg-[#181818]/95 backdrop-blur z-10">
             <div>
-                <h1 class="text-2xl font-bold text-white tracking-tight" id="page-title">Overview</h1>
-                <div class="flex items-center text-xs text-gray-500 mt-1 gap-2">
-                    <span id="date-range" class="font-mono text-blue-400">No Data</span>
-                    <span class="w-1 h-1 rounded-full bg-gray-600"></span>
-                    <span id="record-count">0 Weeks</span>
+                <div class="flex items-center gap-2 text-gray-500 text-xs mb-0.5">
+                    <span id="bc-company" class="uppercase tracking-wider font-bold text-gray-400">DASHBOARD</span>
+                    <i class="ph-bold ph-caret-right"></i>
+                    <span id="bc-location" class="text-blue-400 font-mono">Overview</span>
                 </div>
+                <h1 class="text-xl font-bold text-white tracking-tight" id="page-title">All Areas</h1>
             </div>
             
             <div class="flex items-center gap-4">
-                <div class="flex items-center bg-[#252525] rounded-lg p-1 border border-[#333]">
-                    <button onclick="changeWeek(-1)" class="p-2 hover:bg-[#333] rounded text-gray-400 hover:text-white transition-colors"><i class="ph-bold ph-caret-left"></i></button>
-                    <div class="px-4 text-center min-w-[140px]">
-                        <div class="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Current View</div>
-                        <div id="current-week-display" class="text-sm font-bold text-white">All Time</div>
-                    </div>
-                    <button onclick="changeWeek(1)" class="p-2 hover:bg-[#333] rounded text-gray-400 hover:text-white transition-colors"><i class="ph-bold ph-caret-right"></i></button>
+                <div class="relative group">
+                    <i class="ph-bold ph-calendar-blank absolute left-3 top-2.5 text-gray-400"></i>
+                    <input type="text" id="dateRange" placeholder="Select Date Range" class="bg-[#252525] hover:bg-[#333] border border-[#333] text-white text-xs rounded-lg pl-9 pr-3 py-2 w-56 focus:outline-none focus:border-blue-600 transition-colors cursor-pointer font-mono">
+                    <button onclick="clearDate()" id="clear-date-btn" class="hidden absolute right-2 top-2 text-gray-500 hover:text-white"><i class="ph-bold ph-x"></i></button>
                 </div>
-
-                <div class="h-8 w-[1px] bg-[#333]"></div>
-
-                <button onclick="resetZoom()" class="bg-[#252525] hover:bg-[#333] text-gray-300 px-3 py-2 rounded-lg text-xs font-bold border border-[#333] flex items-center gap-2 hidden" id="btn-reset-zoom">
-                    <i class="ph-bold ph-magnifying-glass-minus"></i> Reset Zoom
-                </button>
-                <label class="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-xs font-bold transition-all shadow-lg shadow-blue-900/20 flex items-center gap-2">
-                    <i class="ph-bold ph-upload-simple text-lg"></i>
-                    <span>Upload CSV</span>
-                    <input type="file" id="fileInput" hidden accept=".csv">
+                <div class="h-6 w-[1px] bg-[#333]"></div>
+                
+                <label class="cursor-pointer bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2">
+                    <i class="ph-bold ph-folder-open text-lg"></i>
+                    <span>Import File</span>
+                    <input type="file" id="fileInput" hidden accept=".xlsx, .xls, .csv" multiple>
                 </label>
+
+                <button onclick="initDropbox()" id="sync-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-xs font-bold transition-all shadow-lg shadow-blue-900/20 flex items-center gap-2">
+                    <i class="ph-bold ph-arrows-clockwise text-lg"></i>
+                    <span>Sync Dropbox</span>
+                </button>
             </div>
         </header>
 
-        <div class="flex-1 overflow-y-auto p-8 custom-scroll" id="main-scroll">
+        <div class="flex-1 overflow-y-auto p-6 custom-scroll" id="main-scroll">
             
-            <div id="empty-state" class="flex flex-col items-center justify-center h-[60vh] text-center fade-in">
+            <div id="ui-empty" class="flex flex-col items-center justify-center h-[60vh] text-center fade-in">
                 <div class="w-24 h-24 bg-[#1e1e1e] rounded-full flex items-center justify-center border border-[#333] mb-6 shadow-2xl">
-                    <i class="ph-fill ph-file-csv text-4xl text-gray-600"></i>
+                    <i class="ph-duotone ph-microsoft-excel-logo text-4xl text-green-600"></i>
                 </div>
-                <h2 class="text-2xl font-bold text-white mb-2">Load Financial Data</h2>
-                <p class="text-gray-500 max-w-md mb-8">Upload <strong>Test.csv</strong> to view financial performance, trends, and efficiency metrics.</p>
-                <button onclick="document.getElementById('fileInput').click()" class="text-blue-400 hover:text-blue-300 font-bold text-sm underline underline-offset-4">Browse Files</button>
+                <h2 class="text-2xl font-bold text-white mb-2">Import Data</h2>
+                <p class="text-gray-500 max-w-md text-sm mb-8">
+                    Upload your <strong>Financial</strong> and <strong>Comb/TripLog</strong> Excel files.<br>
+                    Or click "Sync Dropbox" to pull from the cloud.
+                </p>
+                <div class="flex gap-4">
+                    <button onclick="document.getElementById('fileInput').click()" class="bg-gray-700 hover:bg-gray-600 text-white px-6 py-2 rounded-lg text-sm font-bold">Browse Files</button>
+                    <button onclick="initDropbox()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg text-sm font-bold shadow-lg">Sync Dropbox</button>
+                </div>
             </div>
 
-            <div id="dashboard-content" class="hidden space-y-6">
-                
-                <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
-                    <div class="bg-card p-5 relative overflow-hidden group">
-                        <div class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Revenue</div>
-                        <div class="text-2xl font-bold text-white tracking-tight" id="kpi-rev">$0</div>
-                        <div class="absolute bottom-0 left-0 w-full h-1 bg-green-500 opacity-50"></div>
+            <div id="ui-dashboard" class="hidden space-y-6 fade-in">
+                <div class="bg-card p-6 h-[400px] w-full">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h3 class="text-white font-bold text-lg">Weekly Performance</h3>
+                            <p class="text-xs text-blue-400 font-mono mt-1" id="chart-subtitle">All Time</p>
+                        </div>
+                        <div class="flex gap-4 text-xs font-bold text-gray-500 bg-[#151515] p-2 rounded-lg border border-[#2a2a2a]">
+                            <span class="flex items-center"><span class="w-2 h-2 rounded-full bg-blue-500 mr-2"></span>Rev</span>
+                            <span class="flex items-center"><span class="w-2 h-2 rounded-full bg-red-500 mr-2"></span>Exp</span>
+                            <span class="flex items-center"><span class="w-2 h-2 rounded-full bg-green-500 mr-2"></span>Margin</span>
+                        </div>
                     </div>
-                    <div class="bg-card p-5 relative overflow-hidden group">
-                        <div class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Expenses</div>
-                        <div class="text-2xl font-bold text-white tracking-tight" id="kpi-exp">$0</div>
-                        <div class="absolute bottom-0 left-0 w-full h-1 bg-red-500 opacity-50"></div>
+                    <div class="flex-grow w-full relative"><canvas id="chartTrend"></canvas></div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="bg-card p-6 h-[320px]">
+                        <h3 class="text-white font-bold mb-4 text-sm uppercase tracking-wider">Cost Breakdown</h3>
+                        <div class="flex-grow relative flex justify-center"><canvas id="chartCostRadial"></canvas></div>
                     </div>
-                    <div class="bg-card p-5 relative overflow-hidden group">
-                        <div class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Net Margin</div>
-                        <div class="text-2xl font-bold text-white tracking-tight" id="kpi-margin">$0</div>
-                        <div class="absolute bottom-0 left-0 w-full h-1 bg-blue-500 opacity-50"></div>
+                    <div class="bg-card p-6 h-[320px]">
+                        <h3 class="text-white font-bold mb-4 text-sm uppercase tracking-wider">Cost Trend</h3>
+                        <div class="flex-grow relative"><canvas id="chartCostStack"></canvas></div>
                     </div>
-                    <div class="bg-card p-5 relative overflow-hidden group">
-                        <div class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Cost Ratio</div>
-                        <div class="text-2xl font-bold text-white tracking-tight" id="kpi-ratio">0%</div>
-                        <div class="absolute bottom-0 left-0 w-full h-1 bg-orange-500 opacity-50"></div>
-                    </div>
-                    <div class="bg-card p-5 relative overflow-hidden group">
-                        <div class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Rev / Hour</div>
-                        <div class="text-2xl font-bold text-white tracking-tight" id="kpi-efficiency">$0</div>
-                        <div class="absolute bottom-0 left-0 w-full h-1 bg-purple-500 opacity-50"></div>
+                    <div class="bg-card p-6 h-[320px]">
+                        <h3 class="text-white font-bold mb-4 text-sm uppercase tracking-wider">Top Driver Margin</h3>
+                        <div class="flex-grow relative"><canvas id="chartDriverMargin"></canvas></div>
                     </div>
                 </div>
 
-                <div id="view-dashboard" class="space-y-6 fade-in">
-                    <div class="bg-card p-6 h-[400px] flex flex-col relative group">
-                        <div class="flex justify-between items-center mb-4">
-                            <div>
-                                <h3 class="text-white font-bold text-lg">Financial Trend</h3>
-                                <p class="text-xs text-gray-500">Scroll to zoom • Drag to pan</p>
-                            </div>
-                            <div class="flex gap-4 text-xs font-bold text-gray-500">
-                                <span class="flex items-center"><span class="w-2 h-2 rounded-full bg-blue-500 mr-2"></span>Rev</span>
-                                <span class="flex items-center"><span class="w-2 h-2 rounded-full bg-red-500 mr-2"></span>Exp</span>
-                                <span class="flex items-center"><span class="w-2 h-2 rounded-full bg-green-500 mr-2"></span>Margin</span>
-                            </div>
-                        </div>
-                        <div class="flex-grow relative w-full h-full">
-                            <canvas id="chartTrend"></canvas>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <div class="bg-card p-6 h-80 flex flex-col">
-                            <h3 class="text-white font-bold mb-4">Cost Structure</h3>
-                            <div class="flex-grow relative w-full h-full">
-                                <canvas id="chartCostStack"></canvas>
-                            </div>
-                        </div>
-                        <div class="bg-card p-6 h-80 flex flex-col">
-                            <h3 class="text-white font-bold mb-4">Performance by Location</h3>
-                            <div class="flex-grow relative w-full h-full">
-                                <canvas id="chartLocBar"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="view-costs" class="hidden space-y-6 fade-in">
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <div class="bg-card p-6 h-80 flex flex-col">
-                            <h3 class="text-white font-bold mb-4">Expense Categories</h3>
-                            <div class="flex-grow relative w-full h-full">
-                                <canvas id="chartExpCats"></canvas>
-                            </div>
-                        </div>
-                        <div class="bg-card p-6 h-80 flex flex-col">
-                            <h3 class="text-white font-bold mb-4">Total Expenses Trend</h3>
-                            <div class="flex-grow relative w-full h-full">
-                                <canvas id="chartExpTrend"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="bg-card flex flex-col overflow-hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[500px]">
+                    <div class="bg-card flex flex-col overflow-hidden h-full">
                         <div class="p-4 border-b border-[#2e2e2e] bg-[#1a1a1a] flex justify-between items-center">
-                            <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Detailed Expense Breakdown</h3>
+                            <h3 class="text-xs font-bold text-gray-300 uppercase tracking-wider">Driver Leaderboard</h3>
                         </div>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left text-gray-400">
-                                <thead class="text-[10px] font-bold uppercase bg-[#151515] text-gray-500">
-                                    <tr>
-                                        <th class="p-4">Category</th>
-                                        <th class="p-4 text-right">Total Amount</th>
-                                        <th class="p-4 text-right">% of Total</th>
-                                        <th class="p-4 text-right">Avg / Week</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="table-expenses" class="text-sm divide-y divide-[#2a2a2a]">
-                                    </tbody>
-                            </table>
+                        <div class="overflow-x-auto custom-scroll flex-1">
+                            <table class="w-full text-left text-gray-400 whitespace-nowrap"><thead class="text-[10px] font-bold uppercase bg-[#151515] text-gray-500 sticky top-0"><tr><th class="p-3">Name</th><th class="p-3 text-right">Payroll</th><th class="p-3 text-right">Rev</th><th class="p-3 text-right">Margin</th><th class="p-3 text-right">%</th></tr></thead><tbody id="driver-table-body" class="text-xs divide-y divide-[#2a2a2a] font-mono"></tbody></table>
                         </div>
                     </div>
-                </div>
-
-                <div id="view-efficiency" class="hidden space-y-6 fade-in">
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <div class="bg-card p-6 h-80 flex flex-col">
-                            <h3 class="text-white font-bold mb-4">Revenue per Hour</h3>
-                            <div class="flex-grow relative w-full h-full"><canvas id="chartRevHour"></canvas></div>
-                        </div>
-                        <div class="bg-card p-6 h-80 flex flex-col">
-                            <h3 class="text-white font-bold mb-4">Revenue per Driver</h3>
-                            <div class="flex-grow relative w-full h-full"><canvas id="chartRevDriver"></canvas></div>
-                        </div>
-                    </div>
-                    <div class="bg-card p-6 h-80 flex flex-col">
-                        <h3 class="text-white font-bold mb-4">Driver Count Trend</h3>
-                        <div class="flex-grow relative w-full h-full"><canvas id="chartDrivers"></canvas></div>
-                    </div>
-                </div>
-
-                <div id="view-analysis" class="hidden space-y-6 fade-in">
-                    <div class="bg-card p-6 h-[400px] flex flex-col">
-                        <h3 class="text-white font-bold mb-4">Profitability Heatmap (Margin %)</h3>
-                        <div class="flex-grow relative w-full h-full"><canvas id="chartMarginPct"></canvas></div>
-                    </div>
-                    
-                    <div class="bg-card flex flex-col overflow-hidden">
+                    <div class="bg-card flex flex-col overflow-hidden h-full">
                         <div class="p-4 border-b border-[#2e2e2e] bg-[#1a1a1a] flex justify-between items-center">
-                            <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Weekly Detail</h3>
+                            <h3 class="text-xs font-bold text-gray-300 uppercase tracking-wider">Weekly Financials</h3>
+                            <span id="record-count" class="text-xs text-gray-500 font-mono bg-[#252525] px-2 py-1 rounded">0</span>
                         </div>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left text-gray-400">
-                                <thead class="text-[10px] font-bold uppercase bg-[#151515] text-gray-500">
-                                    <tr>
-                                        <th class="p-4">Week Ending</th>
-                                        <th class="p-4 text-right">Revenue</th>
-                                        <th class="p-4 text-right">Expenses</th>
-                                        <th class="p-4 text-right">Margin</th>
-                                        <th class="p-4 text-right">Margin %</th>
-                                        <th class="p-4 text-right">Drivers</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="table-body" class="text-sm divide-y divide-[#2a2a2a]">
-                                    </tbody>
-                            </table>
+                        <div class="overflow-x-auto custom-scroll flex-1">
+                            <table class="w-full text-left text-gray-400 whitespace-nowrap"><thead class="text-[10px] font-bold uppercase bg-[#151515] text-gray-500 sticky top-0 z-10 shadow-sm"><tr><th class="p-3 border-b border-[#333]">Date</th><th class="p-3 border-b border-[#333] text-right text-red-400">Total Exp</th><th class="p-3 border-b border-[#333] text-right text-blue-400">Revenue</th><th class="p-3 border-b border-[#333] text-right text-green-400">Margin</th><th class="p-3 border-b border-[#333] text-right">%</th></tr></thead><tbody id="table-body" class="text-xs divide-y divide-[#2a2a2a] font-mono"></tbody></table>
                         </div>
                     </div>
                 </div>
-
             </div>
+
+            <div id="ui-triplog" class="hidden space-y-6 fade-in">
+                <div class="bg-card flex flex-col overflow-hidden shadow-xl min-h-[600px]">
+                    <div class="p-4 border-b border-[#2e2e2e] bg-[#1a1a1a] flex flex-wrap gap-4 justify-between items-center">
+                        <div class="flex items-center gap-3">
+                            <h3 class="text-white font-bold text-lg">Trip Log</h3>
+                            <span id="triplog-count" class="text-xs text-gray-500 font-mono bg-[#252525] px-2 py-1 rounded">0 Entries</span>
+                        </div>
+                        
+                        <div class="flex items-center gap-3">
+                            <div class="relative">
+                                <i class="ph-bold ph-magnifying-glass absolute left-3 top-2.5 text-gray-500"></i>
+                                <input type="text" id="triplog-search" onkeyup="updateTripLogTable()" placeholder="Filter Account / Name..." 
+                                       class="bg-[#252525] border border-[#333] text-white text-xs rounded-lg pl-9 pr-3 py-2 w-64 focus:border-blue-600 focus:outline-none">
+                            </div>
+                            
+                            <div class="flex bg-[#252525] rounded-lg p-1 border border-[#333]">
+                                <button onclick="sortTripLog('date')" class="px-3 py-1 text-xs text-gray-400 hover:text-white font-bold border-r border-[#333]">Date</button>
+                                <button onclick="sortTripLog('name')" class="px-3 py-1 text-xs text-gray-400 hover:text-white font-bold border-r border-[#333]">Name</button>
+                                <button onclick="sortTripLog('acct')" class="px-3 py-1 text-xs text-gray-400 hover:text-white font-bold">Acct</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto custom-scroll flex-1">
+                        <table class="w-full text-left text-gray-400 whitespace-nowrap">
+                            <thead class="text-[10px] font-bold uppercase bg-[#151515] text-gray-500 sticky top-0 z-10 shadow-sm">
+                                <tr>
+                                    <th class="p-3 border-b border-[#333]">Driver Name</th>
+                                    <th class="p-3 border-b border-[#333]">Date</th>
+                                    <th class="p-3 border-b border-[#333]">Account #</th>
+                                    <th class="p-3 border-b border-[#333]">Booking ID</th>
+                                    <th class="p-3 border-b border-[#333]">Passenger</th>
+                                    <th class="p-3 border-b border-[#333]">Pick Up</th>
+                                    <th class="p-3 border-b border-[#333]">Drop Off</th>
+                                    <th class="p-3 border-b border-[#333]">Miles</th>
+                                    <th class="p-3 border-b border-[#333]">Fare</th>
+                                    <th class="p-3 border-b border-[#333] w-full">Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody id="triplog-body" class="text-xs divide-y divide-[#2a2a2a] font-mono">
+                                <tr><td colspan="10" class="p-8 text-center text-gray-600">No TripLog data loaded. Import the Comb Excel file.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </main>
 
     <script>
-        // --- CONFIG ---
-        Chart.defaults.font.family = "'Nunito', sans-serif";
-        Chart.defaults.color = '#737373';
-        Chart.defaults.scale.grid.color = '#262626';
-        Chart.defaults.scale.beginAtZero = true;
+        // --- 1. CONFIGURATION ---
+        const DBX_TOKEN = 'sl.u.AGLgqME4NIddINhpqBZt41IaKvCqd-HLF6DEhrg_YLJOONUU6ebKeMSPLjphBej9EoeZJxOn3YZwD9tJSZagUuSsHgQveBsNLAN6cyhDhkv6vq3-ilLE5hxl3JsJuzbpdn6OVxJmpakc2JEEhVMZelzAKxSQMg-L1vHc4CYlGRBskMTIk03PsuiqW3Em-Cs-42fQJE25nNkYok8cMTRTASjOOvPeBwDvsZwuyn55VNoPmD863vfh8OZgsHwdY1EeQwJ_fn3aos5rLUaw_YLtGevc4jMU9CaxpRRDEIQ447ALwUKbwFVw1v9xff3b1IPvDye0SvZALE-PuDCV3d5BPQGl5n2PcRbh2I4Mwj_exTxgEnVPEdAL6PyfGlRXoF6BaYxEeCNOuCp4qQNYmt5CloEhRtzQ3D8c63gUW16C5nWgjBfnJv0RWkNaQKH-Usc0bULHrwT4uu55IgeY8AI66JURkT1whPc43j8zCHOiLAWquTHj954CizWAsATFtf7AgMUFhcg59J-pBkODM4xfZU90PGULs4JOFSC9PGLmU6C9y8W-hgjGeqsqFRZPXI4J8ss1JVMzR_AOjmY0TO3bQn0-Cr5G_DWYKeN2ZpKvne0pGaqMbArMTvNqvE8f0DnjpDcTjJbpNhSIXj4oRQQZ0QAb6t4736PNvz5aiEXizaiDuJfFaESXwNPFUpeTqfqghLYwRHduuGcg4uwumh2NYIWjkXyZfzgd5Pg3ZddkCUPRqSK46Mo2nDuAaj2HxHwHWGZxLgLwlyAMUsrU7SymUuHe9YgavSVZOoGUlqTxxs425-YUE-aCdbHdOi6QdRBH53lqkBrsEa1Lkbft4l0FpNsQzc_qtrQsY-G0P2L2cqYwRDZGSzMdJCjJZnJinwJASFeFXCr9W6ZCIJYrBKy7MhcN6UzH3G7LN63LZLrFghEVIX3pkDW0kYpWqoYCw9ucS_qWuknLEmrNUepC7b4VOPq0ravSy5jqbeD7a7cPmgBv5otxV5jM7q6blcbJaoXNUPD8g_kIrG87RyvxN7uHsa0t7lqYEd-hJ_KA_lXaRZccUbUTLt6B24rNHh4lvyxM189oNAMV6_acE0NzfPxEx-kik4-D3FFJ1WxdJ8HppSIcSEYA-c99_PUo-YoBdTjZWvUkfeae4AmgxFALFtGAk7WzCid_BOIe1_cp1HEFBrnkUpIWWFz3qbmQYTmpaaz-SfpxKDhKLgTIJ3qXDdyZrCon9w2XAGU_LwQRt_7ZrjRwfPMiHSvdQ2smNu9NUVZym_A2lcc3cVQ-3US2AWs9xSTALaS0HNTS6h4XFUrfGMFvc2vqlghH1zBeWmt-qg70UiZH14ytyOE3P-aaekV2MAhp1zhMfKfs0168KaBkZ1qQ5KIi9eS4nBHWv4plHSqmLoqhnwPPcklaie0pQrCUmkEB0JT9u1ZCIsbdma2UYXcbUxpGSk2VWLWbA2cRZMCNsf8'; 
+        
+        const DROPBOX_CONFIG = [
+            { company: 'Deluxe', link: 'https://www.dropbox.com/scl/fi/estjsmhffbxy0y4b3n2se/DLX-Margin.Labor-Spreadsheet-2.27.25.xlsx?rlkey=ecggt0myxuyqylnmtajx3j8id&st=fz7a6y7c&dl=0', type: 'finance' },
+            { company: 'DMT',    link: 'https://www.dropbox.com/scl/fi/4ua44lgj7vqm0nrb15qfz/DMT-Test-File.xlsx?rlkey=ccnfs1etglvkesn16gjhlh60v&st=hgtjmhiv&dl=0', type: 'finance' },
+            { company: 'TripLog', link: 'https://www.dropbox.com/scl/fi/3x76us3schnyezkcfrefs/Margin-Reports-11.1.25-11.30.25-Repaired-Comb.csv?rlkey=0cp03zv5ib5nhb6ku7rzz5zf6&st=7psysp6j&dl=0', type: 'triplog' } // NEW
+        ];
 
-        const STATE = {
-            rawData: [],
-            activeSites: new Set(),
-            weeks: [],
-            currentWeekIndex: -1,
-            view: 'dashboard'
-        };
-
-        const CUSTOM_SITES = {
-            'COAST': 'Coast (XCC)', 'EUGENE': 'DLX-EUG', 'RBG': 'RBG (Roseburg)', 
-            'ROSEBURG': 'RBG (Roseburg)', 'OREGON TAXI': 'Oregon Taxi', 'OT': 'Oregon Taxi',
-            'DMT': 'DMT', 'OAKRIDGE': 'Oakridge', 'ALBANY': 'Albany', 'SALEM': 'Salem',
-            'ADMINISTRATIVE': 'Administrative'
-        };
-        const TARGET_ORDER = ['Administrative', 'Albany', 'Coast (XCC)', 'DMT', 'DLX-EUG', 'Oakridge', 'Oregon Taxi', 'RBG (Roseburg)', 'Salem'];
+        // --- DASHBOARD SETTINGS ---
         const FMT = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
-        const CLEAN = (v) => { if(!v)return 0; const s=v.toString(); const n=parseFloat(s.replace(/[^0-9.]/g,''))||0; return s.includes('(')||s.includes('-')?-n:n; };
+        Chart.defaults.font.family = "'Nunito', sans-serif"; Chart.defaults.color = '#888'; Chart.defaults.borderColor = '#2a2a2a'; Chart.register(ChartDataLabels);
 
-        // --- UPLOAD ---
-        document.getElementById('fileInput').addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if(!file) return;
-            Papa.parse(file, { header: false, skipEmptyLines: true, complete: (res) => processData(res.data) });
+        // Friendly Names Map
+        const SHEET_MAP = {
+            'ABNY.WKLY': 'Albany', 'CST.WKLY': 'Coast', 'CONSOLIDATEDWKLY': 'Company Overview', 'CONSOLIDATED.WKLY': 'Company Overview',
+            'DMTWKLY': 'DMT', 'EUGWKLY': 'DLX-EUG', 'EUG.WKLY': 'Eugene Weekly', 'MDVCR.WKLY': 'Modivcare',
+            'OKRDG.WKLY': 'Oakridge', 'OT': 'Oregon Taxi', 'RBG.WKLY': 'Roseburg', 'ALBANY.SALEM': 'Albany/Salem',
+            'E.OREGON': 'Eastern Oregon', 'NEVADA': 'Nevada'
+        };
+
+        let STATE = { 
+            data: {}, tripLog: [], 
+            ctxType: 'ALL', ctxComp: 'Overview', ctxLoc: 'Overview', 
+            dateRange: null, tripSort: 'date' 
+        };
+
+        // --- INIT ---
+        const fp = flatpickr("#dateRange", { 
+            mode: "range", dateFormat: "Y-m-d", theme: "dark", maxDate: "today", 
+            onChange: (d) => { STATE.dateRange = d.length === 2 ? d : null; document.getElementById('clear-date-btn').classList.toggle('hidden', !STATE.dateRange); updateDashboard(); } 
         });
+        function clearDate() { fp.clear(); STATE.dateRange = null; document.getElementById('clear-date-btn').classList.add('hidden'); updateDashboard(); }
 
-        // --- PROCESSING ---
-        function processData(rows) {
-            STATE.rawData = [];
-            STATE.activeSites.clear();
-            STATE.weeks = [];
-            
-            let hIdx = -1;
-            for(let i=0; i<Math.min(rows.length, 25); i++) {
-                if(JSON.stringify(rows[i]).includes('Payroll Exp')) { hIdx=i; break; }
-            }
-            if(hIdx===-1) return alert("Invalid file structure.");
+        // --- DROPBOX LOADER ---
+        async function initDropbox() {
+            const statusDiv = document.getElementById('status-indicator');
+            const syncBtn = document.getElementById('sync-btn');
+            statusDiv.innerText = "Syncing..."; statusDiv.className = "text-yellow-500 font-bold";
+            if(syncBtn) { syncBtn.disabled = true; syncBtn.classList.add('opacity-50'); }
 
-            for(let i=hIdx+1; i<rows.length; i++) {
-                const r = rows[i];
-                const dateRaw = r[0]||r[1];
-                if(!dateRaw || !dateRaw.toString().includes('20')) continue;
+            let mappedCount = 0;
 
-                const rawLoc = (r[5]||'Unknown').trim();
-                if(rawLoc==='Total'||rawLoc==='nan') continue;
+            try {
+                for (const config of DROPBOX_CONFIG) {
+                    console.log(`Fetching ${config.company}...`);
+                    const response = await fetch('https://content.dropboxapi.com/2/sharing/get_shared_link_file', {
+                        method: 'POST', headers: { 'Authorization': `Bearer ${DBX_TOKEN}`, 'Dropbox-API-Arg': JSON.stringify({ url: config.link }) }
+                    });
+                    if (!response.ok) { console.error(`Error loading ${config.company}`); continue; }
 
-                let site = CUSTOM_SITES[rawLoc.toUpperCase()] || rawLoc;
+                    const blob = await response.blob();
+                    const data = await blob.arrayBuffer();
+                    
+                    if (config.type === 'triplog') {
+                        // TripLog (Comb) File
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        // Scan for "Comb" sheet or just use first sheet
+                        let sheet = workbook.Sheets['Comb'] || workbook.Sheets[workbook.SheetNames[0]];
+                        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+                        processTripLog(rows);
+                    } else {
+                        // Finance Excel
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        workbook.SheetNames.forEach(sheetName => {
+                            const targetName = SHEET_MAP[sheetName.trim().toUpperCase()];
+                            if (targetName) {
+                                const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1 });
+                                if (rows.length > 5) { processSheetData(rows, config.company, targetName); mappedCount++; }
+                            }
+                        });
+                    }
+                }
+                finishLoad(mappedCount);
+            } catch (err) { console.error(err); alert("Sync Failed."); }
+            finally { if(syncBtn) { syncBtn.disabled = false; syncBtn.classList.remove('opacity-50'); } }
+        }
+
+        // --- MANUAL UPLOAD ---
+        document.getElementById('fileInput').addEventListener('change', async (e) => {
+            const files = e.target.files; if (!files.length) return;
+            let mappedCount = 0;
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const data = await file.arrayBuffer();
+                const workbook = XLSX.read(data, { type: 'array' });
                 
-                const pay = CLEAN(r[8]);
-                const fuel = CLEAN(r[9]);
-                const ins = CLEAN(r[10]);
-                const maint = CLEAN(r[11]);
-                const office = CLEAN(r[12]);
-                const rent = CLEAN(r[13]);
-                const tech = CLEAN(r[14]);
-                const bill = CLEAN(r[15]);
+                // Detection: TripLog vs Finance
+                // TripLog "Comb" files usually have "booking_site_reference" or "driver_name" in header
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                const firstRows = XLSX.utils.sheet_to_json(firstSheet, { header: 1, range: 0 });
+                const headerStr = JSON.stringify(firstRows[0] || []).toLowerCase();
                 
-                const rev = CLEAN(r[17]);
-                const drivers = CLEAN(r[6]);
-                const hours = CLEAN(r[7]);
+                if (headerStr.includes("driver_name") || headerStr.includes("arrival time") || file.name.includes("Comb")) {
+                    // TripLog
+                    const rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+                    processTripLog(rows);
+                } else {
+                    // Finance
+                    let company = "Unknown";
+                    const fn = file.name.toUpperCase();
+                    if (fn.includes("DLX") || fn.includes("DELUXE")) company = "Deluxe";
+                    else if (fn.includes("DMT")) company = "DMT";
+                    else if (fn.includes("OT")) company = "Oregon Taxi";
 
-                const adminCost = ins + office + rent + tech + bill;
-                const opsCost = pay + fuel + maint;
-
-                // Create Ops Record
-                STATE.rawData.push({
-                    date: moment(dateRaw).format('YYYY-MM-DD'),
-                    site: site, type: 'Ops',
-                    rev, exp: opsCost, margin: rev - opsCost,
-                    drivers, hours,
-                    detail: { payroll: pay, fuel, maint }
-                });
-
-                // Create Admin Record
-                if(adminCost > 0) {
-                    STATE.rawData.push({
-                        date: moment(dateRaw).format('YYYY-MM-DD'),
-                        site: 'Administrative', type: 'Admin',
-                        rev: 0, exp: adminCost, margin: -adminCost,
-                        drivers: 0, hours: 0,
-                        detail: { admin: adminCost, insurance: ins, office, rent, tech, billbacks: bill }
+                    workbook.SheetNames.forEach(sheetName => {
+                        const targetName = SHEET_MAP[sheetName.trim().toUpperCase()];
+                        if (targetName) {
+                            const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1 });
+                            if (rows.length > 5) { processSheetData(rows, company, targetName); mappedCount++; }
+                        }
                     });
                 }
             }
+            finishLoad(mappedCount);
+            e.target.value = '';
+        });
 
-            // Init Weeks
-            const uniqueWeeks = [...new Set(STATE.rawData.map(d => d.date))].sort();
-            STATE.weeks = uniqueWeeks;
-            STATE.currentWeekIndex = -1; // Default All Time
+        function finishLoad(count) {
+            buildNavigation();
+            document.getElementById('status-indicator').innerText = "Ready";
+            document.getElementById('status-indicator').className = "text-green-500 font-bold";
+            document.getElementById('sheet-count').innerText = count;
+            document.getElementById('ui-empty').classList.add('hidden');
+            if(STATE.ctxType !== 'TRIPLOG') switchContext('ALL', 'Overview', 'Overview');
+            else updateTripLogView();
+        }
 
-            TARGET_ORDER.forEach(s => STATE.activeSites.add(s));
-            document.getElementById('empty-state').classList.add('hidden');
-            document.getElementById('dashboard-content').classList.remove('hidden');
-            renderFilters();
+        // --- DATA PROCESSING ---
+        function cleanMoney(val) {
+            if (!val) return 0;
+            let s = val.toString(); let isNeg = s.includes('(') || s.includes('-');
+            let n = parseFloat(s.replace(/[^0-9.]/g, '')); return isNaN(n) ? 0 : (isNeg ? -n : n);
+        }
+
+        function processSheetData(rows, company, location) {
+            const key = `${company}_${location}`;
+            const weeks = [], drivers = [];
+            const isSummary = location === "Company Overview";
+            const today = moment();
+
+            let colMap = { name:0, drPay:5, drRev:11, drMar:12, drPct:13, date:15, pay:19, fuel:20, ins:21, maint:22, exp:24, rev:25, mar:26, pct:27 };
+            
+            for(let r=0; r<Math.min(rows.length, 10); r++) {
+                const row = rows[r] || [];
+                for(let c=10; c<30; c++) {
+                    if (row[c] && String(row[c]).toLowerCase().includes('start date')) {
+                        const base = c; 
+                        colMap = { ...colMap, date:base, pay:base+4, fuel:base+5, ins:base+6, maint:base+7, exp:base+9, rev:base+10, mar:base+11, pct:base+12 };
+                        break;
+                    }
+                }
+            }
+
+            for(let i=2; i<rows.length; i++) {
+                const r = rows[i]; if (!r) continue;
+                if(r[colMap.name] && String(r[colMap.name]).length > 2 && r[colMap.drPct]) {
+                    drivers.push({ name: r[colMap.name], payroll: cleanMoney(r[colMap.drPay]), rev: cleanMoney(r[colMap.drRev]), margin: cleanMoney(r[colMap.drMar]), pct: r[colMap.drPct] });
+                }
+                const dVal = r[colMap.date];
+                if (dVal) {
+                    let mDate = (typeof dVal === 'number') ? moment(new Date(Math.round((dVal - 25569)*86400*1000))) : moment(dVal, ['M/D/YYYY', 'YYYY-MM-DD']);
+                    if (mDate.isValid() && mDate.year() > 2000 && mDate.isBefore(today)) {
+                        weeks.push({
+                            date: mDate.format('YYYY-MM-DD'), displayDate: mDate.format('MMM D, YYYY'), 
+                            company, location, isSummary,
+                            payroll: cleanMoney(r[colMap.pay]), fuel: cleanMoney(r[colMap.fuel]), totalExp: cleanMoney(r[colMap.exp]), revenue: cleanMoney(r[colMap.rev]), margin: cleanMoney(r[colMap.mar]), marginPct: r[colMap.pct]
+                        });
+                    }
+                }
+            }
+            if (weeks.length > 0) STATE.data[key] = { weeks, drivers };
+        }
+
+        function processTripLog(rows) {
+            STATE.tripLog = [];
+            // Columns in Comb CSV:
+            // 0: booking_site..
+            // 5: driver_name
+            // 6: CustID
+            // 7: booking_id
+            // 8: passenger_name
+            // 10: Arrival Time
+            // 12: pickup_address
+            // 17: destination_address
+            // 22: instructions (Notes)
+            // 23: Miles
+            // 28: meter (Fare) or 34: Rev.
+            
+            // Header is row 0. Data starts row 1.
+            for(let i=1; i<rows.length; i++) {
+                const r = rows[i];
+                if(!r || !r[5]) continue; // Need driver name
+
+                let dateStr = r[10];
+                let mDate;
+                if(dateStr) {
+                     if (typeof dateStr === 'number') mDate = moment(new Date(Math.round((dateStr - 25569)*86400*1000)));
+                     else mDate = moment(dateStr); // Auto parse ISO or other
+                }
+
+                STATE.tripLog.push({
+                    name: r[5],
+                    acct: r[6] || '-',
+                    bookId: r[7] || '-',
+                    pax: r[8] || '-',
+                    date: mDate && mDate.isValid() ? mDate.format('YYYY-MM-DD') : '',
+                    displayDate: mDate && mDate.isValid() ? mDate.format('MMM D, YYYY HH:mm') : dateStr,
+                    pickup: r[12] || '',
+                    dropoff: r[17] || '',
+                    notes: r[22] || '',
+                    miles: r[23] || 0,
+                    fare: r[28] || r[34] || 0
+                });
+            }
+            updateTripLogView();
+        }
+
+        // --- NAVIGATION ---
+        function buildNavigation() {
+            const container = document.getElementById('accordion-container'); container.innerHTML = '';
+            const hierarchy = {};
+            Object.keys(STATE.data).forEach(key => {
+                const [comp, loc] = key.split('_');
+                if (!hierarchy[comp]) hierarchy[comp] = [];
+                if (!hierarchy[comp].includes(loc)) hierarchy[comp].push(loc);
+            });
+
+            Object.keys(hierarchy).forEach(comp => {
+                const locs = hierarchy[comp].sort();
+                const details = document.createElement('details'); details.open = true;
+                details.className = 'group rounded-lg bg-[#252525] overflow-hidden border border-[#333] mb-2';
+                details.innerHTML = `
+                    <summary onclick="switchContext('COMPANY', '${comp}', 'Overview')" class="nav-item flex items-center justify-between px-3 py-2 bg-[#222] text-xs text-gray-400 select-none border-b border-[#333]">
+                        <div class="flex items-center gap-2"><i class="ph-bold ph-buildings"></i><span class="font-bold">${comp}</span></div><i class="ph-bold ph-caret-down arrow"></i>
+                    </summary>
+                    <div class="p-1 space-y-0.5 bg-[#1e1e1e]">
+                        ${locs.map(loc => `<div id="nav-${comp.replace(/\s/g,'')}-${loc.replace(/\s/g,'')}" onclick="switchContext('LOCATION', '${comp}', '${loc}')" class="nav-item flex items-center gap-2 px-3 py-1.5 rounded text-xs text-gray-500 hover:text-white pl-8"><i class="ph-fill ph-map-pin"></i><span>${loc}</span></div>`).join('')}
+                    </div>`;
+                container.appendChild(details);
+            });
+        }
+
+        function switchContext(type, comp, loc) {
+            STATE.ctxType = type; STATE.ctxComp = comp; STATE.ctxLoc = loc;
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            
+            if(type === 'TRIPLOG') {
+                document.getElementById('nav-triplog').classList.add('active');
+                document.getElementById('ui-dashboard').classList.add('hidden');
+                document.getElementById('ui-triplog').classList.remove('hidden');
+                document.getElementById('page-title').innerText = "Trip Logs";
+                updateTripLogView();
+                return;
+            }
+
+            document.getElementById('ui-triplog').classList.add('hidden');
+            document.getElementById('ui-dashboard').classList.remove('hidden');
+            
+            if(type === 'ALL') document.getElementById('nav-all').classList.add('active');
+            else if (type === 'LOCATION') {
+                const el = document.getElementById(`nav-${comp.replace(/\s/g,'')}-${loc.replace(/\s/g,'')}`);
+                if(el) el.classList.add('active');
+            }
+            
+            document.getElementById('bc-company').innerText = comp;
+            document.getElementById('bc-location').innerText = loc;
+            document.getElementById('page-title').innerText = loc === 'Overview' ? comp : loc;
             updateDashboard();
         }
 
-        // --- WEEK NAVIGATION ---
-        function changeWeek(direction) {
-            if (STATE.weeks.length === 0) return;
+        // --- TRIPLOG VIEW ---
+        function sortTripLog(field) { STATE.tripSort = field; updateTripLogView(); }
+        function updateTripLogTable() { updateTripLogView(); }
+
+        function updateTripLogView() {
+            const tbody = document.getElementById('triplog-body');
+            const search = document.getElementById('triplog-search').value.toLowerCase();
             
-            let newIndex = STATE.currentWeekIndex + direction;
-            
-            // Bounds logic
-            if (newIndex < -1) newIndex = STATE.weeks.length - 1; // Wrap to last week
-            if (newIndex >= STATE.weeks.length) newIndex = -1; // Wrap to All Time
-            
-            STATE.currentWeekIndex = newIndex;
-            updateDashboard();
-        }
+            let filtered = STATE.tripLog.filter(d => (d.name+d.acct+d.bookId).toLowerCase().includes(search));
 
-        // --- FILTERS & NAV ---
-        function renderFilters() {
-            const el = document.getElementById('location-toggles');
-            el.innerHTML = '';
-            TARGET_ORDER.forEach(s => {
-                const active = STATE.activeSites.has(s);
-                el.innerHTML += `<div onclick="toggleSite('${s}')" class="flex justify-between items-center px-3 py-2 rounded-lg cursor-pointer ${active?'bg-[#252525] text-white':'text-gray-600'}"><div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full ${active?'bg-blue-500':'bg-gray-700'}"></div><span class="text-xs font-semibold">${s}</span></div>${active?'<i class="ph-bold ph-check text-blue-500 text-xs"></i>':''}</div>`;
+            filtered.sort((a,b) => {
+                if(STATE.tripSort === 'date') return new Date(b.date) - new Date(a.date);
+                if(STATE.tripSort === 'name') return a.name.localeCompare(b.name);
+                if(STATE.tripSort === 'acct') return String(a.acct).localeCompare(String(b.acct));
+                return 0;
             });
-        }
-        function toggleSite(s) { if(STATE.activeSites.has(s)) STATE.activeSites.delete(s); else STATE.activeSites.add(s); renderFilters(); updateDashboard(); }
-        function resetFilters() { TARGET_ORDER.forEach(s=>STATE.activeSites.add(s)); renderFilters(); updateDashboard(); }
 
-        function switchView(view) {
-            STATE.view = view;
-            document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById('nav-'+view).classList.add('active');
-            ['dashboard', 'costs', 'efficiency', 'analysis'].forEach(v => {
-                const el = document.getElementById('view-'+v);
-                if(v === view) el.classList.remove('hidden'); else el.classList.add('hidden');
-            });
-            updateDashboard(); // Re-render charts
-        }
+            document.getElementById('triplog-count').innerText = `${filtered.length} Entries`;
+            if(filtered.length === 0) { tbody.innerHTML = `<tr><td colspan="10" class="p-8 text-center text-gray-600">No records found.</td></tr>`; return; }
 
-        // --- UPDATE ---
-        function updateDashboard() {
-            // 1. Base Data (Site Filter)
-            let data = STATE.rawData.filter(d => STATE.activeSites.has(d.site));
-            
-            // 2. Week Filter
-            if (STATE.currentWeekIndex !== -1) {
-                const weekDate = STATE.weeks[STATE.currentWeekIndex];
-                data = data.filter(d => d.date === weekDate);
-                document.getElementById('current-week-display').innerText = moment(weekDate).format('MMM D, YYYY');
-            } else {
-                document.getElementById('current-week-display').innerText = "All Time";
-            }
-
-            // KPIs
-            const rev = data.reduce((a,b)=>a+b.rev,0);
-            const exp = data.reduce((a,b)=>a+b.exp,0);
-            const drivers = data.reduce((a,b)=>a+b.drivers,0);
-            const hours = data.reduce((a,b)=>a+b.hours,0);
-            const margin = rev - exp;
-
-            document.getElementById('kpi-rev').innerText = FMT.format(rev);
-            document.getElementById('kpi-exp').innerText = FMT.format(exp);
-            document.getElementById('kpi-margin').innerText = FMT.format(margin);
-            document.getElementById('kpi-ratio').innerText = rev ? ((exp/rev)*100).toFixed(1)+'%' : '0%';
-            document.getElementById('kpi-efficiency').innerText = hours ? FMT.format(rev/hours) : '$0';
-
-            const dates = [...new Set(data.map(d=>d.date))].sort();
-            document.getElementById('record-count').innerText = dates.length + " Weeks";
-            if(dates.length) document.getElementById('date-range').innerText = moment(dates[0]).format('MMM YYYY') + ' - ' + moment(dates[dates.length-1]).format('MMM YYYY');
-
-            renderCharts(data, dates);
-            if(STATE.view === 'analysis') renderTable(data, dates);
-            if(STATE.view === 'costs') renderCostTable(data);
-        }
-
-        // --- CHARTS ---
-        let charts = {};
-        function renderCharts(data, dates) {
-            Object.values(charts).forEach(c => c.destroy());
-            const ctx = (id) => document.getElementById(id);
-
-            // Aggregators
-            const agg = {};
-            dates.forEach(d => agg[d] = {rev:0, exp:0, mar:0, drv:0, hrs:0, pay:0, fuel:0, admin:0});
-            data.forEach(d => {
-                const k = d.date;
-                agg[k].rev += d.rev; agg[k].exp += d.exp; agg[k].mar += d.margin;
-                agg[k].drv += d.drivers; agg[k].hrs += d.hours;
-                if(d.detail) {
-                    agg[k].pay += (d.detail.payroll||0);
-                    agg[k].fuel += (d.detail.fuel||0);
-                    agg[k].admin += (d.detail.admin||0);
-                }
-            });
-            const dLabels = dates.map(d => moment(d).format('MMM D'));
-
-            // 1. MAIN TREND (Zoomable)
-            if(ctx('chartTrend')) {
-                const config = {
-                    type: STATE.currentWeekIndex === -1 ? 'line' : 'bar', // Switch to bar if single week
-                    data: {
-                        labels: dLabels,
-                        datasets: [
-                            { label:'Revenue', data: dates.map(d=>agg[d].rev), borderColor:'#3b82f6', backgroundColor:'rgba(59,130,246,0.1)', fill:true, tension:0.4, pointRadius:0 },
-                            { label:'Expenses', data: dates.map(d=>agg[d].exp), borderColor:'#ef4444', borderWidth:2, pointRadius:0 },
-                            { label:'Margin', data: dates.map(d=>agg[d].mar), borderColor:'#10b981', borderDash:[4,4], borderWidth:2, pointRadius:0 }
-                        ]
-                    },
-                    options: {
-                        responsive: true, maintainAspectRatio: false,
-                        interaction: { mode: 'index', intersect: false },
-                        scales: { x: { grid: { display: false } }, y: { grid: { color: '#262626' } } },
-                        plugins: {
-                            legend: { display: false },
-                            zoom: {
-                                zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: 'x' },
-                                pan: { enabled: true, mode: 'x' }
-                            }
-                        }
-                    }
-                };
-                charts.trend = new Chart(ctx('chartTrend'), config);
-                
-                const chart = charts.trend;
-                chart.options.plugins.zoom.zoom.onZoom = () => document.getElementById('btn-reset-zoom').classList.remove('hidden');
-            }
-
-            // 2. COST STACK
-            if(ctx('chartCostStack')) {
-                charts.cost = new Chart(ctx('chartCostStack'), {
-                    type: 'bar',
-                    data: {
-                        labels: dLabels,
-                        datasets: [
-                            { label:'Payroll', data:dates.map(d=>agg[d].pay), backgroundColor:'#3b82f6' },
-                            { label:'Fuel', data:dates.map(d=>agg[d].fuel), backgroundColor:'#ef4444' },
-                            { label:'Admin', data:dates.map(d=>agg[d].admin), backgroundColor:'#f59e0b' }
-                        ]
-                    },
-                    options: { responsive:true, maintainAspectRatio:false, scales:{x:{stacked:true, grid:{display:false}}, y:{stacked:true, grid:{color:'#262626'}}}, plugins:{legend:{labels:{color:'#aaa'}}} }
-                });
-            }
-
-            // 3. LOC BAR
-            if(ctx('chartLocBar')) {
-                const siteAgg = {};
-                data.forEach(d => {
-                    if(!siteAgg[d.site]) siteAgg[d.site]={r:0, m:0};
-                    siteAgg[d.site].r += d.rev; siteAgg[d.site].m += d.margin;
-                });
-                const sites = Object.keys(siteAgg).sort((a,b)=>siteAgg[b].r - siteAgg[a].r);
-                charts.loc = new Chart(ctx('chartLocBar'), {
-                    type: 'bar',
-                    data: {
-                        labels: sites,
-                        datasets: [
-                            { label:'Revenue', data:sites.map(s=>siteAgg[s].r), backgroundColor:'#333' },
-                            { label:'Margin', data:sites.map(s=>siteAgg[s].m), backgroundColor:'#10b981' }
-                        ]
-                    },
-                    options: { responsive:true, maintainAspectRatio:false, scales:{x:{grid:{display:false}}, y:{grid:{color:'#262626'}}} }
-                });
-            }
-
-            // 4. EFFICIENCY CHARTS
-            if(STATE.view === 'efficiency') {
-                charts.revHour = new Chart(ctx('chartRevHour'), {
-                    type: 'line',
-                    data: { labels: dLabels, datasets: [{ label:'Rev/Hour', data: dates.map(d=>agg[d].hrs ? agg[d].rev/agg[d].hrs : 0), borderColor:'#8b5cf6', tension:0.4 }] },
-                    options: { responsive:true, maintainAspectRatio:false, scales:{x:{grid:{display:false}}, y:{grid:{color:'#262626'}}} }
-                });
-                charts.revDriver = new Chart(ctx('chartRevDriver'), {
-                    type: 'line',
-                    data: { labels: dLabels, datasets: [{ label:'Rev/Driver', data: dates.map(d=>agg[d].drv ? agg[d].rev/agg[d].drv : 0), borderColor:'#ec4899', tension:0.4 }] },
-                    options: { responsive:true, maintainAspectRatio:false, scales:{x:{grid:{display:false}}, y:{grid:{color:'#262626'}}} }
-                });
-                charts.drivers = new Chart(ctx('chartDrivers'), {
-                    type: 'bar',
-                    data: { labels: dLabels, datasets: [{ label:'Drivers', data: dates.map(d=>agg[d].drv), backgroundColor:'#eab308' }] },
-                    options: { responsive:true, maintainAspectRatio:false, scales:{x:{grid:{display:false}}, y:{grid:{color:'#262626'}}} }
-                });
-            }
-
-            // 5. ANALYSIS
-            if(STATE.view === 'analysis') {
-                charts.marginPct = new Chart(ctx('chartMarginPct'), {
-                    type: 'line',
-                    data: { 
-                        labels: dLabels, 
-                        datasets: [{ 
-                            label:'Margin %', 
-                            data: dates.map(d=>agg[d].rev ? (agg[d].mar/agg[d].rev)*100 : 0), 
-                            borderColor:'#10b981', backgroundColor: (ctx) => {
-                                const v = ctx.raw; return v < 0 ? '#ef4444' : '#10b981';
-                            },
-                            pointBackgroundColor: (ctx) => ctx.raw < 0 ? '#ef4444' : '#10b981',
-                            segment: { borderColor: ctx => ctx.p0.parsed.y < 0 ? '#ef4444' : '#10b981' }
-                        }] 
-                    },
-                    options: { responsive:true, maintainAspectRatio:false, scales:{x:{grid:{display:false}}, y:{grid:{color:'#262626'}}} }
-                });
-            }
-
-            // 6. COSTS
-            if(STATE.view === 'costs') {
-                // Prepare Categories
-                const cats = { 'Payroll':0, 'Fuel':0, 'Maint':0, 'Admin':0, 'Rent':0, 'Ins':0, 'Tech':0, 'Bill':0 };
-                data.forEach(d => {
-                    if(d.detail) {
-                        cats.Payroll += (d.detail.payroll||0) + (d.detail.office||0);
-                        cats.Fuel += d.detail.fuel||0;
-                        cats.Maint += d.detail.maint||0;
-                        cats.Rent += d.detail.rent||0;
-                        cats.Ins += d.detail.insurance||0;
-                        cats.Tech += d.detail.tech||0;
-                        cats.Bill += d.detail.billbacks||0;
-                    }
-                });
-                const l = Object.keys(cats), val = Object.values(cats);
-
-                charts.expCats = new Chart(ctx('chartExpCats'), {
-                    type: 'bar',
-                    data: { labels: l, datasets: [{ label:'Cost', data: val, backgroundColor:'#ef4444', borderRadius:4 }] },
-                    options: { responsive:true, maintainAspectRatio:false, scales:{x:{grid:{display:false}}, y:{grid:{color:'#262626'}}} }
-                });
-
-                charts.expTrend = new Chart(ctx('chartExpTrend'), {
-                    type: 'line',
-                    data: { labels: dLabels, datasets: [{ label:'Total Exp', data: dates.map(d=>agg[d].exp), borderColor:'#f59e0b', fill:true, backgroundColor:'rgba(245,158,11,0.1)' }] },
-                    options: { responsive:true, maintainAspectRatio:false, scales:{x:{grid:{display:false}}, y:{grid:{color:'#262626'}}} }
-                });
-            }
-        }
-
-        function renderTable(data, dates) {
-            const tbody = document.getElementById('table-body');
-            const agg = {};
-            dates.forEach(d => agg[d] = {rev:0, exp:0, mar:0, drv:0});
-            data.forEach(d => {
-                agg[d.date].rev += d.rev; agg[d.date].exp += d.exp; agg[d.date].mar += d.margin; agg[d.date].drv += d.drivers;
-            });
-            
-            // Reverse chronological
-            const sorted = dates.slice().reverse();
-            tbody.innerHTML = sorted.map(d => {
-                const row = agg[d];
-                const pct = row.rev ? ((row.mar/row.rev)*100).toFixed(1)+'%' : '0%';
-                return `
-                    <tr class="hover:bg-[#1a1a1a] border-b border-[#2a2a2a]">
-                        <td class="p-4 font-mono text-gray-500">${moment(d).format('MMM D, YYYY')}</td>
-                        <td class="p-4 text-right font-bold text-white">${FMT.format(row.rev)}</td>
-                        <td class="p-4 text-right text-gray-400">${FMT.format(row.exp)}</td>
-                        <td class="p-4 text-right font-bold ${row.mar>=0?'text-green-500':'text-red-500'}">${FMT.format(row.mar)}</td>
-                        <td class="p-4 text-right text-xs ${parseFloat(pct)<0?'text-red-400':'text-green-400'}">${pct}</td>
-                        <td class="p-4 text-right text-xs text-gray-500">${row.drv.toLocaleString()}</td>
-                    </tr>
-                `;
-            }).join('');
-        }
-
-        function renderCostTable(data) {
-            const tbody = document.getElementById('table-expenses');
-            const cats = {};
-            let total = 0;
-            data.forEach(d => {
-                if(d.detail) {
-                    const c = d.detail;
-                    cats['Driver Payroll'] = (cats['Driver Payroll']||0) + (c.payroll||0);
-                    cats['Fuel'] = (cats['Fuel']||0) + (c.fuel||0);
-                    cats['Maintenance'] = (cats['Maintenance']||0) + (c.maint||0);
-                    cats['Insurance'] = (cats['Insurance']||0) + (c.insurance||0);
-                    cats['Office Payroll'] = (cats['Office Payroll']||0) + (c.office||0);
-                    cats['Rent'] = (cats['Rent']||0) + (c.rent||0);
-                    cats['Tech'] = (cats['Tech']||0) + (c.tech||0);
-                    cats['Billbacks'] = (cats['Billbacks']||0) + (c.billbacks||0);
-                }
-            });
-            total = Object.values(cats).reduce((a,b)=>a+b,0);
-            const weeks = [...new Set(data.map(d=>d.date))].length || 1;
-
-            tbody.innerHTML = Object.entries(cats).sort((a,b)=>b[1]-a[1]).map(([k,v]) => `
-                <tr class="hover:bg-[#1a1a1a] border-b border-[#2a2a2a]">
-                    <td class="p-4 font-bold text-white">${k}</td>
-                    <td class="p-4 text-right font-mono text-gray-300">${FMT.format(v)}</td>
-                    <td class="p-4 text-right text-xs text-gray-500">${((v/total)*100).toFixed(1)}%</td>
-                    <td class="p-4 text-right font-mono text-gray-500">${FMT.format(v/weeks)}</td>
+            tbody.innerHTML = filtered.slice(0, 200).map(d => `
+                <tr class="hover:bg-[#222] transition-colors border-b border-[#2a2a2a]">
+                    <td class="p-4 font-bold text-white">${d.name}</td>
+                    <td class="p-4 font-mono text-gray-400">${d.displayDate}</td>
+                    <td class="p-4 text-blue-400 font-mono font-bold">${d.acct}</td>
+                    <td class="p-4 text-gray-500 font-mono">${d.bookId}</td>
+                    <td class="p-4 text-gray-300 text-xs">${d.pax}</td>
+                    <td class="p-4 text-gray-400 text-xs truncate max-w-[150px]" title="${d.pickup}">${d.pickup}</td>
+                    <td class="p-4 text-gray-400 text-xs truncate max-w-[150px]" title="${d.dropoff}">${d.dropoff}</td>
+                    <td class="p-4 text-right text-gray-300 font-mono">${d.miles}</td>
+                    <td class="p-4 text-right text-green-400 font-mono font-bold">${FMT.format(d.fare)}</td>
+                    <td class="p-4 text-gray-500 text-[10px] truncate max-w-xs" title="${d.notes}">${d.notes}</td>
                 </tr>
             `).join('');
         }
 
-        function resetZoom() {
-            if(charts.trend) charts.trend.resetZoom();
-            document.getElementById('btn-reset-zoom').classList.add('hidden');
+        // --- DASHBOARD (Finance) ---
+        function updateDashboard() {
+            let allWeeks = [], allDrivers = [];
+            Object.keys(STATE.data).forEach(key => {
+                const [dComp, dLoc] = key.split('_');
+                const block = STATE.data[key];
+                let match = false;
+                if (STATE.ctxType === 'ALL') match = !block.weeks[0]?.isSummary;
+                else if (STATE.ctxType === 'COMPANY') match = (dComp === STATE.ctxComp) && !block.weeks[0]?.isSummary;
+                else if (STATE.ctxType === 'LOCATION') match = (dComp === STATE.ctxComp && dLoc === STATE.ctxLoc);
+                if (match) { allWeeks = [...allWeeks, ...block.weeks]; allDrivers = [...allDrivers, ...block.drivers]; }
+            });
+
+            if (STATE.dateRange) {
+                const s = moment(STATE.dateRange[0]).startOf('day'), e = moment(STATE.dateRange[1]).endOf('day');
+                document.getElementById('chart-subtitle').innerText = `${s.format('MMM D')} - ${e.format('MMM D')}`;
+                allWeeks = allWeeks.filter(d => moment(d.date).isBetween(s, e, undefined, '[]'));
+            } else { document.getElementById('chart-subtitle').innerText = "All Time"; }
+
+            updateCharts(allWeeks, allDrivers);
+            updateTables(allWeeks, allDrivers);
+            document.getElementById('record-count').innerText = `${allWeeks.length}`;
+        }
+
+        let charts = {};
+        function destroyChart(id) { if(charts[id]) { charts[id].destroy(); delete charts[id]; } }
+
+        function updateCharts(weeks, drivers) {
+            destroyChart('trend'); destroyChart('costRadial'); destroyChart('costStack'); destroyChart('driverMargin');
+            
+            const agg = {}; weeks.forEach(d => { if(!agg[d.date]) agg[d.date]={r:0,e:0,m:0,p:0,f:0}; agg[d.date].r+=d.revenue; agg[d.date].e+=d.totalExp; agg[d.date].m+=d.margin; agg[d.date].p+=d.payroll; agg[d.date].f+=d.fuel; });
+            const dates = Object.keys(agg).sort();
+
+            charts.trend = new Chart(document.getElementById('chartTrend'), { type: 'line', data: { labels: dates.map(d=>moment(d).format('MMM D')), datasets: [{ label:'Rev', data:dates.map(d=>agg[d].r), borderColor:'#3b82f6', backgroundColor:'rgba(59,130,246,0.1)', fill:true, tension:0.3 }, { label:'Exp', data:dates.map(d=>agg[d].e), borderColor:'#ef4444', borderDash:[4,4], tension:0.3 }, { label:'Margin', data:dates.map(d=>agg[d].m), type:'bar', backgroundColor:c=>c.raw<0?'#ef4444':'#10b981', barThickness:8 }] }, options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}, datalabels:{display:false}}, scales:{x:{grid:{display:false}}, y:{grid:{color:'#333'}}} } });
+
+            let tots = {p:0,f:0}; weeks.forEach(d=>{tots.p+=d.payroll; tots.f+=d.fuel;});
+            charts.costRadial = new Chart(document.getElementById('chartCostRadial'), { type: 'doughnut', data: { labels: ['Payroll', 'Fuel'], datasets: [{ data: [tots.p, tots.f], backgroundColor: ['#3b82f6', '#ef4444'], borderWidth: 0 }] }, options: { responsive:true, maintainAspectRatio:false, cutout:'70%', layout:{padding:0}, plugins: { legend: { position:'right', labels:{color:'#999', boxWidth:10, usePointStyle:true} }, datalabels: { color:'#fff', formatter: (v, ctx) => { let sum = ctx.dataset.data.reduce((a,b)=>a+b,0); return sum && (v/sum > 0.05) ? (v*100/sum).toFixed(0)+"%" : ''; }} } } });
+
+            charts.costStack = new Chart(document.getElementById('chartCostStack'), { type: 'bar', data: { labels: dates.map(d=>moment(d).format('MMM D')), datasets: [ { label:'Pay', data:dates.map(d=>agg[d].p), backgroundColor:'#3b82f6' }, { label:'Fuel', data:dates.map(d=>agg[d].f), backgroundColor:'#ef4444' } ] }, options: { responsive:true, maintainAspectRatio:false, scales:{x:{stacked:true, grid:{display:false}}, y:{stacked:true, grid:{color:'#333'}}}, plugins: { legend:{display:false}, datalabels:{display:false} } } });
+
+            const dAgg = {}; drivers.forEach(d => { if(!dAgg[d.name]) dAgg[d.name]={mar:0}; dAgg[d.name].mar+=d.margin; });
+            const top = Object.entries(dAgg).map(([k,v])=>({name:k, ...v})).sort((a,b)=>b.mar - a.mar).slice(0, 10);
+            charts.driverMargin = new Chart(document.getElementById('chartDriverMargin'), { type: 'bar', data: { labels: top.map(d=>d.name.split(' ')[0]), datasets: [{ label:'Margin', data:top.map(d=>d.mar), backgroundColor: top.map(d=>d.mar<0?'#ef4444':'#10b981'), borderRadius:4 }] }, options: { indexAxis:'y', responsive:true, maintainAspectRatio:false, scales:{x:{grid:{color:'#333'}}, y:{grid:{display:false}}}, plugins:{legend:{display:false}, datalabels:{color:'#fff', formatter:(v)=>'$'+Math.round(v)}} } });
+        }
+
+        function updateTables(weeks, drivers) {
+            const sorted = [...weeks].sort((a,b)=>new Date(b.date)-new Date(a.date));
+            document.getElementById('table-body').innerHTML = sorted.slice(0,100).map(d => `<tr class="hover:bg-[#222] transition-colors border-b border-[#2a2a2a]"><td class="p-3 text-white font-mono">${d.displayDate}</td><td class="p-3 text-right text-red-400 font-bold">${FMT.format(d.totalExp)}</td><td class="p-3 text-right text-blue-400 font-bold">${FMT.format(d.revenue)}</td><td class="p-3 text-right font-bold ${d.margin<0?'text-red-500':'text-green-500'}">${FMT.format(d.margin)}</td><td class="p-3 text-right text-xs text-gray-400">${d.marginPct||'-'}</td></tr>`).join('');
+            
+            const dAgg = {}; drivers.forEach(d => { if(!dAgg[d.name]) dAgg[d.name]={rev:0, pay:0, mar:0}; dAgg[d.name].rev+=d.rev; dAgg[d.name].pay+=d.payroll; dAgg[d.name].mar+=d.margin; });
+            const drvSorted = Object.entries(dAgg).map(([k,v])=>({name:k, ...v})).sort((a,b)=>b.mar - a.mar);
+            document.getElementById('driver-table-body').innerHTML = drvSorted.slice(0,100).map(d => `<tr class="hover:bg-[#222] transition-colors border-b border-[#2a2a2a]"><td class="p-3 text-white font-bold text-xs">${d.name}</td><td class="p-3 text-right text-gray-500 text-xs">${FMT.format(d.pay)}</td><td class="p-3 text-right text-blue-400 text-xs">${FMT.format(d.rev)}</td><td class="p-3 text-right font-bold text-xs ${d.mar<0?'text-red-500':'text-green-500'}">${FMT.format(d.mar)}</td><td class="p-3 text-right text-xs text-gray-400">${d.rev?((d.mar/d.rev)*100).toFixed(0)+'%':'-'}</td></tr>`).join('');
         }
     </script>
 </body>
