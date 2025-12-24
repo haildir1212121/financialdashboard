@@ -1,104 +1,823 @@
-export default {
-  async fetch(request, env) {
-    // Basic CORS (so your dashboard can call the Worker)
-    const cors = {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET,OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type",
-    };
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>NEMT Finance Dashboard — Glassmorphism</title>
 
-    if (request.method === "OPTIONS") {
-      return new Response(null, { status: 204, headers: cors });
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    html, body { height: 100%; }
+    body { font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+
+    /* Subtle premium grain overlay */
+    .grain:before{
+      content:"";
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='260' height='260' filter='url(%23n)' opacity='.18'/%3E%3C/svg%3E");
+      mix-blend-mode: overlay;
+      opacity: .35;
     }
 
-    const url = new URL(request.url);
-
-    // You can optionally pass ?link=... but default to env.DROPBOX_SHARED_LINK
-    const sharedLink = url.searchParams.get("link") || env.DROPBOX_SHARED_LINK;
-    if (!sharedLink) {
-      return new Response(
-        JSON.stringify({ error: "Missing Dropbox shared link" }),
-        { status: 400, headers: { ...cors, "Content-Type": "application/json" } }
-      );
+    /* Glass panel */
+    .glass{
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.10);
+      box-shadow:
+        0 10px 35px rgba(0,0,0,0.35),
+        inset 0 1px 0 rgba(255,255,255,0.06);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
     }
 
-    // Fetch file bytes via Dropbox "get_shared_link_file"
-    const dbxRes = await fetch("https://www.dropbox.com/scl/fi/ezqsso7exvh8yiiyc5n8t/DLX-Margin.Labor-Spreadsheet-2.27.25.xlsx?rlkey=6mpsb8553mrriro9x9s3nsxxa&st=kieak49i&dl=0", {
-      method: "POST",
-      headers: {
-        "Authorization": `sl.u.AGN0_s_nCe300_-_TRmiY7NyKI_M4t7gq1A14XRIiLn2EvI6dnkNiLLOMcu9EVwBHfHh47tfzq0z3KLkKXJh5nw3qPPCXx5dvnZA_vqhOil5A-8KVc5X_qo8CM6EB0SZaeBQDW26aHDWt4uqSbYyeaK14GDvNU93ZRTwUKNzwbLq0QSa6J8ft8AEFogUjFLX8sQUih5xjZwtgJ6lYtKBw7GbVXS_oK3caOd3h8gXanZzXMP2K59CK3ujnOcP_8vRF1rMJr8oKnLEvIFnSVth7d6ZVRJLrj-wAU8jJbfC-Az6jaRq3XT2reEq2x9WF7iBiDuX007pTIOxTRxUB6Xo8a71adyiLMXGaZgnq5uDYw721NkJEF0nLjlQg1EmhTdoA1lz-XcIFgXg92a91e7kZHqBmKxNCsYyZLW8711OneKo5Oaj1MF6WfoXXFUeOwMS4ujRMNN4EG4gX25TESRDciYKtTCFE4ggmyXOPGPvTQZjRPurki_ywpOfHznwFTAqpKVllLNzikSKCC7PM1tKuWSYgPEO_rEAQ33jogGSW8BZGJhZ2QvGaaOEfugSUWdz9QamzSUf_PXlJ4AZKXwHisFWuIwCGrXagthgX0EKwwSG06lYONTr0DLn64MNIKZ4E72CydOzuhWQqF6mhvGv-Oo0UAT0LhJPt5LQ7gGtrTjx3gnGo6O081uE21mUonEblxUEn5pGRWqmWyy3GxV_lrkrq4tLjYe3RqAIRcaFI2pW8u5D1WUcp4YZ5xHErQZ9hxBU05DYfeVxaAJ-dkdsIPj33azGAc_yTt0p31Esb5I8p-13Rd0KstIzQQdHiVga7jdfTe_2UExGLiyndUzcwfP5k0UMxioyRNmrLAZJwiaIv9X-LKADjqjLfyxWlHCnZGFShcn0svrR2HssQdysVPmkqjE8SC8nM_5oM2CVdIXhggmEAyYBcI3VBBTk4xOaE7jBWrBnbPMnGWxz2kXSRy4iRxGkRriC7br_otDxRYw9cPg0JvaWvrNVLs6kRd7dUaErYp2X5ONa2FDLA9IdOAlsXOY6YhQv7Z0Z1HTUaweVunGojIganAFWD14d2n5bTDc6Wmxs0kfoxRMa_DZ5j4hraMFEaT6vHF3QCuvoXw3ca5nSPhwJKzVV3kaKdUfLFR2wLnxxpmmXRWauaErmj751Xm5cK55LSSyn3sRPBzH0nTsbfoXLHE1wlL5XWo9aHd6DVIRkk0tJ_7wcOFpwZYZ-ywm8JZCMaqWrhst91-c5cobw8NzTH9WSYaSHFYzBU11WuWe3gN3I2M_z2jF7wssmaB4sFQ_KmCXwu-ln0Nuq06juzWBCkFgErVVBRudXx3V_nRnsXQzypH0ZCMJx3xu-lWpGQCyOQP3GyhDzxSnvCrvaGp23Jvb-s--oqKVzWWJHkr2YbbeELpybr1FThYRzcxuhLha_9fpGrxvZw-xxZy4q09EQVGCRZb3-qcx6uiM`,
-        "Dropbox-API-Arg": JSON.stringify({ url: sharedLink }),
-      },
-    });
-
-    if (!dbxRes.ok) {
-      const errText = await dbxRes.text();
-      return new Response(
-        JSON.stringify({ error: "Dropbox download failed", status: dbxRes.status, detail: errText.slice(0, 2000) }),
-        { status: 502, headers: { ...cors, "Content-Type": "application/json" } }
-      );
+    .glass-soft{
+      background: rgba(255,255,255,0.045);
+      border: 1px solid rgba(255,255,255,0.09);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
     }
 
-    // File bytes (Excel/CSV). We'll detect type by Dropbox metadata header if present.
-    const metaHeader = dbxRes.headers.get("dropbox-api-result");
-    let meta = null;
-    try { meta = metaHeader ? JSON.parse(metaHeader) : null; } catch {}
+    /* Tiny scrollbar for tables */
+    .thin-scroll::-webkit-scrollbar{ width: 8px; height: 8px; }
+    .thin-scroll::-webkit-scrollbar-track{ background: rgba(255,255,255,0.04); border-radius: 999px; }
+    .thin-scroll::-webkit-scrollbar-thumb{ background: rgba(255,255,255,0.14); border-radius: 999px; }
+    .thin-scroll::-webkit-scrollbar-thumb:hover{ background: rgba(255,255,255,0.20); }
 
-    const bytes = await dbxRes.arrayBuffer();
+    /* Smooth modal */
+    .fade-in { animation: fadeIn .16s ease-out; }
+    @keyframes fadeIn { from { opacity:0; transform: translateY(8px);} to {opacity:1; transform: translateY(0);} }
 
-    // If it's a CSV file already, we can parse to JSON quickly.
-    // If it's XLSX, we’ll just return the raw bytes as base64 OR you can switch to XLSX parsing in the worker.
-    // Best practice: parse XLSX in the browser (less pain in Workers).
-    const name = meta?.name || "shared-file";
-    const lower = name.toLowerCase();
+    /* Chart canvas crisp on dark */
+    canvas { image-rendering: -webkit-optimize-contrast; }
+  </style>
 
-    if (lower.endsWith(".csv")) {
-      const text = new TextDecoder("utf-8").decode(bytes);
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            ink: {
+              950: "#05070d",
+              900: "#070a12",
+              800: "#0b1020",
+              700: "#101a33",
+            }
+          }
+        }
+      }
+    }
+  </script>
+</head>
 
-      // Simple CSV -> rows (basic parsing; for real CSV edge cases use PapaParse in the client)
-      const lines = text.split(/\r?\n/).filter(Boolean);
-      const headers = (lines.shift() || "").split(",").map(s => s.trim());
-      const rows = lines.map(line => {
-        const cols = line.split(",");
-        const obj = {};
-        headers.forEach((h, i) => obj[h] = (cols[i] ?? "").trim());
-        return obj;
+<body class="grain bg-ink-950 text-white">
+  <!-- Background glow blobs -->
+  <div class="fixed inset-0 -z-10 overflow-hidden">
+    <div class="absolute -top-40 -left-40 h-[540px] w-[540px] rounded-full bg-indigo-600/20 blur-3xl"></div>
+    <div class="absolute top-1/3 -right-40 h-[520px] w-[520px] rounded-full bg-cyan-500/16 blur-3xl"></div>
+    <div class="absolute -bottom-48 left-1/3 h-[560px] w-[560px] rounded-full bg-fuchsia-500/14 blur-3xl"></div>
+    <div class="absolute inset-0 bg-gradient-to-b from-white/[0.03] via-transparent to-black/40"></div>
+  </div>
+
+  <!-- Top bar -->
+  <header class="mx-auto max-w-[1280px] px-4 pt-6">
+    <div class="glass rounded-2xl px-5 py-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+      <div class="flex items-center gap-3">
+        <div class="h-10 w-10 rounded-xl bg-white/10 border border-white/10 grid place-items-center">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" class="opacity-90">
+            <path d="M4 16V10a2 2 0 0 1 2-2h9a3 3 0 0 1 3 3v5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            <path d="M6.5 16.5h11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            <path d="M7.5 19a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3ZM16.5 19a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z" stroke="currentColor" stroke-width="1.8"/>
+          </svg>
+        </div>
+        <div>
+          <div class="text-lg font-semibold tracking-tight">NEMT Provider Dashboard</div>
+          <div class="text-xs text-white/60">Overhead • Revenue • Margins • Regional Loss Radar</div>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2">
+        <div class="glass-soft rounded-xl px-3 py-2 flex items-center gap-2">
+          <span class="text-xs text-white/60">Range</span>
+          <select id="rangeSelect" class="bg-transparent text-sm outline-none">
+            <option value="30">Last 30 days</option>
+            <option value="90">Last 90 days</option>
+            <option value="365">Last 12 months</option>
+          </select>
+        </div>
+
+        <div class="glass-soft rounded-xl px-3 py-2 flex items-center gap-2">
+          <span class="text-xs text-white/60">View</span>
+          <button id="viewMargin" class="text-sm px-2 py-1 rounded-lg bg-white/10 border border-white/10 hover:bg-white/15 transition">Margin</button>
+          <button id="viewRevenue" class="text-sm px-2 py-1 rounded-lg hover:bg-white/10 transition">Revenue</button>
+          <button id="viewCost" class="text-sm px-2 py-1 rounded-lg hover:bg-white/10 transition">Cost</button>
+        </div>
+
+        <button id="exportBtn" class="glass-soft rounded-xl px-3 py-2 text-sm hover:bg-white/10 transition border border-white/10">
+          Export Snapshot
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-[1280px] px-4 pb-10 pt-5">
+    <!-- KPI cards -->
+    <section class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+      <div class="glass rounded-2xl p-4">
+        <div class="flex items-center justify-between">
+          <div class="text-xs text-white/60">Net Margin</div>
+          <span id="kpiMarginDelta" class="text-xs px-2 py-1 rounded-full bg-emerald-400/10 border border-emerald-400/20 text-emerald-200">▲ +1.2%</span>
+        </div>
+        <div class="mt-2 flex items-end justify-between">
+          <div>
+            <div id="kpiMargin" class="text-3xl font-semibold tracking-tight">8.4%</div>
+            <div class="text-xs text-white/55 mt-1">vs previous period</div>
+          </div>
+          <div class="h-10 w-10 rounded-xl bg-white/8 border border-white/10 grid place-items-center">
+            <span class="text-white/70">%</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="glass rounded-2xl p-4">
+        <div class="flex items-center justify-between">
+          <div class="text-xs text-white/60">Revenue (MTD)</div>
+          <span id="kpiRevDelta" class="text-xs px-2 py-1 rounded-full bg-white/8 border border-white/10 text-white/80">▲ +4.1%</span>
+        </div>
+        <div class="mt-2 flex items-end justify-between">
+          <div>
+            <div id="kpiRevenue" class="text-3xl font-semibold tracking-tight">$412.9k</div>
+            <div class="text-xs text-white/55 mt-1">gross receipts</div>
+          </div>
+          <div class="h-10 w-10 rounded-xl bg-white/8 border border-white/10 grid place-items-center">
+            <span class="text-white/70">$</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="glass rounded-2xl p-4">
+        <div class="flex items-center justify-between">
+          <div class="text-xs text-white/60">Overhead (MTD)</div>
+          <span id="kpiOverDelta" class="text-xs px-2 py-1 rounded-full bg-rose-400/10 border border-rose-400/20 text-rose-200">▲ +2.6%</span>
+        </div>
+        <div class="mt-2 flex items-end justify-between">
+          <div>
+            <div id="kpiOverhead" class="text-3xl font-semibold tracking-tight">$86.2k</div>
+            <div class="text-xs text-white/55 mt-1">labor + admin + fixed</div>
+          </div>
+          <div class="h-10 w-10 rounded-xl bg-white/8 border border-white/10 grid place-items-center">
+            <span class="text-white/70">◎</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="glass rounded-2xl p-4">
+        <div class="flex items-center justify-between">
+          <div class="text-xs text-white/60">Cost / Trip</div>
+          <span id="kpiCptDelta" class="text-xs px-2 py-1 rounded-full bg-emerald-400/10 border border-emerald-400/20 text-emerald-200">▼ −3.8%</span>
+        </div>
+        <div class="mt-2 flex items-end justify-between">
+          <div>
+            <div id="kpiCostPerTrip" class="text-3xl font-semibold tracking-tight">$42.11</div>
+            <div class="text-xs text-white/55 mt-1">includes fuel + labor</div>
+          </div>
+          <div class="h-10 w-10 rounded-xl bg-white/8 border border-white/10 grid place-items-center">
+            <span class="text-white/70">↯</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main grid -->
+    <section class="mt-3 grid grid-cols-1 gap-3 xl:grid-cols-3">
+      <!-- Trend panel -->
+      <div class="glass rounded-2xl p-4 xl:col-span-2">
+        <div class="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+          <div>
+            <div class="text-sm font-semibold tracking-tight">Margin Trend</div>
+            <div class="text-xs text-white/55">A calm view of health. Red segments mean negative margin days.</div>
+          </div>
+          <div class="flex items-center gap-2">
+            <div class="glass-soft rounded-xl px-3 py-2">
+              <div class="text-xs text-white/60">Mode</div>
+              <div id="trendModeLabel" class="text-sm font-medium">Margin %</div>
+            </div>
+            <button id="toggleBaseline" class="glass-soft rounded-xl px-3 py-2 text-sm hover:bg-white/10 transition border border-white/10">
+              Toggle Baseline
+            </button>
+          </div>
+        </div>
+
+        <div class="mt-3 glass-soft rounded-2xl p-3">
+          <canvas id="trendChart" height="110"></canvas>
+        </div>
+
+        <!-- Micro insights -->
+        <div class="mt-3 grid grid-cols-1 gap-2 md:grid-cols-3">
+          <div class="glass-soft rounded-2xl p-3">
+            <div class="text-xs text-white/60">Best Region</div>
+            <div id="bestRegion" class="text-sm font-semibold mt-1">Lane County</div>
+            <div id="bestRegionMeta" class="text-xs text-white/55 mt-1">14.2% margin • $91k revenue</div>
+          </div>
+          <div class="glass-soft rounded-2xl p-3">
+            <div class="text-xs text-white/60">Worst Region</div>
+            <div id="worstRegion" class="text-sm font-semibold mt-1 text-rose-200">Douglas County</div>
+            <div id="worstRegionMeta" class="text-xs text-white/55 mt-1">−4.2% margin • deadhead ↑</div>
+          </div>
+          <div class="glass-soft rounded-2xl p-3">
+            <div class="text-xs text-white/60">Primary Driver</div>
+            <div id="primaryDriver" class="text-sm font-semibold mt-1">Fuel / Deadhead</div>
+            <div id="primaryDriverMeta" class="text-xs text-white/55 mt-1">Fuel per mile ↑ 18% in red zones</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Region heat tiles -->
+      <div class="glass rounded-2xl p-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <div class="text-sm font-semibold tracking-tight">Region Heat</div>
+            <div class="text-xs text-white/55">Quick scan — click a tile to drill down.</div>
+          </div>
+          <div class="text-xs text-white/60">Now</div>
+        </div>
+
+        <div id="regionTiles" class="mt-3 grid grid-cols-2 gap-2"></div>
+
+        <div class="mt-3 glass-soft rounded-2xl p-3">
+          <div class="text-xs text-white/60">Legend</div>
+          <div class="mt-2 flex items-center gap-2 text-xs text-white/70">
+            <span class="inline-block h-2.5 w-2.5 rounded-full bg-emerald-400/70"></span> Profit
+            <span class="inline-block h-2.5 w-2.5 rounded-full bg-amber-300/70 ml-3"></span> Risk
+            <span class="inline-block h-2.5 w-2.5 rounded-full bg-rose-400/70 ml-3"></span> Loss
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Loss radar -->
+    <section class="mt-3 glass rounded-2xl p-4">
+      <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+        <div>
+          <div class="text-sm font-semibold tracking-tight">Loss Radar</div>
+          <div class="text-xs text-white/55">Sorted by worst margin. Click any row to open root-cause drilldown.</div>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <div class="glass-soft rounded-xl px-3 py-2 flex items-center gap-2 border border-white/10">
+            <span class="text-xs text-white/60">Search</span>
+            <input id="searchInput" class="bg-transparent outline-none text-sm placeholder:text-white/35 w-48" placeholder="Region / contract / note" />
+          </div>
+          <button id="sortBtn" class="glass-soft rounded-xl px-3 py-2 text-sm hover:bg-white/10 transition border border-white/10">
+            Sort: Margin
+          </button>
+          <button id="resetBtn" class="glass-soft rounded-xl px-3 py-2 text-sm hover:bg-white/10 transition border border-white/10">
+            Reset
+          </button>
+        </div>
+      </div>
+
+      <div class="mt-3 overflow-auto thin-scroll">
+        <table class="min-w-full text-sm">
+          <thead class="text-white/60">
+            <tr class="border-b border-white/10">
+              <th class="py-2 text-left font-medium">Region</th>
+              <th class="py-2 text-left font-medium">Margin</th>
+              <th class="py-2 text-left font-medium">Revenue</th>
+              <th class="py-2 text-left font-medium">Cost</th>
+              <th class="py-2 text-left font-medium">Trips</th>
+              <th class="py-2 text-left font-medium">Loss Driver</th>
+              <th class="py-2 text-right font-medium">Trend</th>
+            </tr>
+          </thead>
+          <tbody id="lossTableBody" class="divide-y divide-white/10"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <!-- Modal -->
+  <div id="modalBackdrop" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm">
+    <div class="mx-auto max-w-[920px] px-4 pt-24">
+      <div class="glass rounded-3xl p-5 fade-in border border-white/12">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <div id="modalTitle" class="text-lg font-semibold tracking-tight">Region Drilldown</div>
+            <div id="modalSubtitle" class="text-xs text-white/60 mt-1">What’s happening, why, and what to do.</div>
+          </div>
+          <button id="closeModal" class="glass-soft rounded-xl px-3 py-2 text-sm hover:bg-white/10 transition border border-white/10">Close</button>
+        </div>
+
+        <div class="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
+          <div class="glass-soft rounded-2xl p-4">
+            <div class="text-xs text-white/60">Margin</div>
+            <div id="modalMargin" class="text-2xl font-semibold mt-1">—</div>
+            <div id="modalMarginHint" class="text-xs text-white/55 mt-1">—</div>
+          </div>
+          <div class="glass-soft rounded-2xl p-4">
+            <div class="text-xs text-white/60">Revenue / Cost</div>
+            <div id="modalRevCost" class="text-2xl font-semibold mt-1">—</div>
+            <div id="modalTrips" class="text-xs text-white/55 mt-1">—</div>
+          </div>
+          <div class="glass-soft rounded-2xl p-4">
+            <div class="text-xs text-white/60">Primary Cause</div>
+            <div id="modalCause" class="text-sm font-semibold mt-1">—</div>
+            <div id="modalCauseMeta" class="text-xs text-white/55 mt-1">—</div>
+          </div>
+        </div>
+
+        <div class="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
+          <div class="glass-soft rounded-2xl p-4">
+            <div class="text-sm font-semibold">Cost Drivers</div>
+            <div id="modalDrivers" class="mt-3 space-y-2"></div>
+          </div>
+          <div class="glass-soft rounded-2xl p-4">
+            <div class="text-sm font-semibold">Suggested Actions</div>
+            <div id="modalActions" class="mt-3 space-y-2"></div>
+          </div>
+        </div>
+
+        <div class="mt-3 glass-soft rounded-2xl p-4">
+          <div class="flex items-center justify-between">
+            <div class="text-sm font-semibold">Mini Trend</div>
+            <div class="text-xs text-white/60">last 14 points</div>
+          </div>
+          <div class="mt-3">
+            <canvas id="miniChart" height="85"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ---------- Mock Data (replace later with real feed) ----------
+    const regions = [
+      { name:"Douglas County", revenue: 38000, cost: 39600, trips: 840, drivers:["Deadhead miles ↑ 22%","Fuel / mile ↑ 18%","Sedan assignments on long routes"], actions:["Restrict sedan > 18 miles","Raise minimum fare by $6","Rebalance vehicle staging"], trend:[-2,-1,-1,-3,-2,-4,-5,-4,-4,-3,-4,-4,-4,-5] },
+      { name:"Coos County", revenue: 21000, cost: 22350, trips: 390, drivers:["Low reimbursement contracts","Idle time between runs"], actions:["Renegotiate top contract","Bundle return trips","Reduce empty repositioning"], trend:[1,0,-1,-1,-2,-2,-2,-3,-2,-2,-3,-3,-2,-3] },
+      { name:"Linn County", revenue: 21000, cost: 20500, trips: 470, drivers:["Underutilized wheelchair vans","Dispatch overtime spikes"], actions:["Increase route density","Optimize shift coverage","Move one unit to Lane"], trend:[3,3,2,2,2,1,1,2,2,2,2,2,2,1] },
+      { name:"Benton County", revenue: 26000, cost: 24800, trips: 520, drivers:["Fuel variance week-to-week","Maintenance backlog"], actions:["Preventive maintenance cycle","Fuel audit (cards)","Standardize routes"], trend:[6,5,6,6,5,4,5,6,7,6,6,7,7,6] },
+      { name:"Lane County", revenue: 91000, cost: 78000, trips: 1740, drivers:["Strong contract rates","High utilization"], actions:["Protect top clients","Pilot new optimized routes","Add 1 peak-hour unit"], trend:[11,12,12,13,14,14,13,14,15,14,14,14,15,14] },
+      { name:"Marion County", revenue: 64000, cost: 59800, trips: 1280, drivers:["Labor cost ↑","Cancellation rate ↑"], actions:["Tighten confirmation process","Adjust staffing windows","Client no-show policy"], trend:[8,7,7,6,6,6,5,6,6,5,5,6,5,5] },
+      { name:"Jackson County", revenue: 52000, cost: 50800, trips: 1120, drivers:["Break-even zone","Deadhead to rural pickups"], actions:["Stage vehicles closer","Improve backhaul scheduling","Add pickup clustering"], trend:[4,4,3,3,2,2,2,1,2,2,1,1,1,1] },
+      { name:"Polk County", revenue: 18000, cost: 17600, trips: 360, drivers:["Small volume volatility","Overhead allocation heavy"], actions:["Bundle routes w/ Marion","Reduce fixed hours","Grow high-margin clients"], trend:[5,4,4,4,3,3,4,4,4,3,3,3,3,3] },
+    ];
+
+    // Derived metrics
+    function marginPct(r){ return ((r.revenue - r.cost) / r.revenue) * 100; }
+    function fmtMoney(n){
+      const abs = Math.abs(n);
+      if(abs >= 1e6) return (n/1e6).toFixed(1)+"m";
+      if(abs >= 1e3) return (n/1e3).toFixed(1)+"k";
+      return n.toFixed(0);
+    }
+    function fmtUSD(n){
+      return n.toLocaleString(undefined,{style:"currency",currency:"USD",maximumFractionDigits:0});
+    }
+    function badgeForMargin(m){
+      if(m < 0) return { cls:"bg-rose-400/10 border-rose-400/20 text-rose-200", label:"Loss" };
+      if(m < 5) return { cls:"bg-amber-300/10 border-amber-300/20 text-amber-100", label:"Risk" };
+      return { cls:"bg-emerald-400/10 border-emerald-400/20 text-emerald-200", label:"Profit" };
+    }
+
+    // ---------- Trend mock series ----------
+    function genSeries(days, mode){
+      // mode: margin | revenue | cost
+      const out = [];
+      let base = mode === "margin" ? 8.2 : (mode === "revenue" ? 13000 : 11700);
+      for(let i=0;i<days;i++){
+        const noise = (Math.random()-0.5) * (mode === "margin" ? 1.8 : 1400);
+        const drift = mode === "margin" ? Math.sin(i/10)*0.9 : Math.sin(i/12)*900;
+        base = base + noise*0.15 + drift*0.02;
+        out.push(mode === "margin" ? base : Math.max(5000, base));
+      }
+      return out;
+    }
+
+    // ---------- Chart ----------
+    let trendChart, miniChart;
+    let showBaseline = true;
+    let trendMode = "margin"; // margin | revenue | cost
+
+    function buildTrend(days){
+      const labels = Array.from({length: days}, (_,i)=> `${days-i}d`);
+      labels.reverse();
+
+      const series = genSeries(days, trendMode);
+      const baseline = trendMode === "margin" ? Array(days).fill(8.0) : (trendMode === "revenue" ? Array(days).fill(12500) : Array(days).fill(11800));
+
+      // point styles: highlight negative margin (only for margin mode)
+      const borderColor = "rgba(255,255,255,0.78)";
+      const fillColor = "rgba(255,255,255,0.06)";
+
+      const datasets = [
+        {
+          label: trendMode === "margin" ? "Margin %" : (trendMode === "revenue" ? "Revenue" : "Cost"),
+          data: series,
+          borderColor,
+          borderWidth: 1.8,
+          pointRadius: 0,
+          tension: 0.35,
+          fill: true,
+          backgroundColor: fillColor,
+        }
+      ];
+
+      if(showBaseline){
+        datasets.push({
+          label: "Baseline",
+          data: baseline,
+          borderColor: "rgba(255,255,255,0.22)",
+          borderWidth: 1,
+          pointRadius: 0,
+          tension: 0.25,
+        });
+      }
+
+      const ctx = document.getElementById("trendChart").getContext("2d");
+      if(trendChart) trendChart.destroy();
+
+      trendChart = new Chart(ctx, {
+        type: "line",
+        data: { labels, datasets },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              enabled: true,
+              backgroundColor: "rgba(10,12,18,0.85)",
+              borderColor: "rgba(255,255,255,0.14)",
+              borderWidth: 1,
+              titleColor: "rgba(255,255,255,0.9)",
+              bodyColor: "rgba(255,255,255,0.85)",
+              displayColors: false,
+              callbacks: {
+                label: (ctx) => {
+                  const v = ctx.parsed.y;
+                  if(trendMode === "margin") return ` ${v.toFixed(1)}%`;
+                  return ` ${fmtUSD(v)}`;
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: { display: false }
+            },
+            y: {
+              grid: { color: "rgba(255,255,255,0.06)" },
+              ticks: {
+                color: "rgba(255,255,255,0.55)",
+                callback: (v) => trendMode === "margin" ? `${v}%` : (v/1000).toFixed(0)+"k"
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function buildMiniChart(series){
+      const labels = Array.from({length: series.length}, (_,i)=> i+1);
+      const ctx = document.getElementById("miniChart").getContext("2d");
+      if(miniChart) miniChart.destroy();
+      miniChart = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels,
+          datasets: [{
+            label: "Margin",
+            data: series,
+            borderColor: "rgba(255,255,255,0.78)",
+            borderWidth: 1.6,
+            pointRadius: 0,
+            tension: 0.35,
+            fill: true,
+            backgroundColor: "rgba(255,255,255,0.05)"
+          }]
+        },
+        options: {
+          plugins: { legend: { display:false } },
+          scales: {
+            x: { grid:{display:false}, ticks:{display:false} },
+            y: { grid:{ color:"rgba(255,255,255,0.06)" }, ticks:{ color:"rgba(255,255,255,0.55)", callback:(v)=>`${v}%` } }
+          }
+        }
+      });
+    }
+
+    // ---------- Region Tiles ----------
+    function renderRegionTiles(){
+      const wrap = document.getElementById("regionTiles");
+      wrap.innerHTML = "";
+
+      regions
+        .slice()
+        .sort((a,b)=> marginPct(a)-marginPct(b)) // worst first
+        .forEach(r=>{
+          const m = marginPct(r);
+          const badge = badgeForMargin(m);
+          const glow = m < 0 ? "shadow-[0_0_30px_rgba(244,63,94,0.12)]" : (m < 5 ? "shadow-[0_0_30px_rgba(253,224,71,0.10)]" : "shadow-[0_0_30px_rgba(52,211,153,0.10)]");
+          const dot = m < 0 ? "bg-rose-400/70" : (m < 5 ? "bg-amber-300/70" : "bg-emerald-400/70");
+
+          const btn = document.createElement("button");
+          btn.className = `glass-soft rounded-2xl p-3 text-left hover:bg-white/[0.07] transition border border-white/10 ${glow}`;
+          btn.innerHTML = `
+            <div class="flex items-start justify-between gap-2">
+              <div class="text-xs text-white/60">Region</div>
+              <span class="inline-flex items-center gap-2 text-[11px] px-2 py-1 rounded-full border ${badge.cls}">
+                <span class="inline-block h-2 w-2 rounded-full ${dot}"></span>${badge.label}
+              </span>
+            </div>
+            <div class="mt-1 text-sm font-semibold">${r.name}</div>
+            <div class="mt-2 flex items-end justify-between">
+              <div>
+                <div class="text-2xl font-semibold tracking-tight ${m<0 ? "text-rose-200" : m<5 ? "text-amber-100" : "text-emerald-200"}">${m.toFixed(1)}%</div>
+                <div class="text-xs text-white/55">${fmtMoney(r.revenue)} revenue • ${r.trips} trips</div>
+              </div>
+            </div>
+          `;
+          btn.addEventListener("click", ()=>openRegionModal(r));
+          wrap.appendChild(btn);
+        });
+    }
+
+    // ---------- Loss Table ----------
+    let currentRows = regions.slice();
+    let sortMode = "margin"; // margin | revenue | cost | trips
+
+    function sparklineSVG(values){
+      const w = 86, h = 24, pad = 2;
+      const min = Math.min(...values), max = Math.max(...values);
+      const span = (max-min) || 1;
+
+      const pts = values.map((v,i)=>{
+        const x = pad + (i/(values.length-1))*(w-2*pad);
+        const y = pad + (1 - (v-min)/span)*(h-2*pad);
+        return `${x.toFixed(1)},${y.toFixed(1)}`;
+      }).join(" ");
+
+      // red if negative anywhere
+      const red = values.some(v=>v<0);
+      const stroke = red ? "rgba(244,63,94,0.70)" : "rgba(255,255,255,0.55)";
+      const fill = red ? "rgba(244,63,94,0.08)" : "rgba(255,255,255,0.05)";
+
+      return `
+        <svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
+          <polyline points="${pts}" fill="none" stroke="${stroke}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          <polygon points="${pts} ${w-pad},${h-pad} ${pad},${h-pad}" fill="${fill}"></polygon>
+        </svg>
+      `;
+    }
+
+    function renderTable(){
+      const tbody = document.getElementById("lossTableBody");
+      tbody.innerHTML = "";
+
+      currentRows.forEach(r=>{
+        const m = marginPct(r);
+        const badge = badgeForMargin(m);
+        const lossDriver = r.drivers[0] || "—";
+        const row = document.createElement("tr");
+        row.className = "hover:bg-white/[0.05] cursor-pointer transition";
+        row.innerHTML = `
+          <td class="py-3 pr-3">
+            <div class="font-semibold">${r.name}</div>
+            <div class="text-xs text-white/55">${badge.label} zone</div>
+          </td>
+          <td class="py-3 pr-3">
+            <span class="inline-flex items-center gap-2 text-xs px-2 py-1 rounded-full border ${badge.cls}">
+              <span class="inline-block h-2 w-2 rounded-full ${m < 0 ? "bg-rose-400/70" : (m < 5 ? "bg-amber-300/70" : "bg-emerald-400/70")}"></span>
+              <span class="${m<0 ? "text-rose-200" : m<5 ? "text-amber-100" : "text-emerald-200"} font-semibold">${m.toFixed(1)}%</span>
+            </span>
+          </td>
+          <td class="py-3 pr-3 text-white/85">${fmtUSD(r.revenue)}</td>
+          <td class="py-3 pr-3 text-white/85">${fmtUSD(r.cost)}</td>
+          <td class="py-3 pr-3 text-white/80">${r.trips}</td>
+          <td class="py-3 pr-3 text-white/70">
+            <div class="truncate max-w-[360px]">${lossDriver}</div>
+            <div class="text-xs text-white/45 truncate max-w-[360px]">${r.actions[0] || ""}</div>
+          </td>
+          <td class="py-3 text-right">${sparklineSVG(r.trend)}</td>
+        `;
+        row.addEventListener("click", ()=>openRegionModal(r));
+        tbody.appendChild(row);
+      });
+    }
+
+    function applySort(){
+      const rows = currentRows.slice();
+      rows.sort((a,b)=>{
+        if(sortMode === "margin") return marginPct(a) - marginPct(b);
+        if(sortMode === "revenue") return b.revenue - a.revenue;
+        if(sortMode === "cost") return b.cost - a.cost;
+        if(sortMode === "trips") return b.trips - a.trips;
+        return 0;
+      });
+      currentRows = rows;
+      renderTable();
+    }
+
+    function applySearch(q){
+      const s = (q || "").toLowerCase().trim();
+      if(!s){
+        currentRows = regions.slice();
+        applySort();
+        return;
+      }
+      currentRows = regions.filter(r=>{
+        const hay = [
+          r.name,
+          ...r.drivers,
+          ...r.actions
+        ].join(" ").toLowerCase();
+        return hay.includes(s);
+      });
+      applySort();
+    }
+
+    // ---------- Modal ----------
+    const modalBackdrop = document.getElementById("modalBackdrop");
+    const closeModalBtn = document.getElementById("closeModal");
+
+    function openRegionModal(r){
+      const m = marginPct(r);
+      const badge = badgeForMargin(m);
+
+      document.getElementById("modalTitle").textContent = r.name;
+      document.getElementById("modalSubtitle").textContent = `${badge.label} zone • Click “Close” to return`;
+
+      document.getElementById("modalMargin").textContent = `${m.toFixed(1)}%`;
+      document.getElementById("modalMargin").className = `text-2xl font-semibold mt-1 ${m<0 ? "text-rose-200" : m<5 ? "text-amber-100" : "text-emerald-200"}`;
+      document.getElementById("modalMarginHint").textContent = m < 0 ? "This region is losing money right now." : (m < 5 ? "This region is at risk / near break-even." : "This region is healthy.");
+
+      document.getElementById("modalRevCost").textContent = `${fmtUSD(r.revenue)} / ${fmtUSD(r.cost)}`;
+      document.getElementById("modalTrips").textContent = `${r.trips} trips • ${(r.cost / Math.max(1,r.trips)).toFixed(2)} cost/trip`;
+
+      document.getElementById("modalCause").textContent = r.drivers[0] || "—";
+      document.getElementById("modalCauseMeta").textContent = r.drivers[1] || "";
+
+      const driversWrap = document.getElementById("modalDrivers");
+      driversWrap.innerHTML = "";
+      r.drivers.slice(0,6).forEach((d, idx)=>{
+        const item = document.createElement("div");
+        item.className = "glass rounded-xl px-3 py-2 border border-white/10";
+        item.innerHTML = `
+          <div class="text-xs text-white/60">Driver #${idx+1}</div>
+          <div class="text-sm font-medium mt-0.5">${d}</div>
+        `;
+        driversWrap.appendChild(item);
       });
 
-      return new Response(
-        JSON.stringify({
-          fileName: name,
-          fetchedAt: new Date().toISOString(),
-          kind: "csv",
-          headers,
-          rows,
-        }),
-        { status: 200, headers: { ...cors, "Content-Type": "application/json" } }
-      );
+      const actionsWrap = document.getElementById("modalActions");
+      actionsWrap.innerHTML = "";
+      r.actions.slice(0,6).forEach((a, idx)=>{
+        const item = document.createElement("div");
+        item.className = "glass rounded-xl px-3 py-2 border border-white/10 hover:bg-white/[0.06] transition";
+        item.innerHTML = `
+          <div class="text-xs text-white/60">Action #${idx+1}</div>
+          <div class="text-sm font-medium mt-0.5">${a}</div>
+        `;
+        actionsWrap.appendChild(item);
+      });
+
+      buildMiniChart(r.trend);
+
+      modalBackdrop.classList.remove("hidden");
     }
 
-    // XLSX or other: return bytes base64 so the browser can parse with SheetJS
-    const b64 = arrayBufferToBase64(bytes);
+    function closeModal(){
+      modalBackdrop.classList.add("hidden");
+    }
 
-    return new Response(
-      JSON.stringify({
-        fileName: name,
-        fetchedAt: new Date().toISOString(),
-        kind: "binary",
-        encoding: "base64",
-        base64: b64,
-      }),
-      { status: 200, headers: { ...cors, "Content-Type": "application/json" } }
-    );
-  }
-};
+    closeModalBtn.addEventListener("click", closeModal);
+    modalBackdrop.addEventListener("click", (e)=>{
+      if(e.target === modalBackdrop) closeModal();
+    });
+    document.addEventListener("keydown", (e)=>{
+      if(e.key === "Escape" && !modalBackdrop.classList.contains("hidden")) closeModal();
+    });
 
-function arrayBufferToBase64(buf) {
-  let binary = "";
-  const bytes = new Uint8Array(buf);
-  const chunkSize = 0x8000;
-  for (let i = 0; i < bytes.length; i += chunkSize) {
-    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
-  }
-  return btoa(binary);
-}
+    // ---------- Controls ----------
+    const trendModeLabel = document.getElementById("trendModeLabel");
+    const viewMargin = document.getElementById("viewMargin");
+    const viewRevenue = document.getElementById("viewRevenue");
+    const viewCost = document.getElementById("viewCost");
+
+    function setView(mode){
+      trendMode = mode;
+
+      // button state
+      [viewMargin, viewRevenue, viewCost].forEach(b=>{
+        b.classList.remove("bg-white/10","border","border-white/10");
+      });
+      const active = mode === "margin" ? viewMargin : (mode === "revenue" ? viewRevenue : viewCost);
+      active.classList.add("bg-white/10","border","border-white/10");
+
+      trendModeLabel.textContent = mode === "margin" ? "Margin %" : (mode === "revenue" ? "Revenue" : "Cost");
+
+      const days = parseInt(document.getElementById("rangeSelect").value,10);
+      buildTrend(days);
+    }
+
+    document.getElementById("toggleBaseline").addEventListener("click", ()=>{
+      showBaseline = !showBaseline;
+      const days = parseInt(document.getElementById("rangeSelect").value,10);
+      buildTrend(days);
+    });
+
+    document.getElementById("rangeSelect").addEventListener("change", (e)=>{
+      buildTrend(parseInt(e.target.value,10));
+    });
+
+    viewMargin.addEventListener("click", ()=>setView("margin"));
+    viewRevenue.addEventListener("click", ()=>setView("revenue"));
+    viewCost.addEventListener("click", ()=>setView("cost"));
+
+    document.getElementById("searchInput").addEventListener("input", (e)=>applySearch(e.target.value));
+
+    document.getElementById("sortBtn").addEventListener("click", ()=>{
+      const modes = ["margin","revenue","cost","trips"];
+      const idx = modes.indexOf(sortMode);
+      sortMode = modes[(idx+1)%modes.length];
+      document.getElementById("sortBtn").textContent = "Sort: " + (sortMode === "margin" ? "Margin" : sortMode[0].toUpperCase()+sortMode.slice(1));
+      applySort();
+    });
+
+    document.getElementById("resetBtn").addEventListener("click", ()=>{
+      document.getElementById("searchInput").value = "";
+      sortMode = "margin";
+      document.getElementById("sortBtn").textContent = "Sort: Margin";
+      currentRows = regions.slice();
+      applySort();
+    });
+
+    document.getElementById("exportBtn").addEventListener("click", ()=>{
+      // Simple export: download JSON snapshot (no server)
+      const payload = {
+        generatedAt: new Date().toISOString(),
+        kpis: {
+          netMarginPct: 8.4,
+          revenueMTD: 412880,
+          overheadMTD: 86200,
+          costPerTrip: 42.11
+        },
+        regions
+      };
+      const blob = new Blob([JSON.stringify(payload,null,2)], {type:"application/json"});
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "nemt_dashboard_snapshot.json";
+      a.click();
+      URL.revokeObjectURL(a.href);
+    });
+
+    // ---------- KPI + Insights (computed from regions for realism) ----------
+    function setKpisFromData(){
+      const totalRevenue = regions.reduce((s,r)=>s+r.revenue,0);
+      const totalCost = regions.reduce((s,r)=>s+r.cost,0);
+      const netMargin = ((totalRevenue-totalCost)/totalRevenue)*100;
+      const totalTrips = regions.reduce((s,r)=>s+r.trips,0);
+      const cpt = totalCost/Math.max(1,totalTrips);
+
+      document.getElementById("kpiRevenue").textContent = `$${fmtMoney(totalRevenue)}`;
+      document.getElementById("kpiOverhead").textContent = `$${fmtMoney(Math.round(totalCost*0.22))}`; // mock overhead share
+      document.getElementById("kpiCostPerTrip").textContent = `$${cpt.toFixed(2)}`;
+      document.getElementById("kpiMargin").textContent = `${netMargin.toFixed(1)}%`;
+
+      // best / worst
+      const sorted = regions.slice().sort((a,b)=> marginPct(b)-marginPct(a));
+      const best = sorted[0];
+      const worst = sorted[sorted.length-1];
+
+      document.getElementById("bestRegion").textContent = best.name;
+      document.getElementById("bestRegionMeta").textContent = `${marginPct(best).toFixed(1)}% margin • ${fmtMoney(best.revenue)} revenue`;
+
+      document.getElementById("worstRegion").textContent = worst.name;
+      document.getElementById("worstRegionMeta").textContent = `${marginPct(worst).toFixed(1)}% margin • ${worst.drivers[0] || "—"}`;
+
+      // primary driver (simple heuristic)
+      const lossCount = regions.filter(r=> marginPct(r) < 0).length;
+      document.getElementById("primaryDriver").textContent = lossCount ? "Deadhead / Fuel" : "Labor Efficiency";
+      document.getElementById("primaryDriverMeta").textContent = lossCount ? "Loss regions correlate with empty miles + fuel variance." : "Largest cost center remains labor scheduling.";
+    }
+
+    // ---------- Init ----------
+    setKpisFromData();
+    renderRegionTiles();
+    currentRows = regions.slice();
+    applySort();
+    setView("margin");
+    buildTrend(30);
+  </script>
+</body>
+</html>
