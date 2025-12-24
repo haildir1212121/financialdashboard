@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>DLX/DMT NEMT Dashboard — Regions (Live)</title>
+  <title>NEMT Dashboard — Dark UI</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
@@ -11,263 +11,243 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
   <style>
-    html, body { height: 100%; }
+    html, body { height:100%; }
     body { font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
 
-    .grain:before{
-      content:"";
-      position:fixed;
-      inset:0;
-      pointer-events:none;
-      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='260' height='260' filter='url(%23n)' opacity='.18'/%3E%3C/svg%3E");
-      mix-blend-mode: overlay;
-      opacity: .35;
+    /* Subtle “Behance-y” depth without blur/glass */
+    .panel {
+      background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
+      border: 1px solid rgba(255,255,255,0.10);
+      box-shadow: 0 18px 55px rgba(0,0,0,0.45);
     }
-
-    .{
+    .card {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.10);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    }
+    .chip {
       background: rgba(255,255,255,0.06);
       border: 1px solid rgba(255,255,255,0.10);
-      box-shadow: 0 10px 35px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06);
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
     }
-
-    .-soft{
-      background: rgba(255,255,255,0.045);
-      border: 1px solid rgba(255,255,255,0.09);
-      box-shadow: 0 12px 40px rgba(0,0,0,0.35);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-    }
-
-    .thin-scroll::-webkit-scrollbar{ width: 8px; height: 8px; }
+    .thin-scroll::-webkit-scrollbar{ width:10px; height:10px; }
     .thin-scroll::-webkit-scrollbar-track{ background: rgba(255,255,255,0.04); border-radius: 999px; }
     .thin-scroll::-webkit-scrollbar-thumb{ background: rgba(255,255,255,0.14); border-radius: 999px; }
     .thin-scroll::-webkit-scrollbar-thumb:hover{ background: rgba(255,255,255,0.20); }
+
+    .bggrid{
+      background:
+        radial-gradient(1200px 600px at 20% -10%, rgba(99,102,241,0.20), transparent 60%),
+        radial-gradient(900px 500px at 90% 10%, rgba(34,211,238,0.12), transparent 55%),
+        radial-gradient(900px 550px at 50% 110%, rgba(236,72,153,0.10), transparent 60%),
+        linear-gradient(180deg, #070812 0%, #05060d 60%, #04050a 100%);
+    }
   </style>
 
   <script>
     tailwind.config = {
       theme: {
         extend: {
-          colors: { ink: { 950:"#05070d", 900:"#070a12", 800:"#0b1020", 700:"#101a33" } }
+          colors: {
+            ink: { 950:"#04050a", 900:"#070812", 850:"#0b0d16", 800:"#101426" },
+            soft: { 100:"rgba(255,255,255,0.08)", 200:"rgba(255,255,255,0.12)" }
+          }
         }
       }
     }
   </script>
 </head>
 
-<body class="grain bg-ink-950 text-white">
-  <!-- Background glows -->
-  <div class="fixed inset-0 -z-10 overflow-hidden">
-    <div class="absolute -top-40 -left-40 h-[540px] w-[540px] rounded-full bg-indigo-600/20 blur-3xl"></div>
-    <div class="absolute top-1/3 -right-40 h-[520px] w-[520px] rounded-full bg-cyan-500/16 blur-3xl"></div>
-    <div class="absolute -bottom-48 left-1/3 h-[560px] w-[560px] rounded-full bg-fuchsia-500/14 blur-3xl"></div>
-    <div class="absolute inset-0 bg-gradient-to-b from-white/[0.03] via-transparent to-black/40"></div>
-  </div>
-
-  <!-- Top bar -->
-  <header class="mx-auto max-w-[1500px] px-4 pt-6">
-    <div class=" rounded-2xl px-5 py-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-      <div class="flex items-center gap-3">
-        <div class="h-10 w-10 rounded-xl bg-white/10 border border-white/10 grid place-items-center">
-          <span class="text-white/80 font-semibold">DLX</span>
-        </div>
-        <div>
-          <div id="dashTitle" class="text-lg font-semibold tracking-tight">DLX/DMT Weekly Dashboard</div>
-          <div id="dashSubtitle" class="text-xs text-white/60">Regions • live workbook</div>
-        </div>
-      </div>
-
-      <div class="flex flex-wrap items-center gap-2">
-        <div class="-soft rounded-xl px-3 py-2 border border-white/10">
-          <div id="lastSyncLabel" class="text-xs text-white/60">Last sync: —</div>
-          <div id="weekLabel" class="text-[11px] text-white/45 mt-0.5">Week: —</div>
-          <div id="statusLabel" class="text-[11px] text-white/45 mt-0.5">Status: —</div>
-        </div>
-
-        <button id="refreshBtn" class="-soft rounded-xl px-3 py-2 text-sm hover:bg-white/10 transition border border-white/10">
-          Refresh Now
-        </button>
-
-        <button id="exportBtn" class="-soft rounded-xl px-3 py-2 text-sm hover:bg-white/10 transition border border-white/10">
-          Export Snapshot
-        </button>
-      </div>
-    </div>
-  </header>
-
-  <main class="mx-auto max-w-[1500px] px-4 pb-10 pt-5">
-    <!-- Regions + KPIs -->
-    <section class="grid grid-cols-1 gap-3 xl:grid-cols-12">
-      <aside class=" rounded-2xl p-3 md:col-span-3">
-        <div class="flex items-center justify-between">
-          <div>
-            <div class="text-sm font-semibold tracking-tight">Regions</div>
-            <div class="text-xs text-white/55">Click to switch view.</div>
-          </div>
-          <div id="activeRegionPill" class="text-[11px] px-2 py-1 rounded-full bg-white/8 border border-white/10 text-white/80">ALL</div>
-        </div>
-
-        <div class="mt-3 -soft rounded-xl p-2 border border-white/10">
-          <input id="regionFilter" class="w-full bg-transparent outline-none px-2 py-2 text-sm placeholder:text-white/35"
-                 placeholder="Filter regions…" />
-        </div>
-
-        <div id="regionList" class="mt-3 grid grid-cols-1 gap-2"></div>
-
-        <div class="mt-3 -soft rounded-2xl p-3 border border-white/10">
-          <div class="text-xs text-white/60">Rules</div>
-          <div class="text-xs text-white/70 mt-1">
-            Newest → oldest. Current view always uses the most recent week available.
-          </div>
-        </div>
-      </aside>
-
-      <div class="xl:col-span-9">
-        <section class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
-          <div class=" rounded-2xl p-4">
-            <div class="flex items-center justify-between">
-              <div class="text-xs text-white/60">Net Margin</div>
-              <span class="text-xs px-2 py-1 rounded-full bg-white/8 border border-white/10 text-white/80">Live</span>
-            </div>
-            <div class="mt-2">
-              <div id="kpiMargin" class="text-3xl font-semibold tracking-tight">—</div>
-              <div id="kpiMarginSub" class="text-xs text-white/55 mt-1">—</div>
-            </div>
-          </div>
-
-          <div class=" rounded-2xl p-4">
-            <div class="flex items-center justify-between">
-              <div class="text-xs text-white/60">Revenue (Week)</div>
-              <span class="text-xs px-2 py-1 rounded-full bg-white/8 border border-white/10 text-white/80">Live</span>
-            </div>
-            <div class="mt-2">
-              <div id="kpiRevenue" class="text-3xl font-semibold tracking-tight">—</div>
-              <div class="text-xs text-white/55 mt-1">gross</div>
-            </div>
-          </div>
-
-          <div class=" rounded-2xl p-4">
-            <div class="flex items-center justify-between">
-              <div class="text-xs text-white/60">Total Expense (Week)</div>
-              <span class="text-xs px-2 py-1 rounded-full bg-white/8 border border-white/10 text-white/80">Live</span>
-            </div>
-            <div class="mt-2">
-              <div id="kpiExpense" class="text-3xl font-semibold tracking-tight">—</div>
-              <div id="kpiExpenseSub" class="text-xs text-white/55 mt-1">TL Exp</div>
-            </div>
-          </div>
-
-          <div class=" rounded-2xl p-4">
-            <div class="flex items-center justify-between">
-              <div class="text-xs text-white/60">Cost / Driver</div>
-              <span class="text-xs px-2 py-1 rounded-full bg-white/8 border border-white/10 text-white/80">Proxy</span>
-            </div>
-            <div class="mt-2">
-              <div id="kpiCostPerDriver" class="text-3xl font-semibold tracking-tight">—</div>
-              <div id="kpiDriversSub" class="text-xs text-white/55 mt-1">Driver Count: —</div>
-            </div>
-          </div>
-        </section>
-
-        <section class="mt-3 grid grid-cols-1 gap-3 xl:grid-cols-3">
-          <div class=" rounded-2xl p-4 xl:col-span-2">
-            <div class="flex items-end justify-between gap-2">
-              <div>
-                <div class="text-sm font-semibold tracking-tight">Margin Trend</div>
-                <div class="text-xs text-white/55">Plot shows oldest → newest; data selection remains newest-first.</div>
+<body class="bggrid text-white">
+  <div class="mx-auto max-w-[1500px] px-4 py-6">
+    <div class="panel rounded-3xl overflow-hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-12 min-h-[86vh]">
+        <!-- Sidebar -->
+        <aside class="lg:col-span-3 border-b lg:border-b-0 lg:border-r border-white/10 bg-black/20">
+          <div class="p-5">
+            <div class="flex items-center gap-3">
+              <div class="h-11 w-11 rounded-2xl bg-white/10 border border-white/10 grid place-items-center">
+                <span class="font-extrabold tracking-wide">DLX</span>
               </div>
-              <button id="toggleBaseline" class="-soft rounded-xl px-3 py-2 text-sm hover:bg-white/10 transition border border-white/10">
-                Toggle Baseline
+              <div>
+                <div class="text-base font-semibold tracking-tight">Dashboard</div>
+                <div class="text-xs text-white/60">NEMT weekly performance</div>
+              </div>
+            </div>
+
+            <div class="mt-5 space-y-2 text-sm">
+              <button class="w-full text-left px-3 py-2 rounded-xl bg-white/8 border border-white/10">
+                <div class="flex items-center justify-between">
+                  <span class="font-semibold">Overview</span>
+                  <span class="text-[11px] text-white/70">Live</span>
+                </div>
+              </button>
+
+              <button class="w-full text-left px-3 py-2 rounded-xl hover:bg-white/5 border border-transparent hover:border-white/10 transition">
+                Analytics
+              </button>
+              <button class="w-full text-left px-3 py-2 rounded-xl hover:bg-white/5 border border-transparent hover:border-white/10 transition">
+                Regions
+              </button>
+              <button class="w-full text-left px-3 py-2 rounded-xl hover:bg-white/5 border border-transparent hover:border-white/10 transition">
+                Loss Areas
               </button>
             </div>
 
-            <div class="mt-3 -soft rounded-2xl p-3 border border-white/10">
-              <canvas id="trendChart" height="110"></canvas>
+            <div class="mt-6">
+              <div class="text-xs text-white/60 mb-2">Regions</div>
+
+              <div class="card rounded-2xl p-2">
+                <input id="regionFilter" class="w-full bg-transparent outline-none px-2 py-2 text-sm placeholder:text-white/35"
+                       placeholder="Filter regions…" />
+              </div>
+
+              <div id="regionList" class="mt-3 grid grid-cols-1 gap-2"></div>
             </div>
 
-            <div class="mt-3 grid grid-cols-1 gap-2 md:grid-cols-3">
-              <div class="-soft rounded-2xl p-3 border border-white/10">
-                <div class="text-xs text-white/60">Best Week</div>
-                <div id="bestWeek" class="text-sm font-semibold mt-1">—</div>
-                <div id="bestWeekMeta" class="text-xs text-white/55 mt-1">—</div>
+            <div class="mt-6 card rounded-2xl p-4">
+              <div class="text-xs text-white/60">Status</div>
+              <div id="statusLabel" class="text-xs text-white/80 mt-2">Status: —</div>
+              <div id="lastSyncLabel" class="text-xs text-white/55 mt-1">Last sync: —</div>
+              <div id="weekLabel" class="text-xs text-white/55 mt-1">Week: —</div>
+
+              <div class="mt-3 flex gap-2">
+                <button id="refreshBtn" class="flex-1 rounded-xl px-3 py-2 text-sm bg-white/8 border border-white/10 hover:bg-white/12 transition">
+                  Refresh
+                </button>
+                <button id="exportBtn" class="flex-1 rounded-xl px-3 py-2 text-sm bg-white/8 border border-white/10 hover:bg-white/12 transition">
+                  Export
+                </button>
               </div>
-              <div class="-soft rounded-2xl p-3 border border-white/10">
-                <div class="text-xs text-white/60">Worst Week</div>
-                <div id="worstWeek" class="text-sm font-semibold mt-1 text-rose-200">—</div>
-                <div id="worstWeekMeta" class="text-xs text-white/55 mt-1">—</div>
+            </div>
+          </div>
+        </aside>
+
+        <!-- Main -->
+        <section class="lg:col-span-9">
+          <!-- Header row -->
+          <div class="p-5 border-b border-white/10">
+            <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div>
+                <div id="dashTitle" class="text-xl font-semibold tracking-tight">DLX/DMT Weekly Dashboard</div>
+                <div id="dashSubtitle" class="text-sm text-white/55 mt-1">Overhead • Revenue • Margin • Regional breakdown</div>
               </div>
-              <div class="-soft rounded-2xl p-3 border border-white/10">
-                <div class="text-xs text-white/60">Primary Pressure</div>
-                <div id="primaryPressure" class="text-sm font-semibold mt-1">—</div>
-                <div id="primaryPressureMeta" class="text-xs text-white/55 mt-1">—</div>
+
+              <div class="flex items-center gap-2">
+                <div class="card rounded-2xl px-3 py-2 flex items-center gap-2 w-[320px] max-w-full">
+                  <span class="text-white/50 text-sm">🔎</span>
+                  <input id="searchInput" class="bg-transparent outline-none w-full text-sm placeholder:text-white/35"
+                         placeholder="Search (week like 11/16/2025)" />
+                </div>
+                <div id="activeRegionPill" class="chip rounded-2xl px-3 py-2 text-sm font-semibold">ALL</div>
               </div>
             </div>
           </div>
 
-          <div class=" rounded-2xl p-4">
-            <div class="flex items-center justify-between">
-              <div>
-                <div class="text-sm font-semibold tracking-tight">Expense Burden</div>
-                <div class="text-xs text-white/55">Latest week cost categories (% of revenue).</div>
+          <!-- Content -->
+          <div class="p-5 space-y-4">
+            <!-- KPI row -->
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+              <div class="card rounded-3xl p-4">
+                <div class="flex items-center justify-between">
+                  <div class="text-xs text-white/60">Revenue</div>
+                  <div class="chip rounded-xl px-2 py-1 text-[11px]">Week</div>
+                </div>
+                <div id="kpiRevenue" class="mt-2 text-3xl font-extrabold tracking-tight">—</div>
+                <div class="mt-1 text-xs text-white/55">Gross</div>
               </div>
-              <div class="text-xs text-white/60">Latest</div>
+
+              <div class="card rounded-3xl p-4">
+                <div class="flex items-center justify-between">
+                  <div class="text-xs text-white/60">Total Expense</div>
+                  <div class="chip rounded-xl px-2 py-1 text-[11px]">TL Exp</div>
+                </div>
+                <div id="kpiExpense" class="mt-2 text-3xl font-extrabold tracking-tight">—</div>
+                <div id="kpiExpenseSub" class="mt-1 text-xs text-white/55">—</div>
+              </div>
+
+              <div class="card rounded-3xl p-4">
+                <div class="flex items-center justify-between">
+                  <div class="text-xs text-white/60">Margin</div>
+                  <div class="chip rounded-xl px-2 py-1 text-[11px]">Net</div>
+                </div>
+                <div id="kpiMargin" class="mt-2 text-3xl font-extrabold tracking-tight">—</div>
+                <div id="kpiMarginSub" class="mt-1 text-xs text-white/55">—</div>
+              </div>
+
+              <div class="card rounded-3xl p-4">
+                <div class="flex items-center justify-between">
+                  <div class="text-xs text-white/60">Drivers</div>
+                  <div class="chip rounded-xl px-2 py-1 text-[11px]">Count</div>
+                </div>
+                <div id="kpiDrivers" class="mt-2 text-3xl font-extrabold tracking-tight">—</div>
+                <div id="kpiDriversSub" class="mt-1 text-xs text-white/55">—</div>
+              </div>
             </div>
 
-            <div id="expenseTiles" class="mt-3 grid grid-cols-2 gap-2"></div>
+            <!-- Charts row -->
+            <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
+              <div class="card rounded-3xl p-4 xl:col-span-2">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <div class="text-sm font-semibold">Margin Trend</div>
+                    <div class="text-xs text-white/55 mt-1">Most recent weeks (chart shows oldest → newest)</div>
+                  </div>
+                  <button id="toggleBaseline" class="chip rounded-2xl px-3 py-2 text-sm hover:bg-white/10 transition">
+                    Toggle baseline
+                  </button>
+                </div>
+                <div class="mt-3 bg-black/25 border border-white/10 rounded-2xl p-3">
+                  <canvas id="trendChart" height="110"></canvas>
+                </div>
+              </div>
 
-            <div class="mt-3 -soft rounded-2xl p-3 border border-white/10">
-              <div class="text-xs text-white/60">Legend</div>
-              <div class="mt-2 flex items-center gap-2 text-xs text-white/70">
-                <span class="inline-block h-2.5 w-2.5 rounded-full bg-emerald-400/70"></span> Good
-                <span class="inline-block h-2.5 w-2.5 rounded-full bg-amber-300/70 ml-3"></span> Elevated
-                <span class="inline-block h-2.5 w-2.5 rounded-full bg-rose-400/70 ml-3"></span> Critical
+              <div class="card rounded-3xl p-4">
+                <div class="text-sm font-semibold">Expense Mix</div>
+                <div class="text-xs text-white/55 mt-1">Latest week categories</div>
+                <div class="mt-3 bg-black/25 border border-white/10 rounded-2xl p-3">
+                  <canvas id="mixChart" height="220"></canvas>
+                </div>
+                <div id="mixLegend" class="mt-3 grid grid-cols-2 gap-2 text-xs text-white/70"></div>
               </div>
             </div>
+
+            <!-- Table row -->
+            <div class="card rounded-3xl p-4">
+              <div class="flex items-center justify-between">
+                <div>
+                  <div class="text-sm font-semibold">Loss Radar</div>
+                  <div class="text-xs text-white/55 mt-1">Worst weeks first (valid weekly rows only)</div>
+                </div>
+                <button id="resetBtn" class="chip rounded-2xl px-3 py-2 text-sm hover:bg-white/10 transition">
+                  Reset
+                </button>
+              </div>
+
+              <div class="mt-3 overflow-auto thin-scroll">
+                <table class="min-w-full text-sm">
+                  <thead class="text-white/60">
+                    <tr class="border-b border-white/10">
+                      <th class="py-2 text-left font-medium">Week</th>
+                      <th class="py-2 text-left font-medium">% Margin</th>
+                      <th class="py-2 text-left font-medium">Revenue</th>
+                      <th class="py-2 text-left font-medium">TL Exp</th>
+                      <th class="py-2 text-left font-medium">Margin</th>
+                      <th class="py-2 text-left font-medium">Signal</th>
+                    </tr>
+                  </thead>
+                  <tbody id="lossTableBody" class="divide-y divide-white/10"></tbody>
+                </table>
+              </div>
+            </div>
+
           </div>
         </section>
       </div>
-    </section>
-
-    <!-- Loss Radar -->
-    <section class="mt-3  rounded-2xl p-4">
-      <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-        <div>
-          <div class="text-sm font-semibold tracking-tight">Loss Radar (Weeks)</div>
-          <div class="text-xs text-white/55">Worst weeks first (still using valid weekly rows).</div>
-        </div>
-        <div class="flex flex-wrap items-center gap-2">
-          <div class="-soft rounded-xl px-3 py-2 flex items-center gap-2 border border-white/10">
-            <span class="text-xs text-white/60">Search</span>
-            <input id="searchInput" class="bg-transparent outline-none text-sm placeholder:text-white/35 w-48" placeholder="mm/dd/yyyy" />
-          </div>
-          <button id="resetBtn" class="-soft rounded-xl px-3 py-2 text-sm hover:bg-white/10 transition border border-white/10">
-            Reset
-          </button>
-        </div>
-      </div>
-
-      <div class="mt-3 overflow-auto thin-scroll">
-        <table class="min-w-full text-sm">
-          <thead class="text-white/60">
-            <tr class="border-b border-white/10">
-              <th class="py-2 text-left font-medium">Week</th>
-              <th class="py-2 text-left font-medium">% Margin</th>
-              <th class="py-2 text-left font-medium">Revenue</th>
-              <th class="py-2 text-left font-medium">TL Exp</th>
-              <th class="py-2 text-left font-medium">Margin</th>
-              <th class="py-2 text-left font-medium">Signal</th>
-            </tr>
-          </thead>
-          <tbody id="lossTableBody" class="divide-y divide-white/10"></tbody>
-        </table>
-      </div>
-    </section>
-  </main>
+    </div>
+  </div>
 
   <script>
     // ============================
@@ -287,7 +267,7 @@
       { id: "DMT", name: "DMT", sheet: "DMT.Wkly" }
     ];
 
-    // Weekly summary table columns (P..AB) for region sheets
+    // Weekly summary table columns (P..AB)
     const COLMAP = {
       weekStart: "P",
       weekEnd: "Q",
@@ -304,7 +284,6 @@
       pctMargin: "AB",
     };
 
-    // Title/subtitle (optional) from consolidated sheet
     const CONSOLIDATED_SHEET = "ConsolidatedWkly";
     const TITLE_CELL = "P1";
     const SUBTITLE_CELL = "P2";
@@ -316,7 +295,9 @@
     let activeRegionId = "ALL";
     let weekly = [];
     let latestWeek = null;
+
     let trendChart = null;
+    let mixChart = null;
     let showBaseline = true;
     let _timer = null;
 
@@ -324,13 +305,6 @@
     // HELPERS
     // ============================
     function fmtUSD(n){ return Number(n||0).toLocaleString(undefined,{style:"currency",currency:"USD",maximumFractionDigits:0}); }
-    function fmtShort(n){
-      const x = Number(n||0);
-      const a = Math.abs(x);
-      if (a >= 1e6) return (x/1e6).toFixed(1)+"m";
-      if (a >= 1e3) return (x/1e3).toFixed(1)+"k";
-      return x.toFixed(0);
-    }
     function safeNum(v){
       if (typeof v === "number") return isFinite(v) ? v : 0;
       if (v == null) return 0;
@@ -341,6 +315,7 @@
     function asDate(v){
       if (v instanceof Date && !isNaN(v)) return v;
       if (typeof v === "number" && isFinite(v)) {
+        // Excel serial -> Date
         const utcDays = Math.floor(v - 25569);
         return new Date(utcDays * 86400 * 1000);
       }
@@ -384,7 +359,6 @@
     }
 
     async function fetchWorkbook(){
-      // If this fails with CORS, your Worker is missing Access-Control-Allow-Origin.
       const res = await fetch(WORKER_URL, { cache: "no-store" });
       const data = await res.json();
       if (!res.ok || data?.error) throw new Error(data?.detail || data?.error || `Fetch failed (${res.status})`);
@@ -401,7 +375,7 @@
     }
 
     // ============================
-    // PARSE REGION SHEET WEEKLY TABLE (P..AB)
+    // PARSE REGION WEEKLY TABLE (P..AB)
     // ============================
     function parseRegionSheet(ws){
       const aoa = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
@@ -414,14 +388,15 @@
 
       const hasWord = (v, word) => String(v||"").toLowerCase().includes(word);
 
-      // Find header row (top 120 rows is plenty)
+      // Find header row
       let headerRow = -1;
-      for (let r=0; r<Math.min(120, aoa.length); r++){
+      for (let r=0; r<Math.min(140, aoa.length); r++){
         const row = aoa[r] || [];
-        const p = row[P], q = row[Q];
         const z = row[idx.revenue];
         const aa = row[idx.margin];
         const ab = row[idx.pctMargin];
+        const p = row[P];
+        const q = row[Q];
 
         const looksLikeHeader =
           (hasWord(p,"week") && hasWord(q,"week")) ||
@@ -440,7 +415,6 @@
         const wsVal = row[P];
         const weVal = row[Q];
 
-        // Stop at end of weekly table
         if (String(wsVal).trim()==="" && String(weVal).trim()==="") break;
 
         const revenue = safeNum(row[idx.revenue]);
@@ -475,13 +449,11 @@
           billbacks: safeNum(row[idx.billbacks]),
         });
       }
-
       return sortWeeksDesc(out);
     }
 
     function sumRegionsByWeek(seriesById){
       const map = new Map();
-
       for (const [id, series] of Object.entries(seriesById)){
         if (id === "ALL") continue;
         for (const w of series){
@@ -489,19 +461,18 @@
           const cur = map.get(key) || {
             weekStart: w.weekStart,
             weekEnd: w.weekEnd,
-            revenue: 0, totalExp: 0, margin: 0,
-            pctMargin: 0,
-            maintenance: 0, payroll: 0, fuel: 0, insurance: 0, billbacks: 0,
-            driverCount: 0, hoursWorked: 0
+            revenue: 0, totalExp: 0, margin: 0, pctMargin: 0,
+            payroll:0, fuel:0, insurance:0, maintenance:0, billbacks:0,
+            driverCount:0, hoursWorked:0
           };
           cur.revenue += w.revenue || 0;
           cur.totalExp += w.totalExp || 0;
           cur.margin += w.margin || 0;
 
-          cur.maintenance += w.maintenance || 0;
           cur.payroll += w.payroll || 0;
           cur.fuel += w.fuel || 0;
           cur.insurance += w.insurance || 0;
+          cur.maintenance += w.maintenance || 0;
           cur.billbacks += w.billbacks || 0;
 
           cur.driverCount += w.driverCount || 0;
@@ -510,7 +481,6 @@
           map.set(key, cur);
         }
       }
-
       const all = Array.from(map.values());
       for (const w of all){
         w.pctMargin = ((w.revenue - w.totalExp) / Math.max(1, w.revenue)) * 100;
@@ -522,33 +492,30 @@
     // ============================
     // UI RENDER
     // ============================
+    function pmBadge(pm){
+      if (!isFinite(pm)) return { label:"—", cls:"text-white/70" };
+      if (pm < 0) return { label:"LOSS", cls:"text-rose-200" };
+      if (pm < 5) return { label:"RISK", cls:"text-amber-100" };
+      return { label:"OK", cls:"text-emerald-200" };
+    }
+
     function renderRegionSidebar(){
       const list = document.getElementById("regionList");
       const filter = String(document.getElementById("regionFilter").value || "").trim().toLowerCase();
-
       list.innerHTML = "";
 
       REGION_SHEETS
         .filter(r => !filter || r.name.toLowerCase().includes(filter) || r.id.toLowerCase().includes(filter))
         .forEach(r=>{
           const series = regionSeries[r.id] || [];
-          const w = series[0]; // newest week always
-          const pm = w ? w.pctMargin : 0;
-
-          const cls = !w
-            ? "text-white/60"
-            : pm < 0
-              ? "text-rose-200"
-              : pm < 5
-                ? "text-amber-100"
-                : "text-emerald-200";
-
-          const isActive = r.id === activeRegionId;
+          const w = series[0];
+          const pm = w ? w.pctMargin : NaN;
+          const b = pmBadge(pm);
 
           const btn = document.createElement("button");
           btn.className =
-            "-soft rounded-xl px-3 py-2 text-left border border-white/10 hover:bg-white/[0.07] transition " +
-            (isActive ? "bg-white/[0.09]" : "");
+            "card rounded-2xl px-3 py-3 text-left hover:bg-white/7 transition " +
+            (r.id === activeRegionId ? "ring-1 ring-white/25" : "");
 
           btn.innerHTML = `
             <div class="flex items-center justify-between gap-3">
@@ -557,8 +524,8 @@
                 <div class="text-xs text-white/55 truncate">${r.sheet ? r.sheet : "computed sum"}</div>
               </div>
               <div class="text-right shrink-0">
-                <div class="text-sm font-semibold ${cls}">${w ? pm.toFixed(2) + "%" : "—"}</div>
-                <div class="text-[11px] text-white/55">${w ? "$" + fmtShort(w.revenue) : "—"}</div>
+                <div class="text-sm font-bold">${w ? w.pctMargin.toFixed(2)+"%" : "—"}</div>
+                <div class="text-[11px] ${b.cls}">${b.label}</div>
               </div>
             </div>
           `;
@@ -578,85 +545,30 @@
         });
     }
 
-    function renderAll(){
-      if (!latestWeek) {
-        setStatus("No data for selection");
-        return;
-      }
-
+    function renderKpis(){
       const w = latestWeek;
-      const rev = w.revenue;
-      const exp = w.totalExp;
-      const mar = w.margin;
-      const pm = isFinite(w.pctMargin) ? w.pctMargin : ((rev - exp) / Math.max(1, rev) * 100);
+      const rev = w.revenue || 0;
+      const exp = w.totalExp || 0;
+      const pm = isFinite(w.pctMargin) ? w.pctMargin : ((rev-exp)/Math.max(1,rev))*100;
 
-      document.getElementById("kpiRevenue").textContent = `$${fmtShort(rev)}`;
-      document.getElementById("kpiExpense").textContent = `$${fmtShort(exp)}`;
+      document.getElementById("kpiRevenue").textContent = fmtUSD(rev);
+      document.getElementById("kpiExpense").textContent = fmtUSD(exp);
+      document.getElementById("kpiExpenseSub").textContent = `TL Exp • ${niceDate(w.weekStart)} → ${niceDate(w.weekEnd)}`;
       document.getElementById("kpiMargin").textContent = `${pm.toFixed(2)}%`;
-      document.getElementById("kpiMarginSub").textContent = `${fmtUSD(mar)} margin`;
+      document.getElementById("kpiMarginSub").textContent = `${fmtUSD(w.margin || 0)} margin`;
 
-      const cpd = exp / Math.max(1, w.driverCount || 0);
-      document.getElementById("kpiCostPerDriver").textContent = isFinite(cpd) ? `$${cpd.toFixed(0)}` : "—";
-      document.getElementById("kpiDriversSub").textContent = `Driver Count: ${w.driverCount || 0} • Hours: ${Math.round(w.hoursWorked || 0)}`;
+      document.getElementById("kpiDrivers").textContent = `${w.driverCount || 0}`;
+      document.getElementById("kpiDriversSub").textContent = `Hours: ${Math.round(w.hoursWorked || 0)} • Cost/Driver: ${fmtUSD((exp/Math.max(1,w.driverCount||0))||0)}`;
 
       document.getElementById("weekLabel").textContent = `Week: ${niceDate(w.weekStart)} → ${niceDate(w.weekEnd)}`;
-
-      renderExpenseTiles(w);
-      renderTrendChart();
-      renderInsights();
-      renderLossTable();
-      setStatus(`OK (${activeRegionId})`);
-    }
-
-    function renderExpenseTiles(w){
-      const rev = Math.max(1, w.revenue);
-
-      const tiles = [
-        { label: "Payroll", value: w.payroll || 0 },
-        { label: "Fuel", value: w.fuel || 0 },
-        { label: "Insurance", value: w.insurance || 0 },
-        { label: "Maintenance", value: w.maintenance || 0 },
-        { label: "Billbacks", value: w.billbacks || 0 },
-      ];
-
-      const known = tiles.reduce((a,t)=>a+t.value,0);
-      const overheadProxy = Math.max(0, (w.totalExp || 0) - known);
-      tiles.push({ label: "Other", value: overheadProxy });
-
-      const wrap = document.getElementById("expenseTiles");
-      wrap.innerHTML = "";
-
-      tiles.forEach(t=>{
-        const burden = (t.value / rev) * 100;
-
-        const state = burden >= 25 ? "critical" : (burden >= 12 ? "elevated" : "good");
-        const dot = state === "critical" ? "bg-rose-400/70" : state === "elevated" ? "bg-amber-300/70" : "bg-emerald-400/70";
-        const titleColor = state === "critical" ? "text-rose-200" : state === "elevated" ? "text-amber-100" : "text-emerald-200";
-
-        const el = document.createElement("div");
-        el.className = "-soft rounded-2xl p-3 border border-white/10";
-        el.innerHTML = `
-          <div class="flex items-start justify-between gap-2">
-            <div class="text-xs text-white/60">${t.label}</div>
-            <span class="inline-flex items-center gap-2 text-[11px] px-2 py-1 rounded-full border border-white/10 bg-white/5">
-              <span class="inline-block h-2 w-2 rounded-full ${dot}"></span>${state}
-            </span>
-          </div>
-          <div class="mt-2 text-2xl font-semibold tracking-tight ${titleColor}">${burden.toFixed(1)}%</div>
-          <div class="text-xs text-white/55">${fmtUSD(t.value)} of revenue</div>
-        `;
-        wrap.appendChild(el);
-      });
     }
 
     function renderTrendChart(){
-      // weekly is newest->oldest; chart should be oldest->newest
       const seriesDesc = weekly.filter(w => isFinite(w.pctMargin) && Math.abs(w.revenue) > 0.0001);
-      const take = seriesDesc.slice(0, 20).reverse(); // oldest -> newest of last 20
-      const labels = take.map(w => `${niceDate(w.weekStart)}→${niceDate(w.weekEnd)}`);
+      const take = seriesDesc.slice(0, 16).reverse(); // oldest->newest for chart
+      const labels = take.map(w => niceDate(w.weekEnd));
       const data = take.map(w => w.pctMargin);
-
-      const baseline = data.length ? (data.reduce((a,b)=>a+b,0) / data.length) : 0;
+      const baseline = data.length ? data.reduce((a,b)=>a+b,0)/data.length : 0;
 
       const ctx = document.getElementById("trendChart").getContext("2d");
       if (trendChart) trendChart.destroy();
@@ -664,19 +576,19 @@
       const datasets = [{
         label: "% Margin",
         data,
-        borderColor: "rgba(255,255,255,0.78)",
-        borderWidth: 1.8,
+        borderColor: "rgba(255,255,255,0.85)",
+        borderWidth: 2,
         pointRadius: 0,
         tension: 0.35,
         fill: true,
-        backgroundColor: "rgba(255,255,255,0.06)"
+        backgroundColor: "rgba(99,102,241,0.12)"
       }];
 
       if (showBaseline){
         datasets.push({
           label: "Baseline",
           data: Array(data.length).fill(baseline),
-          borderColor: "rgba(255,255,255,0.22)",
+          borderColor: "rgba(255,255,255,0.25)",
           borderWidth: 1,
           pointRadius: 0,
           tension: 0.2
@@ -689,65 +601,74 @@
         options: {
           plugins: { legend: { display:false } },
           scales: {
-            x: { grid:{display:false}, ticks:{ display:false } },
+            x: { grid:{ display:false }, ticks:{ color:"rgba(255,255,255,0.55)" } },
             y: { grid:{ color:"rgba(255,255,255,0.06)" }, ticks:{ color:"rgba(255,255,255,0.55)", callback:(v)=>`${v}%` } }
           }
         }
       });
     }
 
-    function renderInsights(){
-      const series = weekly.filter(w => isFinite(w.pctMargin) && Math.abs(w.revenue) > 0.0001);
-      if (!series.length){
-        document.getElementById("bestWeek").textContent = "—";
-        document.getElementById("worstWeek").textContent = "—";
-        document.getElementById("primaryPressure").textContent = "—";
-        return;
-      }
-
-      // weekly is newest->oldest. For best/worst, sort by pctMargin.
-      const sortedByPM = series.slice().sort((a,b)=> a.pctMargin - b.pctMargin);
-      const worst = sortedByPM[0];
-      const best = sortedByPM[sortedByPM.length-1];
-
-      document.getElementById("bestWeek").textContent = `${niceDate(best.weekStart)} → ${niceDate(best.weekEnd)}`;
-      document.getElementById("bestWeekMeta").textContent = `${best.pctMargin.toFixed(2)}% • $${fmtShort(best.revenue)} rev`;
-
-      document.getElementById("worstWeek").textContent = `${niceDate(worst.weekStart)} → ${niceDate(worst.weekEnd)}`;
-      document.getElementById("worstWeekMeta").textContent = `${worst.pctMargin.toFixed(2)}% • $${fmtShort(worst.revenue)} rev`;
-
+    function renderMixChart(){
       const w = latestWeek;
-      const buckets = [
-        ["Payroll", w.payroll || 0],
-        ["Fuel", w.fuel || 0],
-        ["Insurance", w.insurance || 0],
-        ["Maintenance", w.maintenance || 0],
-        ["Billbacks", w.billbacks || 0],
-      ].sort((a,b)=> b[1]-a[1]);
+      const labels = ["Payroll","Fuel","Insurance","Maintenance","Billbacks","Other"];
+      const vals = [
+        w.payroll||0,
+        w.fuel||0,
+        w.insurance||0,
+        w.maintenance||0,
+        w.billbacks||0
+      ];
+      const known = vals.reduce((a,b)=>a+b,0);
+      const other = Math.max(0, (w.totalExp||0) - known);
+      vals.push(other);
 
-      const top = buckets[0];
-      document.getElementById("primaryPressure").textContent = `${top[0]} burden`;
-      document.getElementById("primaryPressureMeta").textContent = `${fmtUSD(top[1])} this week`;
+      const ctx = document.getElementById("mixChart").getContext("2d");
+      if (mixChart) mixChart.destroy();
+
+      mixChart = new Chart(ctx, {
+        type: "doughnut",
+        data: {
+          labels,
+          datasets: [{
+            data: vals,
+            backgroundColor: [
+              "rgba(99,102,241,0.75)",
+              "rgba(34,211,238,0.70)",
+              "rgba(245,158,11,0.70)",
+              "rgba(236,72,153,0.65)",
+              "rgba(16,185,129,0.65)",
+              "rgba(255,255,255,0.18)"
+            ],
+            borderColor: "rgba(255,255,255,0.10)",
+            borderWidth: 1
+          }]
+        },
+        options: {
+          plugins: { legend: { display:false } },
+          cutout: "62%"
+        }
+      });
+
+      const legend = document.getElementById("mixLegend");
+      legend.innerHTML = "";
+      const total = Math.max(1, (w.totalExp||0));
+      labels.forEach((lab, i)=>{
+        const pct = (vals[i]/total)*100;
+        const div = document.createElement("div");
+        div.className = "chip rounded-xl px-2 py-2";
+        div.innerHTML = `
+          <div class="text-[11px] text-white/60">${lab}</div>
+          <div class="text-sm font-semibold">${pct.toFixed(1)}%</div>
+        `;
+        legend.appendChild(div);
+      });
     }
 
     function buildSignal(w){
-      const rev = Math.max(1, w.revenue || 0);
-      const parts = [
-        ["Payroll", w.payroll || 0],
-        ["Fuel", w.fuel || 0],
-        ["Insurance", w.insurance || 0],
-        ["Maintenance", w.maintenance || 0],
-        ["Billbacks", w.billbacks || 0],
-      ].map(([k,v]) => ({ k, v, p: (v/rev)*100 }))
-       .sort((a,b)=> b.v - a.v);
-
-      const top = parts[0];
-      const cpd = (w.totalExp || 0) / Math.max(1, w.driverCount || 0);
-      const loss = (w.pctMargin || 0) < 0;
-
-      if (loss) return `Loss week. Biggest bucket: ${top.k} (${top.p.toFixed(1)}% of rev). Cost/driver ≈ ${cpd.toFixed(0)}.`;
-      if ((w.pctMargin || 0) < 5) return `At-risk week. Biggest bucket: ${top.k} (${top.p.toFixed(1)}%). Cost/driver ≈ ${cpd.toFixed(0)}.`;
-      return `Healthy week. Biggest bucket: ${top.k} (${top.p.toFixed(1)}%).`;
+      const pm = w.pctMargin || 0;
+      if (pm < 0) return "Loss week. Check payroll, maintenance, and fuel burdens.";
+      if (pm < 5) return "Low margin. Investigate expense spikes and underpriced weeks.";
+      return "Healthy week.";
     }
 
     function renderLossTable(){
@@ -758,17 +679,15 @@
       const rows = series.slice().sort((a,b)=> a.pctMargin - b.pctMargin).slice(0, 20);
 
       rows.forEach(w=>{
-        const pm = w.pctMargin || 0;
-        const cls = pm < 0 ? "text-rose-200" : (pm < 5 ? "text-amber-100" : "text-emerald-200");
-
+        const b = pmBadge(w.pctMargin);
         const tr = document.createElement("tr");
-        tr.className = "hover:bg-white/[0.05] transition";
+        tr.className = "hover:bg-white/5 transition";
         tr.innerHTML = `
           <td class="py-3 pr-3">
             <div class="font-semibold">${niceDate(w.weekStart)} → ${niceDate(w.weekEnd)}</div>
             <div class="text-xs text-white/55">Drivers: ${w.driverCount || 0}</div>
           </td>
-          <td class="py-3 pr-3 ${cls} font-semibold">${pm.toFixed(2)}%</td>
+          <td class="py-3 pr-3 font-semibold ${b.cls}">${(w.pctMargin||0).toFixed(2)}%</td>
           <td class="py-3 pr-3 text-white/85">${fmtUSD(w.revenue)}</td>
           <td class="py-3 pr-3 text-white/85">${fmtUSD(w.totalExp)}</td>
           <td class="py-3 pr-3 text-white/85">${fmtUSD(w.margin)}</td>
@@ -776,6 +695,18 @@
         `;
         tbody.appendChild(tr);
       });
+    }
+
+    function renderAll(){
+      if (!latestWeek){
+        setStatus("No data");
+        return;
+      }
+      renderKpis();
+      renderTrendChart();
+      renderMixChart();
+      renderLossTable();
+      setStatus(`OK (${activeRegionId})`);
     }
 
     // ============================
@@ -787,18 +718,18 @@
     });
 
     document.getElementById("exportBtn").addEventListener("click", ()=>{
-      const payload = {
-        generatedAt: new Date().toISOString(),
-        activeRegionId,
-        latestWeek,
-        weekly
-      };
+      const payload = { generatedAt: new Date().toISOString(), activeRegionId, latestWeek, weekly };
       const blob = new Blob([JSON.stringify(payload,null,2)], {type:"application/json"});
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
       a.download = `weekly_snapshot_${activeRegionId}.json`;
       a.click();
       URL.revokeObjectURL(a.href);
+    });
+
+    document.getElementById("resetBtn").addEventListener("click", ()=>{
+      document.getElementById("searchInput").value = "";
+      renderLossTable();
     });
 
     document.getElementById("searchInput").addEventListener("input", (e)=>{
@@ -815,7 +746,7 @@
 
       filtered.forEach(w=>{
         const tr = document.createElement("tr");
-        tr.className = "hover:bg-white/[0.05] transition";
+        tr.className = "hover:bg-white/5 transition";
         tr.innerHTML = `
           <td class="py-3 pr-3"><div class="font-semibold">${niceDate(w.weekStart)} → ${niceDate(w.weekEnd)}</div></td>
           <td class="py-3 pr-3 font-semibold">${(w.pctMargin||0).toFixed(2)}%</td>
@@ -826,11 +757,6 @@
         `;
         tbody.appendChild(tr);
       });
-    });
-
-    document.getElementById("resetBtn").addEventListener("click", ()=>{
-      document.getElementById("searchInput").value = "";
-      renderLossTable();
     });
 
     document.getElementById("regionFilter").addEventListener("input", ()=>{
@@ -845,11 +771,8 @@
     // LIVE LOOP
     // ============================
     async function refresh(){
-      const lastSync = document.getElementById("lastSyncLabel");
-
       try {
         setStatus("Syncing…");
-
         const { wb, meta } = await fetchWorkbook();
 
         // optional title/subtitle
@@ -866,35 +789,28 @@
         for (const r of REGION_SHEETS){
           if (r.id === "ALL") continue;
           const ws = wb.Sheets[r.sheet];
-          if (!ws){
-            console.warn("Missing sheet:", r.sheet);
-            regionSeries[r.id] = [];
-            continue;
-          }
-          regionSeries[r.id] = parseRegionSheet(ws);
+          regionSeries[r.id] = ws ? parseRegionSheet(ws) : [];
         }
 
         // compute ALL
         regionSeries["ALL"] = sumRegionsByWeek(regionSeries);
 
-        // ensure active selection has data
+        // keep selection
         weekly = sortWeeksDesc(regionSeries[activeRegionId] || regionSeries["ALL"] || []);
         latestWeek = weekly[0] || null;
 
         if (!latestWeek) throw new Error("No valid weekly rows found across region sheets.");
 
         const fetchedAt = meta?.fetchedAt ? new Date(meta.fetchedAt) : new Date();
-        lastSync.textContent = `Last sync: ${fetchedAt.toLocaleString()} • ${meta.fileName || ""}`;
+        document.getElementById("lastSyncLabel").textContent = `Last sync: ${fetchedAt.toLocaleString()} • ${meta.fileName || ""}`;
 
         document.getElementById("activeRegionPill").textContent = activeRegionId;
 
         renderRegionSidebar();
         renderAll();
-
       } catch (err) {
         console.error(err);
         setStatus(`Sync failed: ${String(err?.message || err)}`);
-        lastSync.textContent = `Last sync: failed (${new Date().toLocaleString()})`;
       }
     }
 
@@ -908,4 +824,3 @@
   </script>
 </body>
 </html>
-
