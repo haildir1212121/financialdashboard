@@ -251,584 +251,1012 @@
     </div>
   </div>
 
-  <script>
-    // ============================
-    // CONFIG
-    // ============================
-    const WORKER_URL = "https://withered-king-c48e.haildir12121.workers.dev/";
-    const POLL_MS = 120000;
+<script>
+  // ============================
+  // CONFIG
+  // ============================
+  const WORKER_URL = "https://withered-king-c48e.haildir12121.workers.dev/";
+  const POLL_MS = 120000;
 
-    const REGION_SHEETS = [
-      { id: "ALL", name: "All Areas (Sum)", sheet: null }, // computed
-      { id: "CST", name: "Coast", sheet: "CST.Wkly" },
-      { id: "EUG", name: "Eugene", sheet: "EUG.Wkly" },
-      { id: "RBG", name: "Roseburg", sheet: "RBG.Wkly" },
-      { id: "OKRDG", name: "Oakridge", sheet: "OKRDG.Wkly" },
-      { id: "MDVCR", name: "Mid-Valley/Corvallis", sheet: "MDVCR.Wkly" },
-      { id: "ALBNY", name: "Albany", sheet: "ALBNY.Wkly" },
-      { id: "DMT", name: "DMT", sheet: "DMT.Wkly" }
-    ];
+  const REGION_SHEETS = [
+    { id: "ALL", name: "All Areas (Sum)", sheet: null }, // computed
+    { id: "CST", name: "Coast", sheet: "CST.Wkly" },
+    { id: "EUG", name: "Eugene", sheet: "EUG.Wkly" },
+    { id: "RBG", name: "Roseburg", sheet: "RBG.Wkly" },
+    { id: "OKRDG", name: "Oakridge", sheet: "OKRDG.Wkly" },
+    { id: "MDVCR", name: "Mid-Valley/Corvallis", sheet: "MDVCR.Wkly" },
+    { id: "ALBNY", name: "Albany", sheet: "ALBNY.Wkly" },
+    { id: "DMT", name: "DMT", sheet: "DMT.Wkly" }
+  ];
 
-    // Weekly summary table columns (P..AB)
-    const COLMAP = {
-      weekStart: "P",
-      weekEnd: "Q",
-      driverCount: "R",
-      hoursWorked: "S",
-      payroll: "T",
-      fuel: "U",
-      insurance: "V",
-      maintenance: "W",
-      billbacks: "X",
-      totalExp: "Y",
-      revenue: "Z",
-      margin: "AA",
-      pctMargin: "AB",
-    };
+  // Weekly summary table columns (P..AB)
+  const COLMAP = {
+    weekStart: "P",
+    weekEnd: "Q",
+    driverCount: "R",
+    hoursWorked: "S",
+    payroll: "T",
+    fuel: "U",
+    insurance: "V",
+    maintenance: "W",
+    billbacks: "X",
+    totalExp: "Y",
+    revenue: "Z",
+    margin: "AA",
+    pctMargin: "AB",
+  };
 
-    const CONSOLIDATED_SHEET = "ConsolidatedWkly";
-    const TITLE_CELL = "P1";
-    const SUBTITLE_CELL = "P2";
+  const CONSOLIDATED_SHEET = "ConsolidatedWkly";
+  const TITLE_CELL = "P1";
+  const SUBTITLE_CELL = "P2";
 
-    // ============================
-    // STATE
-    // ============================
-    let regionSeries = {};
-    let activeRegionId = "ALL";
-    let weekly = [];
-    let latestWeek = null;
+  // ============================
+  // STATE
+  // ============================
+  let regionSeries = {};
+  let activeRegionId = "ALL";
+  let weekly = [];
+  let latestWeek = null;
 
-    let trendChart = null;
-    let mixChart = null;
-    let showBaseline = true;
-    let _timer = null;
+  let trendChart = null;
+  let mixChart = null;
+  let regionCompareChart = null;
 
-    // ============================
-    // HELPERS
-    // ============================
-    function fmtUSD(n){ return Number(n||0).toLocaleString(undefined,{style:"currency",currency:"USD",maximumFractionDigits:0}); }
-    function safeNum(v){
-      if (typeof v === "number") return isFinite(v) ? v : 0;
-      if (v == null) return 0;
-      const s = String(v).replace(/[^0-9.\-]/g,"");
-      const n = parseFloat(s);
-      return isFinite(n) ? n : 0;
+  let showBaseline = true;
+  let _timer = null;
+  let _activeView = "overview"; // overview | analytics | regions | loss
+
+  // ============================
+  // HELPERS
+  // ============================
+  function $(id){ return document.getElementById(id); }
+
+  function fmtUSD(n) {
+    return Number(n || 0).toLocaleString(undefined, {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 0
+    });
+  }
+
+  function safeNum(v) {
+    if (typeof v === "number") return isFinite(v) ? v : 0;
+    if (v == null) return 0;
+    const s = String(v).replace(/[^0-9.\-]/g, "");
+    const n = parseFloat(s);
+    return isFinite(n) ? n : 0;
+  }
+
+  function asDate(v) {
+    if (v instanceof Date && !isNaN(v)) return v;
+    if (typeof v === "number" && isFinite(v)) {
+      // Excel serial -> Date
+      const utcDays = Math.floor(v - 25569);
+      return new Date(utcDays * 86400 * 1000);
     }
-    function asDate(v){
-      if (v instanceof Date && !isNaN(v)) return v;
-      if (typeof v === "number" && isFinite(v)) {
-        // Excel serial -> Date
-        const utcDays = Math.floor(v - 25569);
-        return new Date(utcDays * 86400 * 1000);
+    const d = new Date(v);
+    return isNaN(d) ? null : d;
+  }
+
+  function niceDate(v) {
+    const d = asDate(v);
+    if (!d) return String(v || "");
+    return `${d.getMonth() + 1}/${d.getDate()}/${d.getFullYear()}`;
+  }
+
+  function colToIndex(col) {
+    let n = 0;
+    const s = String(col).toUpperCase().trim();
+    for (let i = 0; i < s.length; i++) n = n * 26 + (s.charCodeAt(i) - 64);
+    return n - 1;
+  }
+
+  function weekTimestamp(w) {
+    const d = asDate(w.weekEnd) || asDate(w.weekStart);
+    return d ? d.getTime() : -Infinity;
+  }
+
+  function sortWeeksDesc(arr) {
+    return (arr || []).slice().sort((a, b) => weekTimestamp(b) - weekTimestamp(a));
+  }
+
+  function weekKey(weekStart, weekEnd) {
+    return `${niceDate(weekStart)}|${niceDate(weekEnd)}`;
+  }
+
+  function setStatus(text) {
+    const el = $("statusLabel");
+    if (el) el.textContent = `Status: ${text}`;
+  }
+
+  function readCell(ws, addr) {
+    return ws?.[addr]?.v ?? "";
+  }
+
+  function pmBadge(pm) {
+    if (!isFinite(pm)) return { label: "—", cls: "text-white/70" };
+    if (pm < 0) return { label: "LOSS", cls: "text-rose-200" };
+    if (pm < 5) return { label: "RISK", cls: "text-amber-100" };
+    return { label: "OK", cls: "text-emerald-200" };
+  }
+
+  function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
+
+  // ============================
+  // NAV / VIEWS (make sidebar buttons actually do something)
+  // ============================
+  function setActiveView(viewId){
+    _activeView = viewId;
+
+    // highlight nav buttons
+    document.querySelectorAll("[data-view]").forEach(btn=>{
+      const isOn = btn.getAttribute("data-view") === viewId;
+      btn.classList.toggle("bg-white/8", isOn);
+      btn.classList.toggle("border-white/10", isOn);
+    });
+
+    // sections (we create them if not present)
+    const ids = ["view_overview","view_analytics","view_regions","view_loss"];
+    ids.forEach(id=>{
+      const el = $(id);
+      if (!el) return;
+      el.classList.toggle("hidden", true);
+    });
+
+    const showId =
+      viewId === "overview" ? "view_overview" :
+      viewId === "analytics" ? "view_analytics" :
+      viewId === "regions" ? "view_regions" :
+      "view_loss";
+
+    if ($(showId)) $(showId).classList.toggle("hidden", false);
+
+    // render view-specific things
+    renderAll();
+  }
+
+  function attachNavHandlers(){
+    // Bind to your existing sidebar buttons by text or by adding data-view attr
+    // We will prefer data-view if present, else we guess based on label.
+    const candidates = Array.from(document.querySelectorAll("aside button"));
+    candidates.forEach(btn=>{
+      const t = (btn.textContent || "").trim().toLowerCase();
+      if (btn.id === "refreshBtn" || btn.id === "exportBtn") return;
+
+      // If user didn't set data-view, infer:
+      if (!btn.getAttribute("data-view")){
+        if (t === "overview") btn.setAttribute("data-view","overview");
+        else if (t === "analytics") btn.setAttribute("data-view","analytics");
+        else if (t === "regions") btn.setAttribute("data-view","regions");
+        else if (t === "loss areas") btn.setAttribute("data-view","loss");
       }
-      const d = new Date(v);
-      return isNaN(d) ? null : d;
-    }
-    function niceDate(v){
-      const d = asDate(v);
-      if (!d) return String(v||"");
-      return `${d.getMonth()+1}/${d.getDate()}/${d.getFullYear()}`;
-    }
-    function colToIndex(col){
-      let n = 0;
-      const s = String(col).toUpperCase().trim();
-      for (let i=0;i<s.length;i++) n = n * 26 + (s.charCodeAt(i) - 64);
-      return n - 1;
-    }
-    function weekTimestamp(w){
-      const d = asDate(w.weekEnd) || asDate(w.weekStart);
-      return d ? d.getTime() : -Infinity;
-    }
-    function sortWeeksDesc(arr){
-      return arr.slice().sort((a,b)=> weekTimestamp(b) - weekTimestamp(a));
-    }
-    function weekKey(weekStart, weekEnd){
-      return `${niceDate(weekStart)}|${niceDate(weekEnd)}`;
-    }
-    function setStatus(text){
-      document.getElementById("statusLabel").textContent = `Status: ${text}`;
-    }
 
-    // ============================
-    // FETCH + XLSX
-    // ============================
-    function base64ToUint8Array(b64){
-      const bin = atob(b64);
-      const len = bin.length;
-      const bytes = new Uint8Array(len);
-      for (let i=0;i<len;i++) bytes[i] = bin.charCodeAt(i);
-      return bytes;
-    }
+      const v = btn.getAttribute("data-view");
+      if (!v) return;
 
-    async function fetchWorkbook(){
-      const res = await fetch(WORKER_URL, { cache: "no-store" });
-      const data = await res.json();
-      if (!res.ok || data?.error) throw new Error(data?.detail || data?.error || `Fetch failed (${res.status})`);
-      if (data.kind !== "binary" || data.encoding !== "base64" || !data.base64) {
-        throw new Error("Worker response isn't XLSX base64 (expected {kind:'binary',encoding:'base64',base64:'...'}).");
+      btn.addEventListener("click", ()=>{
+        setActiveView(v);
+      }, { passive:true });
+    });
+  }
+
+  // Create 3 extra content sections under your existing content (no HTML edits required)
+  function ensureViewContainers(){
+    // We are going to wrap existing KPI/chart/table area as "overview"
+    // and append hidden sections for analytics/regions/loss.
+    // This assumes your main content area contains: canvas#trendChart, canvas#mixChart, table#lossTableBody.
+    const trendCanvas = $("trendChart");
+    if (!trendCanvas) return; // page not ready
+
+    // Find a reasonable container to inject views into: parent section content block
+    // We'll locate the nearest common ancestor inside the main area.
+    let root = trendCanvas.closest(".p-5") || trendCanvas.closest("section") || trendCanvas.parentElement;
+    if (!root) return;
+
+    // If already created, skip
+    if ($("view_overview")) return;
+
+    // Create wrappers
+    const wrap = document.createElement("div");
+    wrap.id = "viewsRoot";
+    wrap.className = "space-y-4";
+    // Move existing blocks into overview by cloning container: easiest = create overview container and move siblings until end.
+    // We'll just insert containers and then leave existing content visible as overview by default.
+    // We will hide/show by toggling on these containers; so we need actual containers.
+
+    // Create containers
+    const vOverview = document.createElement("div");
+    vOverview.id = "view_overview";
+    vOverview.className = "space-y-4";
+
+    const vAnalytics = document.createElement("div");
+    vAnalytics.id = "view_analytics";
+    vAnalytics.className = "space-y-4 hidden";
+
+    const vRegions = document.createElement("div");
+    vRegions.id = "view_regions";
+    vRegions.className = "space-y-4 hidden";
+
+    const vLoss = document.createElement("div");
+    vLoss.id = "view_loss";
+    vLoss.className = "space-y-4 hidden";
+
+    // We want overview to contain the original content currently inside root.
+    // So: move all children of root into overview, then put overview/others back.
+    const originalKids = Array.from(root.children);
+    originalKids.forEach(ch => vOverview.appendChild(ch));
+
+    // Build Analytics section UI
+    vAnalytics.innerHTML = `
+      <div class="card rounded-3xl p-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <div class="text-sm font-semibold">Analytics</div>
+            <div class="text-xs text-white/55 mt-1">Region comparison based on latest available week</div>
+          </div>
+          <div class="chip rounded-2xl px-3 py-2 text-sm font-semibold" id="analyticsWeekPill">—</div>
+        </div>
+        <div class="mt-3 bg-black/25 border border-white/10 rounded-2xl p-3">
+          <canvas id="regionCompareChart" height="130"></canvas>
+        </div>
+        <div class="mt-3 grid grid-cols-2 lg:grid-cols-4 gap-3" id="topRegionsGrid"></div>
+      </div>
+    `;
+
+    // Build Regions section UI
+    vRegions.innerHTML = `
+      <div class="card rounded-3xl p-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <div class="text-sm font-semibold">Regions</div>
+            <div class="text-xs text-white/55 mt-1">Pick a region from the sidebar. Data is week-sorted newest → oldest.</div>
+          </div>
+          <div class="chip rounded-2xl px-3 py-2 text-sm font-semibold">Active: <span id="regionsActivePill">—</span></div>
+        </div>
+        <div class="mt-3 grid grid-cols-1 lg:grid-cols-3 gap-3" id="regionKpiGrid"></div>
+      </div>
+    `;
+
+    // Build Loss section UI (separate from overview table)
+    vLoss.innerHTML = `
+      <div class="card rounded-3xl p-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <div class="text-sm font-semibold">Loss Areas</div>
+            <div class="text-xs text-white/55 mt-1">Weeks filtered to margin &lt; 0%, newest first</div>
+          </div>
+          <button id="lossResetBtn" class="chip rounded-2xl px-3 py-2 text-sm hover:bg-white/10 transition">Reset</button>
+        </div>
+
+        <div class="mt-3 thin-scroll overflow-x-auto">
+          <table class="min-w-full text-sm">
+            <thead class="text-white/60">
+              <tr class="border-b border-white/10">
+                <th class="py-2 text-left font-medium">Week</th>
+                <th class="py-2 text-left font-medium">% Margin</th>
+                <th class="py-2 text-left font-medium">Revenue</th>
+                <th class="py-2 text-left font-medium">TL Exp</th>
+                <th class="py-2 text-left font-medium">Margin</th>
+                <th class="py-2 text-left font-medium">Signal</th>
+              </tr>
+            </thead>
+            <tbody id="lossOnlyBody" class="divide-y divide-white/10"></tbody>
+          </table>
+        </div>
+      </div>
+    `;
+
+    // Assemble
+    wrap.appendChild(vOverview);
+    wrap.appendChild(vAnalytics);
+    wrap.appendChild(vRegions);
+    wrap.appendChild(vLoss);
+
+    root.appendChild(wrap);
+
+    // loss reset button handler
+    $("lossResetBtn")?.addEventListener("click", ()=>{
+      renderLossOnlyTable();
+    });
+  }
+
+  // ============================
+  // FETCH + XLSX ✅ BINARY ONLY
+  // ============================
+  async function fetchWorkbookBinary() {
+    const res = await fetch(WORKER_URL, { cache: "no-store" });
+
+    if (!res.ok) {
+      // try to read JSON error if worker returns it
+      let detail = "";
+      try {
+        const maybeJson = await res.clone().json();
+        detail = maybeJson?.detail || maybeJson?.error || JSON.stringify(maybeJson);
+      } catch {
+        detail = (await res.text()).slice(0, 500);
       }
-      const bytes = base64ToUint8Array(data.base64);
-      const wb = XLSX.read(bytes, { type: "array" });
-      return { wb, meta: data };
+      throw new Error(`Fetch failed (${res.status}): ${detail}`);
     }
 
-    function readCell(ws, addr){
-      return ws?.[addr]?.v ?? "";
+    // IMPORTANT: this endpoint returns XLSX bytes, not JSON
+    const fileName = res.headers.get("X-File-Name") || "shared-file.xlsx";
+    const fetchedAt = res.headers.get("X-Fetched-At") || new Date().toISOString();
+
+    const bytes = await res.arrayBuffer();
+    const wb = XLSX.read(bytes, { type: "array" });
+
+    return { wb, meta: { fileName, fetchedAt } };
+  }
+
+  async function fetchWorkbook() {
+    return fetchWorkbookBinary();
+  }
+
+  // ============================
+  // PARSE REGION WEEKLY TABLE (P..AB)
+  // ============================
+  function parseRegionSheet(ws) {
+    const aoa = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
+
+    const idx = {};
+    for (const [k, col] of Object.entries(COLMAP)) idx[k] = colToIndex(col);
+
+    const P = idx.weekStart;
+    const Q = idx.weekEnd;
+    const hasWord = (v, word) => String(v || "").toLowerCase().includes(word);
+
+    // Find header row
+    let headerRow = -1;
+    for (let r = 0; r < Math.min(140, aoa.length); r++) {
+      const row = aoa[r] || [];
+      const z = row[idx.revenue];
+      const aa = row[idx.margin];
+      const ab = row[idx.pctMargin];
+      const p = row[P];
+      const q = row[Q];
+
+      const looksLikeHeader =
+        (hasWord(p, "week") && hasWord(q, "week")) ||
+        (hasWord(z, "revenue") && hasWord(aa, "margin")) ||
+        (hasWord(ab, "margin") && (String(ab).includes("%") || hasWord(ab, "%")));
+
+      if (looksLikeHeader) { headerRow = r; break; }
     }
+    if (headerRow === -1) headerRow = 2;
 
-    // ============================
-    // PARSE REGION WEEKLY TABLE (P..AB)
-    // ============================
-    function parseRegionSheet(ws){
-      const aoa = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
+    const dataStart = headerRow + 1;
+    const out = [];
 
-      const idx = {};
-      for (const [k, col] of Object.entries(COLMAP)) idx[k] = colToIndex(col);
+    for (let r = dataStart; r < aoa.length; r++) {
+      const row = aoa[r] || [];
+      const wsVal = row[P];
+      const weVal = row[Q];
 
-      const P = idx.weekStart;
-      const Q = idx.weekEnd;
+      if (String(wsVal).trim() === "" && String(weVal).trim() === "") break;
 
-      const hasWord = (v, word) => String(v||"").toLowerCase().includes(word);
+      const revenue = safeNum(row[idx.revenue]);
+      const totalExp = safeNum(row[idx.totalExp]);
+      const margin = safeNum(row[idx.margin]);
 
-      // Find header row
-      let headerRow = -1;
-      for (let r=0; r<Math.min(140, aoa.length); r++){
-        const row = aoa[r] || [];
-        const z = row[idx.revenue];
-        const aa = row[idx.margin];
-        const ab = row[idx.pctMargin];
-        const p = row[P];
-        const q = row[Q];
+      const hasMoney =
+        Math.abs(revenue) > 0.0001 ||
+        Math.abs(totalExp) > 0.0001 ||
+        Math.abs(margin) > 0.0001;
 
-        const looksLikeHeader =
-          (hasWord(p,"week") && hasWord(q,"week")) ||
-          (hasWord(z,"revenue") && hasWord(aa,"margin")) ||
-          (hasWord(ab,"margin") && (String(ab).includes("%") || hasWord(ab,"%")));
+      if (!hasMoney) continue;
 
-        if (looksLikeHeader) { headerRow = r; break; }
+      let pmRaw = row[idx.pctMargin];
+      let pm = 0;
+      if (typeof pmRaw === "number") pm = pmRaw <= 1.5 ? pmRaw * 100 : pmRaw;
+      else {
+        const n = safeNum(pmRaw);
+        pm = n <= 1.5 ? n * 100 : n;
       }
-      if (headerRow === -1) headerRow = 2;
+      if (!isFinite(pm)) pm = 0;
 
-      const dataStart = headerRow + 1;
-
-      const out = [];
-      for (let r = dataStart; r < aoa.length; r++){
-        const row = aoa[r] || [];
-        const wsVal = row[P];
-        const weVal = row[Q];
-
-        if (String(wsVal).trim()==="" && String(weVal).trim()==="") break;
-
-        const revenue = safeNum(row[idx.revenue]);
-        const totalExp = safeNum(row[idx.totalExp]);
-        const margin = safeNum(row[idx.margin]);
-
-        const hasMoney = Math.abs(revenue) > 0.0001 || Math.abs(totalExp) > 0.0001 || Math.abs(margin) > 0.0001;
-        if (!hasMoney) continue;
-
-        let pmRaw = row[idx.pctMargin];
-        let pm = 0;
-        if (typeof pmRaw === "number") pm = pmRaw <= 1.5 ? pmRaw * 100 : pmRaw;
-        else {
-          const n = safeNum(pmRaw);
-          pm = n <= 1.5 ? n * 100 : n;
-        }
-        if (!isFinite(pm)) pm = 0;
-
-        out.push({
-          weekStart: wsVal,
-          weekEnd: weVal,
-          revenue,
-          totalExp,
-          margin,
-          pctMargin: pm,
-          driverCount: Math.round(safeNum(row[idx.driverCount])),
-          hoursWorked: safeNum(row[idx.hoursWorked]),
-          payroll: safeNum(row[idx.payroll]),
-          fuel: safeNum(row[idx.fuel]),
-          insurance: safeNum(row[idx.insurance]),
-          maintenance: safeNum(row[idx.maintenance]),
-          billbacks: safeNum(row[idx.billbacks]),
-        });
-      }
-      return sortWeeksDesc(out);
+      out.push({
+        weekStart: wsVal,
+        weekEnd: weVal,
+        revenue,
+        totalExp,
+        margin,
+        pctMargin: pm,
+        driverCount: Math.round(safeNum(row[idx.driverCount])),
+        hoursWorked: safeNum(row[idx.hoursWorked]),
+        payroll: safeNum(row[idx.payroll]),
+        fuel: safeNum(row[idx.fuel]),
+        insurance: safeNum(row[idx.insurance]),
+        maintenance: safeNum(row[idx.maintenance]),
+        billbacks: safeNum(row[idx.billbacks]),
+      });
     }
 
-    function sumRegionsByWeek(seriesById){
-      const map = new Map();
-      for (const [id, series] of Object.entries(seriesById)){
-        if (id === "ALL") continue;
-        for (const w of series){
-          const key = weekKey(w.weekStart, w.weekEnd);
-          const cur = map.get(key) || {
-            weekStart: w.weekStart,
-            weekEnd: w.weekEnd,
-            revenue: 0, totalExp: 0, margin: 0, pctMargin: 0,
-            payroll:0, fuel:0, insurance:0, maintenance:0, billbacks:0,
-            driverCount:0, hoursWorked:0
-          };
-          cur.revenue += w.revenue || 0;
-          cur.totalExp += w.totalExp || 0;
-          cur.margin += w.margin || 0;
+    return sortWeeksDesc(out);
+  }
 
-          cur.payroll += w.payroll || 0;
-          cur.fuel += w.fuel || 0;
-          cur.insurance += w.insurance || 0;
-          cur.maintenance += w.maintenance || 0;
-          cur.billbacks += w.billbacks || 0;
+  function sumRegionsByWeek(seriesById) {
+    const map = new Map();
 
-          cur.driverCount += w.driverCount || 0;
-          cur.hoursWorked += w.hoursWorked || 0;
+    for (const [id, series] of Object.entries(seriesById || {})) {
+      if (id === "ALL") continue;
 
-          map.set(key, cur);
-        }
+      for (const w of (series || [])) {
+        const key = weekKey(w.weekStart, w.weekEnd);
+        const cur = map.get(key) || {
+          weekStart: w.weekStart,
+          weekEnd: w.weekEnd,
+          revenue: 0, totalExp: 0, margin: 0, pctMargin: 0,
+          payroll: 0, fuel: 0, insurance: 0, maintenance: 0, billbacks: 0,
+          driverCount: 0, hoursWorked: 0
+        };
+
+        cur.revenue += w.revenue || 0;
+        cur.totalExp += w.totalExp || 0;
+        cur.margin += w.margin || 0;
+
+        cur.payroll += w.payroll || 0;
+        cur.fuel += w.fuel || 0;
+        cur.insurance += w.insurance || 0;
+        cur.maintenance += w.maintenance || 0;
+        cur.billbacks += w.billbacks || 0;
+
+        cur.driverCount += w.driverCount || 0;
+        cur.hoursWorked += w.hoursWorked || 0;
+
+        map.set(key, cur);
       }
-      const all = Array.from(map.values());
-      for (const w of all){
-        w.pctMargin = ((w.revenue - w.totalExp) / Math.max(1, w.revenue)) * 100;
-        if (!isFinite(w.pctMargin)) w.pctMargin = 0;
-      }
-      return sortWeeksDesc(all);
     }
 
-    // ============================
-    // UI RENDER
-    // ============================
-    function pmBadge(pm){
-      if (!isFinite(pm)) return { label:"—", cls:"text-white/70" };
-      if (pm < 0) return { label:"LOSS", cls:"text-rose-200" };
-      if (pm < 5) return { label:"RISK", cls:"text-amber-100" };
-      return { label:"OK", cls:"text-emerald-200" };
+    const all = Array.from(map.values());
+    for (const w of all) {
+      w.pctMargin = ((w.revenue - w.totalExp) / Math.max(1, w.revenue)) * 100;
+      if (!isFinite(w.pctMargin)) w.pctMargin = 0;
     }
 
-    function renderRegionSidebar(){
-      const list = document.getElementById("regionList");
-      const filter = String(document.getElementById("regionFilter").value || "").trim().toLowerCase();
-      list.innerHTML = "";
+    return sortWeeksDesc(all);
+  }
 
-      REGION_SHEETS
-        .filter(r => !filter || r.name.toLowerCase().includes(filter) || r.id.toLowerCase().includes(filter))
-        .forEach(r=>{
-          const series = regionSeries[r.id] || [];
-          const w = series[0];
-          const pm = w ? w.pctMargin : NaN;
-          const b = pmBadge(pm);
+  // ============================
+  // UI RENDER (sidebar, kpis, charts, tables)
+  // ============================
+  function renderRegionSidebar() {
+    const list = $("regionList");
+    if (!list) return;
 
-          const btn = document.createElement("button");
-          btn.className =
-            "card rounded-2xl px-3 py-3 text-left hover:bg-white/7 transition " +
-            (r.id === activeRegionId ? "ring-1 ring-white/25" : "");
+    const filter = String($("regionFilter")?.value || "").trim().toLowerCase();
+    list.innerHTML = "";
 
-          btn.innerHTML = `
-            <div class="flex items-center justify-between gap-3">
-              <div class="min-w-0">
-                <div class="text-sm font-semibold truncate">${r.name}</div>
-                <div class="text-xs text-white/55 truncate">${r.sheet ? r.sheet : "computed sum"}</div>
-              </div>
-              <div class="text-right shrink-0">
-                <div class="text-sm font-bold">${w ? w.pctMargin.toFixed(2)+"%" : "—"}</div>
-                <div class="text-[11px] ${b.cls}">${b.label}</div>
-              </div>
+    REGION_SHEETS
+      .filter(r => !filter || r.name.toLowerCase().includes(filter) || r.id.toLowerCase().includes(filter))
+      .forEach(r => {
+        const series = regionSeries[r.id] || [];
+        const w = series[0];
+        const pm = w ? w.pctMargin : NaN;
+        const b = pmBadge(pm);
+
+        const btn = document.createElement("button");
+        btn.className =
+          "card rounded-2xl px-3 py-3 text-left hover:bg-white/7 transition " +
+          (r.id === activeRegionId ? "ring-1 ring-white/25" : "");
+
+        btn.innerHTML = `
+          <div class="flex items-center justify-between gap-3">
+            <div class="min-w-0">
+              <div class="text-sm font-semibold truncate">${r.name}</div>
+              <div class="text-xs text-white/55 truncate">${r.sheet ? r.sheet : "computed sum"}</div>
             </div>
-          `;
+            <div class="text-right shrink-0">
+              <div class="text-sm font-bold">${w ? w.pctMargin.toFixed(2) + "%" : "—"}</div>
+              <div class="text-[11px] ${b.cls}">${b.label}</div>
+            </div>
+          </div>
+        `;
 
-          btn.addEventListener("click", ()=>{
-            activeRegionId = r.id;
-            document.getElementById("activeRegionPill").textContent = r.id;
+        btn.addEventListener("click", () => {
+          activeRegionId = r.id;
+          if ($("activeRegionPill")) $("activeRegionPill").textContent = r.id;
 
-            weekly = sortWeeksDesc(regionSeries[activeRegionId] || []);
-            latestWeek = weekly[0] || null;
+          weekly = sortWeeksDesc(regionSeries[activeRegionId] || []);
+          latestWeek = weekly[0] || null;
 
-            renderRegionSidebar();
-            renderAll();
-          });
-
-          list.appendChild(btn);
+          renderRegionSidebar();
+          renderAll();
         });
+
+        list.appendChild(btn);
+      });
+  }
+
+  function renderKpis() {
+    const w = latestWeek;
+    if (!w) return;
+
+    const rev = w.revenue || 0;
+    const exp = w.totalExp || 0;
+    const pm = isFinite(w.pctMargin) ? w.pctMargin : ((rev - exp) / Math.max(1, rev)) * 100;
+
+    if ($("kpiRevenue")) $("kpiRevenue").textContent = fmtUSD(rev);
+    if ($("kpiExpense")) $("kpiExpense").textContent = fmtUSD(exp);
+    if ($("kpiExpenseSub")) $("kpiExpenseSub").textContent = `TL Exp • ${niceDate(w.weekStart)} → ${niceDate(w.weekEnd)}`;
+    if ($("kpiMargin")) $("kpiMargin").textContent = `${pm.toFixed(2)}%`;
+    if ($("kpiMarginSub")) $("kpiMarginSub").textContent = `${fmtUSD(w.margin || 0)} margin`;
+
+    if ($("kpiDrivers")) $("kpiDrivers").textContent = `${w.driverCount || 0}`;
+    if ($("kpiDriversSub")) {
+      const costPer = (exp / Math.max(1, w.driverCount || 0)) || 0;
+      $("kpiDriversSub").textContent = `Hours: ${Math.round(w.hoursWorked || 0)} • Cost/Driver: ${fmtUSD(costPer)}`;
     }
 
-    function renderKpis(){
-      const w = latestWeek;
-      const rev = w.revenue || 0;
-      const exp = w.totalExp || 0;
-      const pm = isFinite(w.pctMargin) ? w.pctMargin : ((rev-exp)/Math.max(1,rev))*100;
+    if ($("weekLabel")) $("weekLabel").textContent = `Week: ${niceDate(w.weekStart)} → ${niceDate(w.weekEnd)}`;
+  }
 
-      document.getElementById("kpiRevenue").textContent = fmtUSD(rev);
-      document.getElementById("kpiExpense").textContent = fmtUSD(exp);
-      document.getElementById("kpiExpenseSub").textContent = `TL Exp • ${niceDate(w.weekStart)} → ${niceDate(w.weekEnd)}`;
-      document.getElementById("kpiMargin").textContent = `${pm.toFixed(2)}%`;
-      document.getElementById("kpiMarginSub").textContent = `${fmtUSD(w.margin || 0)} margin`;
+  function renderTrendChart() {
+    const canvas = $("trendChart");
+    if (!canvas) return;
 
-      document.getElementById("kpiDrivers").textContent = `${w.driverCount || 0}`;
-      document.getElementById("kpiDriversSub").textContent = `Hours: ${Math.round(w.hoursWorked || 0)} • Cost/Driver: ${fmtUSD((exp/Math.max(1,w.driverCount||0))||0)}`;
+    const seriesDesc = (weekly || []).filter(w => isFinite(w.pctMargin) && Math.abs(w.revenue) > 0.0001);
+    const take = seriesDesc.slice(0, 16).reverse(); // oldest->newest for chart
+    const labels = take.map(w => niceDate(w.weekEnd));
+    const data = take.map(w => w.pctMargin);
+    const baseline = data.length ? data.reduce((a, b) => a + b, 0) / data.length : 0;
 
-      document.getElementById("weekLabel").textContent = `Week: ${niceDate(w.weekStart)} → ${niceDate(w.weekEnd)}`;
-    }
+    const ctx = canvas.getContext("2d");
+    if (trendChart) trendChart.destroy();
 
-    function renderTrendChart(){
-      const seriesDesc = weekly.filter(w => isFinite(w.pctMargin) && Math.abs(w.revenue) > 0.0001);
-      const take = seriesDesc.slice(0, 16).reverse(); // oldest->newest for chart
-      const labels = take.map(w => niceDate(w.weekEnd));
-      const data = take.map(w => w.pctMargin);
-      const baseline = data.length ? data.reduce((a,b)=>a+b,0)/data.length : 0;
+    const datasets = [{
+      label: "% Margin",
+      data,
+      borderColor: "rgba(255,255,255,0.85)",
+      borderWidth: 2,
+      pointRadius: 0,
+      tension: 0.35,
+      fill: true,
+      backgroundColor: "rgba(255,255,255,0.08)"
+    }];
 
-      const ctx = document.getElementById("trendChart").getContext("2d");
-      if (trendChart) trendChart.destroy();
-
-      const datasets = [{
-        label: "% Margin",
-        data,
-        borderColor: "rgba(255,255,255,0.85)",
-        borderWidth: 2,
+    if (showBaseline) {
+      datasets.push({
+        label: "Baseline",
+        data: Array(data.length).fill(baseline),
+        borderColor: "rgba(255,255,255,0.25)",
+        borderWidth: 1,
         pointRadius: 0,
-        tension: 0.35,
-        fill: true,
-        backgroundColor: "rgba(99,102,241,0.12)"
-      }];
+        tension: 0.2
+      });
+    }
 
-      if (showBaseline){
-        datasets.push({
-          label: "Baseline",
-          data: Array(data.length).fill(baseline),
-          borderColor: "rgba(255,255,255,0.25)",
-          borderWidth: 1,
-          pointRadius: 0,
-          tension: 0.2
-        });
+    trendChart = new Chart(ctx, {
+      type: "line",
+      data: { labels, datasets },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { display: false }, ticks: { color: "rgba(255,255,255,0.55)" } },
+          y: { grid: { color: "rgba(255,255,255,0.06)" }, ticks: { color: "rgba(255,255,255,0.55)", callback: v => `${v}%` } }
+        }
       }
+    });
+  }
 
-      trendChart = new Chart(ctx, {
-        type: "line",
-        data: { labels, datasets },
-        options: {
-          plugins: { legend: { display:false } },
-          scales: {
-            x: { grid:{ display:false }, ticks:{ color:"rgba(255,255,255,0.55)" } },
-            y: { grid:{ color:"rgba(255,255,255,0.06)" }, ticks:{ color:"rgba(255,255,255,0.55)", callback:(v)=>`${v}%` } }
+  function renderMixChart() {
+    const w = latestWeek;
+    const canvas = $("mixChart");
+    if (!w || !canvas) return;
+
+    const labels = ["Payroll", "Fuel", "Insurance", "Maintenance", "Billbacks", "Other"];
+    const vals = [
+      w.payroll || 0,
+      w.fuel || 0,
+      w.insurance || 0,
+      w.maintenance || 0,
+      w.billbacks || 0
+    ];
+    const known = vals.reduce((a, b) => a + b, 0);
+    const other = Math.max(0, (w.totalExp || 0) - known);
+    vals.push(other);
+
+    const ctx = canvas.getContext("2d");
+    if (mixChart) mixChart.destroy();
+
+    mixChart = new Chart(ctx, {
+      type: "doughnut",
+      data: {
+        labels,
+        datasets: [{
+          data: vals,
+          borderColor: "rgba(255,255,255,0.12)",
+          borderWidth: 1
+        }]
+      },
+      options: {
+        plugins: { legend: { display: false } },
+        cutout: "62%"
+      }
+    });
+
+    const legend = $("mixLegend");
+    if (!legend) return;
+
+    legend.innerHTML = "";
+    const total = Math.max(1, (w.totalExp || 0));
+
+    labels.forEach((lab, i) => {
+      const pct = (vals[i] / total) * 100;
+      const div = document.createElement("div");
+      div.className = "chip rounded-xl px-2 py-2";
+      div.innerHTML = `
+        <div class="text-[11px] text-white/60">${lab}</div>
+        <div class="text-sm font-semibold">${pct.toFixed(1)}%</div>
+      `;
+      legend.appendChild(div);
+    });
+  }
+
+  function buildSignal(w) {
+    const pm = w.pctMargin || 0;
+    if (pm < 0) return "Loss week. Check payroll, maintenance, and fuel burdens.";
+    if (pm < 5) return "Low margin. Investigate expense spikes and underpriced weeks.";
+    return "Healthy week.";
+  }
+
+  // Newest -> Oldest by default
+  function renderHistoryTable(customData = null) {
+    const tbody = $("lossTableBody");
+    if (!tbody) return;
+    tbody.innerHTML = "";
+
+    let series = customData || weekly;
+    series = (series || []).filter(w => isFinite(w.pctMargin) && Math.abs(w.revenue) > 0.0001);
+    series = sortWeeksDesc(series);
+
+    const rows = series.slice(0, 50);
+
+    if (rows.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6" class="py-4 text-center text-white/50">No data found.</td></tr>`;
+      return;
+    }
+
+    rows.forEach(w => {
+      const b = pmBadge(w.pctMargin);
+      const tr = document.createElement("tr");
+      tr.className = "hover:bg-white/5 transition";
+      tr.innerHTML = `
+        <td class="py-3 pr-3">
+          <div class="font-semibold">${niceDate(w.weekStart)} → ${niceDate(w.weekEnd)}</div>
+          <div class="text-xs text-white/55">Drivers: ${w.driverCount || 0}</div>
+        </td>
+        <td class="py-3 pr-3 font-semibold ${b.cls}">${(w.pctMargin || 0).toFixed(2)}%</td>
+        <td class="py-3 pr-3 text-white/85">${fmtUSD(w.revenue)}</td>
+        <td class="py-3 pr-3 text-white/85">${fmtUSD(w.totalExp)}</td>
+        <td class="py-3 pr-3 text-white/85">${fmtUSD(w.margin)}</td>
+        <td class="py-3 pr-3 text-white/70"><div class="max-w-[520px] truncate">${buildSignal(w)}</div></td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  // Loss-only table for the "Loss Areas" view
+  function renderLossOnlyTable(){
+    const tbody = $("lossOnlyBody");
+    if (!tbody) return;
+    tbody.innerHTML = "";
+
+    let series = (weekly || []).filter(w => isFinite(w.pctMargin) && Math.abs(w.revenue) > 0.0001);
+    series = sortWeeksDesc(series).filter(w => (w.pctMargin || 0) < 0);
+
+    const rows = series.slice(0, 60);
+
+    if (rows.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6" class="py-4 text-center text-white/50">No loss weeks in this region.</td></tr>`;
+      return;
+    }
+
+    rows.forEach(w => {
+      const b = pmBadge(w.pctMargin);
+      const tr = document.createElement("tr");
+      tr.className = "hover:bg-white/5 transition";
+      tr.innerHTML = `
+        <td class="py-3 pr-3">
+          <div class="font-semibold">${niceDate(w.weekStart)} → ${niceDate(w.weekEnd)}</div>
+          <div class="text-xs text-white/55">Drivers: ${w.driverCount || 0}</div>
+        </td>
+        <td class="py-3 pr-3 font-semibold ${b.cls}">${(w.pctMargin || 0).toFixed(2)}%</td>
+        <td class="py-3 pr-3 text-white/85">${fmtUSD(w.revenue)}</td>
+        <td class="py-3 pr-3 text-white/85">${fmtUSD(w.totalExp)}</td>
+        <td class="py-3 pr-3 text-white/85">${fmtUSD(w.margin)}</td>
+        <td class="py-3 pr-3 text-white/70"><div class="max-w-[520px] truncate">${buildSignal(w)}</div></td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  // Analytics: region comparison for latest common week
+  function getLatestCommonWeekKey(){
+    // We want the most recent week that exists for activeRegion (or ALL) for display.
+    // For analytics compare, we just use each region's latest week independently.
+    const w = latestWeek;
+    if (!w) return null;
+    return weekKey(w.weekStart, w.weekEnd);
+  }
+
+  function renderAnalytics(){
+    ensureViewContainers();
+    const pill = $("analyticsWeekPill");
+    const wk = latestWeek ? `${niceDate(latestWeek.weekStart)} → ${niceDate(latestWeek.weekEnd)}` : "—";
+    if (pill) pill.textContent = wk;
+
+    // Build bar chart: revenue + margin % for latest week of each region
+    const rows = REGION_SHEETS.filter(r => r.id !== "ALL").map(r=>{
+      const s = regionSeries[r.id] || [];
+      const w = s[0] || null;
+      return {
+        id: r.id,
+        name: r.name,
+        revenue: w ? (w.revenue||0) : 0,
+        pctMargin: w ? (w.pctMargin||0) : 0,
+        totalExp: w ? (w.totalExp||0) : 0
+      };
+    });
+
+    // Sort by revenue desc for readability
+    rows.sort((a,b)=> (b.revenue||0) - (a.revenue||0));
+
+    const canvas = $("regionCompareChart");
+    if (!canvas) return;
+
+    const labels = rows.map(r => r.id);
+    const rev = rows.map(r => r.revenue);
+    const pm = rows.map(r => r.pctMargin);
+
+    const ctx = canvas.getContext("2d");
+    if (regionCompareChart) regionCompareChart.destroy();
+
+    regionCompareChart = new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels,
+        datasets: [
+          { label: "Revenue", data: rev },
+          { label: "% Margin", data: pm, yAxisID: "y2" }
+        ]
+      },
+      options: {
+        plugins: { legend: { display: false } },
+        scales: {
+          y: {
+            ticks: { color: "rgba(255,255,255,0.55)", callback: v => fmtUSD(v) },
+            grid: { color: "rgba(255,255,255,0.06)" }
+          },
+          y2: {
+            position: "right",
+            ticks: { color: "rgba(255,255,255,0.55)", callback: v => `${v}%` },
+            grid: { display: false }
+          },
+          x: {
+            ticks: { color: "rgba(255,255,255,0.55)" },
+            grid: { display: false }
           }
         }
-      });
-    }
-
-    function renderMixChart(){
-      const w = latestWeek;
-      const labels = ["Payroll","Fuel","Insurance","Maintenance","Billbacks","Other"];
-      const vals = [
-        w.payroll||0,
-        w.fuel||0,
-        w.insurance||0,
-        w.maintenance||0,
-        w.billbacks||0
-      ];
-      const known = vals.reduce((a,b)=>a+b,0);
-      const other = Math.max(0, (w.totalExp||0) - known);
-      vals.push(other);
-
-      const ctx = document.getElementById("mixChart").getContext("2d");
-      if (mixChart) mixChart.destroy();
-
-      mixChart = new Chart(ctx, {
-        type: "doughnut",
-        data: {
-          labels,
-          datasets: [{
-            data: vals,
-            backgroundColor: [
-              "rgba(99,102,241,0.75)",
-              "rgba(34,211,238,0.70)",
-              "rgba(245,158,11,0.70)",
-              "rgba(236,72,153,0.65)",
-              "rgba(16,185,129,0.65)",
-              "rgba(255,255,255,0.18)"
-            ],
-            borderColor: "rgba(255,255,255,0.10)",
-            borderWidth: 1
-          }]
-        },
-        options: {
-          plugins: { legend: { display:false } },
-          cutout: "62%"
-        }
-      });
-
-      const legend = document.getElementById("mixLegend");
-      legend.innerHTML = "";
-      const total = Math.max(1, (w.totalExp||0));
-      labels.forEach((lab, i)=>{
-        const pct = (vals[i]/total)*100;
-        const div = document.createElement("div");
-        div.className = "chip rounded-xl px-2 py-2";
-        div.innerHTML = `
-          <div class="text-[11px] text-white/60">${lab}</div>
-          <div class="text-sm font-semibold">${pct.toFixed(1)}%</div>
-        `;
-        legend.appendChild(div);
-      });
-    }
-
-    function buildSignal(w){
-      const pm = w.pctMargin || 0;
-      if (pm < 0) return "Loss week. Check payroll, maintenance, and fuel burdens.";
-      if (pm < 5) return "Low margin. Investigate expense spikes and underpriced weeks.";
-      return "Healthy week.";
-    }
-
-    // UPDATED: Now strictly follows date order (Most recent first) unless filtered
-    function renderLossTable(customData = null){
-      const tbody = document.getElementById("lossTableBody");
-      tbody.innerHTML = "";
-
-      let series = customData || weekly;
-      series = series.filter(w => isFinite(w.pctMargin) && Math.abs(w.revenue) > 0.0001);
-
-      // Previously sorted by margin. Now just taking the first 50 items of 'series'
-      // which is already sorted Newest -> Oldest.
-      const rows = series.slice(0, 50);
-
-      if (rows.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="6" class="py-4 text-center text-white/50">No data found for this period.</td></tr>`;
-          return;
       }
-
-      rows.forEach(w=>{
-        const b = pmBadge(w.pctMargin);
-        const tr = document.createElement("tr");
-        tr.className = "hover:bg-white/5 transition";
-        tr.innerHTML = `
-          <td class="py-3 pr-3">
-            <div class="font-semibold">${niceDate(w.weekStart)} → ${niceDate(w.weekEnd)}</div>
-            <div class="text-xs text-white/55">Drivers: ${w.driverCount || 0}</div>
-          </td>
-          <td class="py-3 pr-3 font-semibold ${b.cls}">${(w.pctMargin||0).toFixed(2)}%</td>
-          <td class="py-3 pr-3 text-white/85">${fmtUSD(w.revenue)}</td>
-          <td class="py-3 pr-3 text-white/85">${fmtUSD(w.totalExp)}</td>
-          <td class="py-3 pr-3 text-white/85">${fmtUSD(w.margin)}</td>
-          <td class="py-3 pr-3 text-white/70"><div class="max-w-[520px] truncate">${buildSignal(w)}</div></td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-
-    function renderAll(){
-      if (!latestWeek){
-        setStatus("No data");
-        return;
-      }
-      renderKpis();
-      renderTrendChart();
-      renderMixChart();
-      renderLossTable();
-      setStatus(`OK (${activeRegionId})`);
-    }
-
-    // ============================
-    // EVENTS
-    // ============================
-    document.getElementById("toggleBaseline").addEventListener("click", ()=>{
-      showBaseline = !showBaseline;
-      renderTrendChart();
     });
 
-    document.getElementById("exportBtn").addEventListener("click", ()=>{
-      const payload = { generatedAt: new Date().toISOString(), activeRegionId, latestWeek, weekly };
-      const blob = new Blob([JSON.stringify(payload,null,2)], {type:"application/json"});
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = `weekly_snapshot_${activeRegionId}.json`;
-      a.click();
-      URL.revokeObjectURL(a.href);
-    });
+    // Top regions quick cards
+    const grid = $("topRegionsGrid");
+    if (!grid) return;
+    grid.innerHTML = "";
 
-    document.getElementById("resetBtn").addEventListener("click", ()=>{
-      document.getElementById("searchInput").value = "";
-      renderLossTable();
-    });
-
-    // UPDATED: Date Filter Logic
-    document.getElementById("searchInput").addEventListener("change", (e)=>{
-      const val = e.target.value; // YYYY-MM-DD
-      if (!val) return renderLossTable();
-
-      // Create a date object (noon to avoid timezone shifting)
-      const inputDate = new Date(val + "T12:00:00");
-      const inputTime = inputDate.getTime();
-
-      const filtered = weekly.filter(w => {
-        // Convert week start/end to timestamps
-        const start = asDate(w.weekStart);
-        const end = asDate(w.weekEnd);
-        if(!start || !end) return false;
-
-        // Check if selected date is inside the week OR matches start/end
-        // Adding a slight buffer for exact matches
-        return inputTime >= start.getTime() && inputTime <= end.getTime();
-      });
-
-      renderLossTable(filtered);
-    });
-
-    document.getElementById("regionFilter").addEventListener("input", ()=>{
-      renderRegionSidebar();
-    });
-
-    document.getElementById("refreshBtn").addEventListener("click", ()=>{
-      refresh();
-    });
-
-    // ============================
-    // LIVE LOOP
-    // ============================
-    async function refresh(){
-      try {
-        setStatus("Syncing…");
-        const { wb, meta } = await fetchWorkbook();
-
-        // optional title/subtitle
-        const cws = wb.Sheets[CONSOLIDATED_SHEET];
-        if (cws){
-          const title = readCell(cws, TITLE_CELL);
-          const subtitle = readCell(cws, SUBTITLE_CELL);
-          if (title) document.getElementById("dashTitle").textContent = String(title);
-          if (subtitle) document.getElementById("dashSubtitle").textContent = String(subtitle);
-        }
-
-        // parse region sheets
-        regionSeries = {};
-        for (const r of REGION_SHEETS){
-          if (r.id === "ALL") continue;
-          const ws = wb.Sheets[r.sheet];
-          regionSeries[r.id] = ws ? parseRegionSheet(ws) : [];
-        }
-
-        // compute ALL
-        regionSeries["ALL"] = sumRegionsByWeek(regionSeries);
-
-        // keep selection
-        weekly = sortWeeksDesc(regionSeries[activeRegionId] || regionSeries["ALL"] || []);
+    const top = rows.slice(0, 8);
+    top.forEach(r=>{
+      const b = pmBadge(r.pctMargin);
+      const div = document.createElement("div");
+      div.className = "chip rounded-2xl p-3";
+      div.innerHTML = `
+        <div class="flex items-center justify-between">
+          <div class="text-sm font-semibold">${r.name}</div>
+          <div class="text-xs ${b.cls} font-semibold">${b.label}</div>
+        </div>
+        <div class="mt-2 text-xs text-white/60">Revenue</div>
+        <div class="text-lg font-extrabold">${fmtUSD(r.revenue)}</div>
+        <div class="mt-1 text-xs text-white/60">% Margin</div>
+        <div class="text-base font-semibold">${(r.pctMargin||0).toFixed(2)}%</div>
+      `;
+      div.addEventListener("click", ()=>{
+        activeRegionId = r.id;
+        $("activeRegionPill") && ($("activeRegionPill").textContent = r.id);
+        weekly = sortWeeksDesc(regionSeries[activeRegionId] || []);
         latestWeek = weekly[0] || null;
-
-        if (!latestWeek) throw new Error("No valid weekly rows found across region sheets.");
-
-        const fetchedAt = meta?.fetchedAt ? new Date(meta.fetchedAt) : new Date();
-        document.getElementById("lastSyncLabel").textContent = `Last sync: ${fetchedAt.toLocaleString()} • ${meta.fileName || ""}`;
-
-        document.getElementById("activeRegionPill").textContent = activeRegionId;
-
         renderRegionSidebar();
         renderAll();
-      } catch (err) {
-        console.error(err);
-        setStatus(`Sync failed: ${String(err?.message || err)}`);
+        setActiveView("overview");
+      });
+      grid.appendChild(div);
+    });
+  }
+
+  function renderRegionsView(){
+    ensureViewContainers();
+    if ($("regionsActivePill")) $("regionsActivePill").textContent = activeRegionId;
+
+    const grid = $("regionKpiGrid");
+    if (!grid) return;
+    grid.innerHTML = "";
+
+    const series = sortWeeksDesc(regionSeries[activeRegionId] || []);
+    const w0 = series[0];
+    const w1 = series[1];
+
+    if (!w0){
+      grid.innerHTML = `<div class="text-white/60 text-sm">No data for this region.</div>`;
+      return;
+    }
+
+    const delta = (a,b)=> (safeNum(a) - safeNum(b));
+    const pct = (a,b)=> ( (delta(a,b) / Math.max(1, Math.abs(safeNum(b)))) * 100 );
+
+    const cards = [
+      { title:"Revenue", val: fmtUSD(w0.revenue), sub: w1 ? `${pct(w0.revenue, w1.revenue).toFixed(1)}% vs prior` : "—" },
+      { title:"Total Expense", val: fmtUSD(w0.totalExp), sub: w1 ? `${pct(w0.totalExp, w1.totalExp).toFixed(1)}% vs prior` : "—" },
+      { title:"% Margin", val: `${(w0.pctMargin||0).toFixed(2)}%`, sub: w1 ? `${delta(w0.pctMargin, w1.pctMargin).toFixed(2)} pts vs prior` : "—" },
+      { title:"Maintenance", val: fmtUSD(w0.maintenance), sub: w1 ? `${pct(w0.maintenance, w1.maintenance).toFixed(1)}% vs prior` : "—" },
+      { title:"Fuel", val: fmtUSD(w0.fuel), sub: w1 ? `${pct(w0.fuel, w1.fuel).toFixed(1)}% vs prior` : "—" },
+      { title:"Payroll", val: fmtUSD(w0.payroll), sub: w1 ? `${pct(w0.payroll, w1.payroll).toFixed(1)}% vs prior` : "—" },
+    ];
+
+    cards.forEach(c=>{
+      const div = document.createElement("div");
+      div.className = "card rounded-3xl p-4";
+      div.innerHTML = `
+        <div class="text-xs text-white/60">${c.title}</div>
+        <div class="mt-2 text-2xl font-extrabold tracking-tight">${c.val}</div>
+        <div class="mt-1 text-xs text-white/55">${c.sub}</div>
+      `;
+      grid.appendChild(div);
+    });
+  }
+
+  function renderAll(){
+    if (!latestWeek){
+      setStatus("No data");
+      // still try to render view containers
+      ensureViewContainers();
+      return;
+    }
+
+    // Always update sidebar + header pill
+    if ($("activeRegionPill")) $("activeRegionPill").textContent = activeRegionId;
+
+    // Overview always updates its base elements
+    renderKpis();
+    renderTrendChart();
+    renderMixChart();
+    renderHistoryTable();
+    setStatus(`OK (${activeRegionId})`);
+
+    // View-specific
+    if (_activeView === "analytics") renderAnalytics();
+    if (_activeView === "regions") renderRegionsView();
+    if (_activeView === "loss") renderLossOnlyTable();
+  }
+
+  // ============================
+  // EVENTS
+  // ============================
+  $("toggleBaseline")?.addEventListener("click", () => {
+    showBaseline = !showBaseline;
+    renderTrendChart();
+  });
+
+  $("exportBtn")?.addEventListener("click", () => {
+    const payload = { generatedAt: new Date().toISOString(), activeRegionId, latestWeek, weekly };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `weekly_snapshot_${activeRegionId}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+
+  $("resetBtn")?.addEventListener("click", () => {
+    const si = $("searchInput");
+    if (si) si.value = "";
+    renderHistoryTable();
+  });
+
+  // Date filter (type="date")
+  $("searchInput")?.addEventListener("change", (e) => {
+    const val = e.target.value; // YYYY-MM-DD
+    if (!val) return renderHistoryTable();
+
+    const inputDate = new Date(val + "T12:00:00");
+    const inputTime = inputDate.getTime();
+
+    const filtered = (weekly || []).filter(w => {
+      const start = asDate(w.weekStart);
+      const end = asDate(w.weekEnd);
+      if (!start || !end) return false;
+      return inputTime >= start.getTime() && inputTime <= end.getTime();
+    });
+
+    renderHistoryTable(filtered);
+  });
+
+  $("regionFilter")?.addEventListener("input", () => {
+    renderRegionSidebar();
+  });
+
+  // ✅ Refresh button should call refresh()
+  $("refreshBtn")?.addEventListener("click", () => {
+    refresh();
+  });
+
+  // ============================
+  // LIVE LOOP
+  // ============================
+  async function refresh() {
+    try {
+      setStatus("Syncing…");
+      const { wb, meta } = await fetchWorkbook();
+
+      // title/subtitle from consolidated
+      const cws = wb.Sheets[CONSOLIDATED_SHEET];
+      if (cws) {
+        const title = readCell(cws, TITLE_CELL);
+        const subtitle = readCell(cws, SUBTITLE_CELL);
+        if (title && $("dashTitle")) $("dashTitle").textContent = String(title);
+        if (subtitle && $("dashSubtitle")) $("dashSubtitle").textContent = String(subtitle);
       }
-    }
 
-    function start(){
-      refresh();
-      if (_timer) clearInterval(_timer);
-      _timer = setInterval(refresh, POLL_MS);
-    }
+      // parse region sheets
+      regionSeries = {};
+      for (const r of REGION_SHEETS) {
+        if (r.id === "ALL") continue;
+        const ws = wb.Sheets[r.sheet];
+        regionSeries[r.id] = ws ? parseRegionSheet(ws) : [];
+      }
 
-    start();
-  </script>
+      // compute ALL
+      regionSeries["ALL"] = sumRegionsByWeek(regionSeries);
+
+      // keep selection
+      weekly = sortWeeksDesc(regionSeries[activeRegionId] || regionSeries["ALL"] || []);
+      latestWeek = weekly[0] || null;
+
+      if (!latestWeek) throw new Error("No valid weekly rows found across region sheets.");
+
+      const fetchedAt = meta?.fetchedAt ? new Date(meta.fetchedAt) : new Date();
+      const lastSync = $("lastSyncLabel");
+      if (lastSync) lastSync.textContent = `Last sync: ${fetchedAt.toLocaleString()} • ${meta.fileName || ""}`;
+
+      // Ensure view containers exist and nav works
+      ensureViewContainers();
+      attachNavHandlers();
+
+      // Update sidebar + render
+      renderRegionSidebar();
+      renderAll();
+
+    } catch (err) {
+      console.error(err);
+      setStatus(`Sync failed: ${String(err?.message || err)}`);
+    }
+  }
+
+  function start() {
+    // Ensure view containers even before first refresh if possible
+    ensureViewContainers();
+    attachNavHandlers();
+
+    // default view is overview
+    setActiveView("overview");
+
+    refresh();
+    if (_timer) clearInterval(_timer);
+    _timer = setInterval(refresh, POLL_MS);
+  }
+
+  start();
+</script>
+
 </body>
 </html>
