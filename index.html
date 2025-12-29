@@ -73,7 +73,7 @@
             <div class="mt-6">
               <div class="text-xs text-white/60 mb-2">Driver filter</div>
               <div class="card rounded-2xl p-2">
-                <select id="driverSelect" class="w-full bg-transparent outline-none px-2 py-2 text-sm">
+                <select id="driverSelect" class="grid w-full cursor-default grid-cols-1 rounded-md bg-white py-1.5 pr-2 pl-3 text-left text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-indigo-600 sm:text-sm/6">
                   <option value="">All Drivers</option>
                 </select>
               </div>
@@ -167,8 +167,8 @@
             </div>
 
             <!-- CHARTS -->
-            <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
-              <div class="card rounded-3xl p-4">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              <div class="card rounded-3xl p-4 lg:col-span-2">
                 <div class="flex items-center justify-between">
                   <div>
                     <div class="text-sm font-semibold">Margin Trend</div>
@@ -183,13 +183,14 @@
                 </div>
               </div>
 
-              <div class="card rounded-3xl p-4">
+              <div class="card rounded-3xl p-4 lg-w-1/2 ">
                 <div class="text-sm font-semibold">Expense Mix</div>
                 <div class="text-xs text-white/55 mt-1">Latest week categories</div>
                 <div class="mt-3 bg-black/40 border border-white/10 rounded-2xl p-3 flex justify-center">
-                  <canvas id="mixChart" height="140"></canvas>
+                  <canvas id="mixChart" height="100"></canvas>
                 </div>
                 <div id="mixLegend" class="mt-3 grid grid-cols-3 gap-2 text-xs text-white/70"></div>
+   </div>
               </div>
             </div>
 
@@ -342,16 +343,15 @@
   const RUNNING_SHEET_NAME = "Running Sheet";
 
   const RUNNING_SCHEMA = {
-    dataHeaderRowIndex0: 2,  // Matches Row 3 in the sheet
-    dateCol: "D",            // Matches the "Date" column
+    dataHeaderRowIndex0: 2,  // Row 3
+    dateCol: "D",
     areas: [
-      { id:"CST", name:"Coast", start:"E", end:"N" },        // Corrected from EE
-      { id:"RBG", name:"Roseburg", start:"P", end:"Y" },     // Corrected from PP
+      { id:"CST", name:"Coast", start:"EE", end:"NN" },
+      { id:"RBG", name:"Roseburg", start:"PP", end:"YY" },
       { id:"EUG", name:"Eugene", start:"AA", end:"AJ" },
       { id:"OKRDG", name:"Oakridge", start:"AL", end:"AU" },
       { id:"ALBNY", name:"Albany", start:"AW", end:"BF" },
-      { id:"MDVCR", name:"ModivCare", start:"BG", end:"BP" },
-      { id:"DMT", name:"DMT", start:"BR", end:"CA" }         // Added missing DMT section
+      { id:"MDVCR", name:"Modivcare", start:"BG", end:"BP" }
     ],
     offsets: {
       driver: 0,
