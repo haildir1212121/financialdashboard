@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>NEMT Dashboard — Overview + Drivers</title>
+  <title>NEMT Dashboard — DLX</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
@@ -14,396 +14,359 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
   <style>
+    /* 1. GLOBAL & BACKGROUND */
     html, body { height:100%; }
-    body { font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background:#070707; color:#fff; }
-    .panel { background:#0b0b0b; border:1px solid rgba(255,255,255,0.10); }
-    .card  { background:#0f0f0f; border:1px solid rgba(255,255,255,0.10); }
-    .chip  { background:#111; border:1px solid rgba(255,255,255,0.12); }
-    .thin-scroll::-webkit-scrollbar{ width:10px; height:10px; }
-    .thin-scroll::-webkit-scrollbar-track{ background: rgba(255,255,255,0.04); border-radius: 999px; }
-    .thin-scroll::-webkit-scrollbar-thumb{ background: rgba(255,255,255,0.14); border-radius: 999px; }
-    .thin-scroll::-webkit-scrollbar-thumb:hover{ background: rgba(255,255,255,0.20); }
+    body { 
+      font-family: 'Inter', system-ui, sans-serif; 
+      background: #050505; 
+      background-image: radial-gradient(circle at 50% 0%, #1e1e24 0%, #050505 60%);
+      color: #e2e8f0; 
+      overflow: hidden; 
+    }
+
+    /* 2. GLASSMORPHISM CARDS */
+    .panel { 
+      background: rgba(13, 13, 13, 0.6); 
+      backdrop-filter: blur(12px); 
+      border: 1px solid rgba(255,255,255,0.08); 
+    }
+    .card  { 
+      background: rgba(255, 255, 255, 0.03); 
+      border: 1px solid rgba(255,255,255,0.06); 
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+      transition: transform 0.2s ease, border-color 0.2s;
+    }
+    .card:hover { border-color: rgba(255,255,255,0.12); }
+    
+    .chip  { background: rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); }
+
+    /* 3. SCROLLBARS */
+    .thin-scroll::-webkit-scrollbar{ width:6px; height:6px; }
+    .thin-scroll::-webkit-scrollbar-track{ background: transparent; }
+    .thin-scroll::-webkit-scrollbar-thumb{ background: #333; border-radius: 99px; }
+    .thin-scroll::-webkit-scrollbar-thumb:hover{ background: #555; }
+
+    /* 4. UTILS */
     input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; opacity: 0.6; }
     input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
+    
+    /* Navigation Buttons */
+    .navbtn { width:100%; text-align:left; padding:8px 12px; border-radius:10px; border:1px solid transparent; transition: all 0.2s; color: #94a3b8; font-size: 0.875rem; }
+    .navbtn:hover { background: rgba(255,255,255,0.05); color: #fff; }
+    .navbtn.active { 
+      background: rgba(99, 102, 241, 0.1); 
+      border-color: rgba(99, 102, 241, 0.2); 
+      color: #818cf8; 
+      font-weight: 600; 
+    }
 
-    .navbtn { width:100%; text-align:left; padding:10px 12px; border-radius:12px; border:1px solid transparent; }
-    .navbtn:hover { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.10); }
-    .navbtn.active { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.12); font-weight: 700; }
-
-    .hiddenView { display:none; }
+    .hiddenView { display:none !important; }
   </style>
 </head>
 
 <body>
-  <div class="mx-auto max-w-[1500px] px-4 py-6">
-    <div class="panel rounded-3xl overflow-hidden">
-      <div class="grid grid-cols-1 lg:grid-cols-12 min-h-[86vh]">
+  <div class="mx-auto max-w-[1600px] h-full p-4">
+    <div class="panel rounded-3xl overflow-hidden h-full flex flex-col lg:flex-row">
 
-        <!-- SIDEBAR -->
-        <aside class="lg:col-span-3 border-b lg:border-b-0 lg:border-r border-white/10 bg-black">
-          <div class="p-5">
-            <div class="flex items-center gap-3">
-              <div class="h-11 w-11 rounded-2xl bg-white/5 border border-white/10 grid place-items-center">
-                <span class="font-extrabold tracking-wide">DLX</span>
-              </div>
-              <div>
-                <div class="text-base font-semibold tracking-tight">Dashboard</div>
-                <div class="text-xs text-white/60">Weekly + Driver performance</div>
-              </div>
+      <aside class="w-full lg:w-[280px] flex-shrink-0 border-b lg:border-b-0 lg:border-r border-white/10 bg-[#0a0a0a] flex flex-col h-full">
+        
+        <div class="p-5 border-b border-white/5">
+          <div class="flex items-center gap-3">
+            <div class="h-10 w-10 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border border-white/10 grid place-items-center shadow-lg shadow-indigo-500/10">
+              <span class="font-extrabold tracking-wide text-indigo-400 text-sm">DLX</span>
             </div>
-
-            <!-- NAV -->
-            <div class="mt-5 space-y-2 text-sm">
-              <button class="navbtn active" data-view="overview">Overview</button>
-              <button class="navbtn" data-view="loss">Loss Areas</button>
-              <button class="navbtn" data-view="drivers">Drivers</button>
-            </div>
-
-            <!-- REGION FILTER -->
-            <div class="mt-6">
-              <div class="text-xs text-white/60 mb-2">Regions</div>
-              <div class="card rounded-2xl p-2">
-                <input id="regionFilter" class="w-full bg-transparent outline-none px-2 py-2 text-sm placeholder:text-white/35"
-                       placeholder="Filter regions…" />
-              </div>
-              <div id="regionList" class="mt-3 grid grid-cols-1 gap-2"></div>
-            </div>
-
-            <!-- DRIVER FILTER -->
-            <div class="mt-6">
-              <div class="text-xs text-white/60 mb-2">Driver filter</div>
-              <div class="card rounded-2xl p-2">
-                <select id="driverSelect" class="grid w-full cursor-default grid-cols-1 rounded-md bg-white py-1.5 pr-2 pl-3 text-left text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-indigo-600 sm:text-sm/6">
-                  <option value="">All Drivers</option>
-                </select>
-              </div>
-              <div class="text-[11px] text-white/50 mt-2">
-                Driver stats come from “Running Sheet”.
-              </div>
-            </div>
-
-            <!-- STATUS -->
-            <div class="mt-6 card rounded-2xl p-4">
-              <div class="text-xs text-white/60">Status</div>
-              <div id="statusLabel" class="text-xs text-white/80 mt-2">Status: —</div>
-              <div id="lastSyncLabel" class="text-xs text-white/55 mt-1">Last sync: —</div>
-              <div id="weekLabel" class="text-xs text-white/55 mt-1">Week: —</div>
-
-              <div class="mt-3 flex gap-2">
-                <button id="refreshBtn" class="flex-1 rounded-xl px-3 py-2 text-sm bg-white/5 border border-white/10 hover:bg-white/10 transition">
-                  Refresh
-                </button>
-                <button id="exportBtn" class="flex-1 rounded-xl px-3 py-2 text-sm bg-white/5 border border-white/10 hover:bg-white/10 transition">
-                  Export
-                </button>
-              </div>
+            <div>
+              <div class="text-sm font-semibold tracking-tight text-white">Dashboard</div>
+              <div class="text-[11px] text-white/50">Performance Explorer</div>
             </div>
           </div>
-        </aside>
+        </div>
 
-        <!-- MAIN -->
-        <section class="lg:col-span-9">
-          <div class="p-5 border-b border-white/10">
-            <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <div>
-                <div id="dashTitle" class="text-xl font-semibold tracking-tight">DLX/DMT Weekly Dashboard</div>
-                <div id="dashSubtitle" class="text-sm text-white/55 mt-1">Regional weekly performance + driver stats</div>
-              </div>
-
-              <div class="flex items-center gap-2">
-                <div class="card rounded-2xl px-3 py-2 flex items-center gap-2 w-[320px] max-w-full">
-                  <span class="text-white/50 text-sm">📅</span>
-                  <input type="date" id="searchInput"
-                         class="bg-transparent outline-none w-full text-sm placeholder:text-white/35 text-white/90 [color-scheme:dark]" />
-                </div>
-                <div class="flex gap-2">
-                  <div id="activeRegionPill" class="chip rounded-2xl px-3 py-2 text-sm font-semibold">ALL</div>
-                  <div id="activeDriverPill" class="chip rounded-2xl px-3 py-2 text-sm font-semibold">ALL</div>
-                </div>
-              </div>
+        <div class="flex-1 overflow-y-auto thin-scroll p-3 space-y-6">
+          
+          <div>
+            <div class="text-[10px] uppercase tracking-wider text-white/40 font-bold mb-2 pl-2">Global</div>
+            <div class="space-y-1">
+              <button class="navbtn active group flex items-center gap-3" data-view="overview" onclick="resetToGlobal()">
+                <span class="p-1 rounded bg-white/5 text-white/60 group-hover:text-white transition">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                </span>
+                Overview
+              </button>
+              <button class="navbtn group flex items-center gap-3" data-view="loss" onclick="activeView='loss'; setView('loss');">
+                 <span class="p-1 rounded bg-white/5 text-white/60 group-hover:text-white transition">
+                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"></path></svg>
+                 </span>
+                 Loss Areas
+              </button>
             </div>
           </div>
 
-          <!-- OVERVIEW VIEW -->
-          <div id="view-overview" class="p-5 space-y-4">
+          <div>
+            <div class="flex items-center justify-between mb-2 pl-2 pr-1">
+              <div class="text-[10px] uppercase tracking-wider text-white/40 font-bold">Regions</div>
+              <div class="text-[10px] text-white/30" id="regionCountLabel">...</div>
+            </div>
+            
+            <div id="regionTreeList" class="space-y-1"></div>
+          </div>
+        
+        </div>
 
-            <!-- KPIS -->
-            <div class="grid grid-cols-2 xl:grid-cols-2 gap-4">
-              <div class="card rounded-3xl p-4">
-                <div class="flex items-center justify-between">
-                  <div class="text-xs text-white/60">Revenue</div>
-                  <div class="chip rounded-xl px-2 py-1 text-[11px]">Week</div>
-                </div>
-                <div id="kpiRevenue" class="mt-2 text-3xl font-extrabold tracking-tight">—</div>
-                <div class="mt-1 text-xs text-white/55">Gross</div>
-              </div>
+        <div class="p-4 border-t border-white/5 bg-black/20">
+          <div class="text-[10px] text-white/40 mb-3 truncate" id="lastSyncLabel">Syncing...</div>
+          <div class="flex gap-2">
+            <button id="refreshBtn" class="flex-1 rounded-lg px-3 py-2 text-xs font-medium bg-white/5 border border-white/10 hover:bg-white/10 transition text-white/80">
+              Sync
+            </button>
+            <button id="exportBtn" class="flex-1 rounded-lg px-3 py-2 text-xs font-medium bg-white/5 border border-white/10 hover:bg-white/10 transition text-white/80">
+              Export
+            </button>
+          </div>
+        </div>
+      </aside>
 
-              <div class="card rounded-3xl p-4">
-                <div class="flex items-center justify-between">
-                  <div class="text-xs text-white/60">Total Expense</div>
-                  <div class="chip rounded-xl px-2 py-1 text-[11px]">TL Exp</div>
-                </div>
-                <div id="kpiExpense" class="mt-2 text-3xl font-extrabold tracking-tight">—</div>
-                <div id="kpiExpenseSub" class="mt-1 text-xs text-white/55">—</div>
-              </div>
-
-              <div class="card rounded-3xl p-4">
-                <div class="flex items-center justify-between">
-                  <div class="text-xs text-white/60">Margin</div>
-                  <div class="chip rounded-xl px-2 py-1 text-[11px]">Net</div>
-                </div>
-                <div id="kpiMargin" class="mt-2 text-3xl font-extrabold tracking-tight">—</div>
-                <div id="kpiMarginSub" class="mt-1 text-xs text-white/55">—</div>
-              </div>
-
-              <div class="card rounded-3xl p-4">
-                <div class="flex items-center justify-between">
-                  <div class="text-xs text-white/60">Drivers</div>
-                  <div class="chip rounded-xl px-2 py-1 text-[11px]">Count</div>
-                </div>
-                <div id="kpiDrivers" class="mt-2 text-3xl font-extrabold tracking-tight">—</div>
-                <div id="kpiDriversSub" class="mt-1 text-xs text-white/55">—</div>
+      <section class="flex-1 flex flex-col h-full relative overflow-hidden">
+        
+        <div class="p-5 border-b border-white/10 flex-shrink-0 z-10 bg-[#0a0a0a]/50 backdrop-blur-md">
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            
+            <div>
+              <div id="dashTitle" class="text-xl font-bold tracking-tight text-white">Weekly Dashboard</div>
+              <div id="activeContextLabel" class="text-sm font-medium text-indigo-400 mt-0.5 flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
+                Global • Overview
               </div>
             </div>
 
-            <!-- CHARTS -->
+            <div class="flex items-center gap-2">
+              <div class="card rounded-xl px-3 py-2 flex items-center gap-3">
+                <span class="text-white/40 text-sm">Date</span>
+                <input type="date" id="searchInput"
+                       class="bg-transparent outline-none text-sm text-white/90 [color-scheme:dark] w-[130px]" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex-1 overflow-y-auto thin-scroll p-5 scroll-smooth">
+
+          <div id="view-overview" class="space-y-4 pb-10">
+
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <div class="card rounded-3xl p-5 relative overflow-hidden group">
+                <div class="absolute -right-4 -top-4 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl group-hover:bg-blue-500/20 transition"></div>
+                <div class="text-xs text-white/60 mb-1">Revenue (Week)</div>
+                <div id="kpiRevenue" class="text-2xl font-bold text-white tracking-tight">—</div>
+                <div class="text-[10px] text-white/40 mt-1">Gross income</div>
+              </div>
+
+              <div class="card rounded-3xl p-5 relative overflow-hidden group">
+                <div class="absolute -right-4 -top-4 w-24 h-24 bg-rose-500/10 rounded-full blur-2xl group-hover:bg-rose-500/20 transition"></div>
+                <div class="text-xs text-white/60 mb-1">Total Expense</div>
+                <div id="kpiExpense" class="text-2xl font-bold text-white tracking-tight">—</div>
+                <div id="kpiExpenseSub" class="text-[10px] text-white/40 mt-1 truncate">—</div>
+              </div>
+
+              <div class="card rounded-3xl p-5 relative overflow-hidden group">
+                <div class="absolute -right-4 -top-4 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl group-hover:bg-emerald-500/20 transition"></div>
+                <div class="text-xs text-white/60 mb-1">Net Margin</div>
+                <div id="kpiMargin" class="text-2xl font-bold tracking-tight text-white">—</div>
+                <div id="kpiMarginSub" class="text-[10px] text-white/40 mt-1 truncate">—</div>
+              </div>
+
+              <div class="card rounded-3xl p-5 relative overflow-hidden group">
+                <div class="absolute -right-4 -top-4 w-24 h-24 bg-purple-500/10 rounded-full blur-2xl group-hover:bg-purple-500/20 transition"></div>
+                <div class="text-xs text-white/60 mb-1">Active Drivers</div>
+                <div id="kpiDrivers" class="text-2xl font-bold text-white tracking-tight">—</div>
+                <div id="kpiDriversSub" class="text-[10px] text-white/40 mt-1 truncate">—</div>
+              </div>
+            </div>
+
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              <div class="card rounded-3xl p-4 lg:col-span-2">
-                <div class="flex items-center justify-between">
+              
+              <div class="card rounded-3xl p-5 lg:col-span-2 flex flex-col">
+                <div class="flex items-center justify-between mb-4">
                   <div>
                     <div class="text-sm font-semibold">Margin Trend</div>
-                    <div class="text-xs text-white/55 mt-1">Oldest → newest (last 16 weeks)</div>
+                    <div class="text-xs text-white/40">Last 16 active weeks</div>
                   </div>
-                  <button id="toggleBaseline" class="chip rounded-2xl px-3 py-2 text-sm hover:bg-white/10 transition">
-                    Toggle baseline
+                  <button id="toggleBaseline" class="text-[10px] border border-white/10 rounded px-2 py-1 text-white/50 hover:text-white hover:bg-white/5 transition">
+                    Toggle Avg
                   </button>
                 </div>
-                <div class="mt-3 bg-black/40 border border-white/10 rounded-2xl p-3">
-                  <canvas id="trendChart" height="120"></canvas>
+                <div class="relative flex-1 min-h-[240px]">
+                  <canvas id="trendChart"></canvas>
                 </div>
               </div>
 
-              <div class="card rounded-3xl p-4 lg-w-1/2 ">
-                <div class="text-sm font-semibold">Expense Mix</div>
-                <div class="text-xs text-white/55 mt-1">Latest week categories</div>
-                <div class="mt-3 bg-black/40 border border-white/10 rounded-2xl p-3 flex justify-center">
-                  <canvas id="mixChart" height="100"></canvas>
+              <div class="card rounded-3xl p-5 flex flex-col">
+                <div class="text-sm font-semibold mb-1">Expense Mix</div>
+                <div class="text-xs text-white/40 mb-4">Current week breakdown</div>
+                <div class="relative flex-1 flex justify-center items-center min-h-[140px]">
+                  <canvas id="mixChart"></canvas>
                 </div>
-                <div id="mixLegend" class="mt-3 grid grid-cols-3 gap-2 text-xs text-white/70"></div>
-   </div>
+                <div id="mixLegend" class="mt-4 grid grid-cols-3 gap-2"></div>
               </div>
             </div>
 
-            <!-- WEEKLY TABLE -->
-            <div class="card rounded-3xl p-4">
-              <div class="flex items-center justify-between">
-                <div>
-                  <div class="text-sm font-semibold">Weekly History</div>
-                  <div class="text-xs text-white/55 mt-1">Recent weeks first (region view)</div>
-                </div>
-                <button id="resetBtn" class="chip rounded-2xl px-3 py-2 text-sm hover:bg-white/10 transition">
-                  Reset
-                </button>
+            <div class="card rounded-3xl p-0 overflow-hidden flex flex-col max-h-[600px]">
+              <div class="p-4 border-b border-white/5 flex justify-between items-center bg-white/5">
+                <div class="font-semibold text-sm">Weekly History</div>
+                <div class="text-xs text-white/40">All recorded weeks</div>
               </div>
-
-              <div class="mt-3 thin-scroll max-h-[520px] overflow-y-auto">
-                <table class="min-w-full text-sm">
-                  <thead class="text-white/60">
-                    <tr class="border-b border-white/10">
-                      <th class="py-2 text-left font-medium">Week</th>
-                      <th class="py-2 text-left font-medium">% Margin</th>
-                      <th class="py-2 text-left font-medium">Revenue</th>
-                      <th class="py-2 text-left font-medium">TL Exp</th>
-                      <th class="py-2 text-left font-medium">Margin</th>
-                      <th class="py-2 text-left font-medium">Signal</th>
+              
+              <div class="thin-scroll overflow-y-auto flex-1">
+                <table class="w-full text-left text-sm border-collapse">
+                  <thead class="sticky top-0 bg-[#151515] text-white/50 text-xs uppercase tracking-wider z-10 shadow-lg">
+                    <tr>
+                      <th class="py-3 px-4 font-medium">Week</th>
+                      <th class="py-3 px-4 font-medium">% Margin</th>
+                      <th class="py-3 px-4 font-medium">Revenue</th>
+                      <th class="py-3 px-4 font-medium">TL Exp</th>
+                      <th class="py-3 px-4 font-medium">Margin</th>
+                      <th class="py-3 px-4 font-medium">Signal</th>
                     </tr>
                   </thead>
-                  <tbody id="lossTableBody" class="divide-y divide-white/10"></tbody>
+                  <tbody id="lossTableBody" class="divide-y divide-white/5 text-white/80">
+                    </tbody>
+                </table>
+              </div>
+            </div>
+          </div> <div id="view-loss" class="space-y-4 hiddenView pb-10">
+            <div class="card rounded-3xl p-0 overflow-hidden flex flex-col max-h-[80vh]">
+              <div class="p-4 border-b border-white/5 bg-rose-500/5">
+                <div class="font-semibold text-sm text-rose-200">Loss Areas</div>
+                <div class="text-xs text-white/40">Weeks with negative or low margin</div>
+              </div>
+              <div class="thin-scroll overflow-y-auto flex-1">
+                <table class="w-full text-left text-sm border-collapse">
+                  <thead class="sticky top-0 bg-[#151515] text-white/50 text-xs uppercase tracking-wider z-10">
+                    <tr>
+                      <th class="py-3 px-4">Week / Source</th>
+                      <th class="py-3 px-4">% Margin</th>
+                      <th class="py-3 px-4">Revenue</th>
+                      <th class="py-3 px-4">TL Exp</th>
+                      <th class="py-3 px-4">Margin</th>
+                      <th class="py-3 px-4">Analysis</th>
+                    </tr>
+                  </thead>
+                  <tbody id="lossAreasBody" class="divide-y divide-white/5 text-white/80"></tbody>
                 </table>
               </div>
             </div>
           </div>
 
-          <!-- LOSS VIEW -->
-          <div id="view-loss" class="p-5 space-y-4 hiddenView">
-            <div class="card rounded-3xl p-4">
-              <div class="text-sm font-semibold">Loss Areas</div>
-              <div class="text-xs text-white/55 mt-1">
-                Worst weeks first for current selection.
-                (Region = main weekly sheets, Driver = Running Sheet rollup.)
-              </div>
 
-              <div class="mt-3 thin-scroll max-h-[720px] overflow-y-auto">
-                <table class="min-w-full text-sm">
-                  <thead class="text-white/60">
-                    <tr class="border-b border-white/10">
-                      <th class="py-2 text-left font-medium">Week</th>
-                      <th class="py-2 text-left font-medium">% Margin</th>
-                      <th class="py-2 text-left font-medium">Revenue</th>
-                      <th class="py-2 text-left font-medium">TL Exp</th>
-                      <th class="py-2 text-left font-medium">Margin</th>
-                      <th class="py-2 text-left font-medium">Signal</th>
-                    </tr>
-                  </thead>
-                  <tbody id="lossAreasBody" class="divide-y divide-white/10"></tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-
-          <!-- DRIVERS VIEW -->
-          <div id="view-drivers" class="p-5 space-y-4 hiddenView">
-            <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
-              <div class="card rounded-3xl p-4">
-                <div class="text-sm font-semibold">Driver Weekly History</div>
-                <div class="text-xs text-white/55 mt-1">Select a driver to populate.</div>
-
-                <div class="mt-3 thin-scroll max-h-[680px] overflow-y-auto">
-                  <table class="min-w-full text-sm">
-                    <thead class="text-white/60">
-                      <tr class="border-b border-white/10">
-                        <th class="py-2 text-left font-medium">Week</th>
-                        <th class="py-2 text-left font-medium">% Margin</th>
-                        <th class="py-2 text-left font-medium">Revenue</th>
-                        <th class="py-2 text-left font-medium">TL Exp</th>
-                        <th class="py-2 text-left font-medium">Margin</th>
-                        <th class="py-2 text-left font-medium">Hours</th>
+          <div id="view-drivers" class="space-y-4 hiddenView pb-10">
+            <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 h-full">
+              
+              <div class="card rounded-3xl p-0 overflow-hidden flex flex-col max-h-[75vh]">
+                <div class="p-4 border-b border-white/5 bg-white/5">
+                  <div class="font-semibold text-sm">Driver History</div>
+                  <div class="text-xs text-white/40">Weekly performance aggregation</div>
+                </div>
+                <div class="thin-scroll overflow-y-auto flex-1">
+                  <table class="w-full text-left text-sm">
+                    <thead class="sticky top-0 bg-[#151515] text-white/50 text-xs uppercase tracking-wider z-10">
+                      <tr>
+                        <th class="py-3 px-4">Week</th>
+                        <th class="py-3 px-4">% Margin</th>
+                        <th class="py-3 px-4">Revenue</th>
+                        <th class="py-3 px-4">Margin</th>
+                        <th class="py-3 px-4">Hours</th>
                       </tr>
                     </thead>
-                    <tbody id="driverWeeklyBody" class="divide-y divide-white/10"></tbody>
+                    <tbody id="driverWeeklyBody" class="divide-y divide-white/5 text-white/80"></tbody>
                   </table>
                 </div>
               </div>
 
-              <div class="card rounded-3xl p-4">
-                <div class="text-sm font-semibold">Latest Week Region Breakdown</div>
-                <div class="text-xs text-white/55 mt-1">For selected driver only.</div>
-
-                <div class="mt-3 thin-scroll max-h-[680px] overflow-y-auto">
-                  <table class="min-w-full text-sm">
-                    <thead class="text-white/60">
-                      <tr class="border-b border-white/10">
-                        <th class="py-2 text-left font-medium">Region</th>
-                        <th class="py-2 text-left font-medium">Revenue</th>
-                        <th class="py-2 text-left font-medium">TL Exp</th>
-                        <th class="py-2 text-left font-medium">Margin</th>
-                        <th class="py-2 text-left font-medium">Hours</th>
+              <div class="card rounded-3xl p-0 overflow-hidden flex flex-col h-auto">
+                <div class="p-4 border-b border-white/5 bg-white/5">
+                  <div class="font-semibold text-sm">Region Breakdown</div>
+                  <div class="text-xs text-white/40">Latest week split by area</div>
+                </div>
+                <div class="thin-scroll overflow-y-auto flex-1">
+                  <table class="w-full text-left text-sm">
+                    <thead class="sticky top-0 bg-[#151515] text-white/50 text-xs uppercase tracking-wider z-10">
+                      <tr>
+                        <th class="py-3 px-4">Region</th>
+                        <th class="py-3 px-4">Revenue</th>
+                        <th class="py-3 px-4">Margin</th>
+                        <th class="py-3 px-4">Hours</th>
                       </tr>
                     </thead>
-                    <tbody id="driverRegionBody" class="divide-y divide-white/10"></tbody>
+                    <tbody id="driverRegionBody" class="divide-y divide-white/5 text-white/80"></tbody>
                   </table>
                 </div>
               </div>
+
             </div>
           </div>
 
-        </section>
-      </div>
+        </div> </section>
     </div>
   </div>
 
 <script>
-  // ============================
   // CONFIG
-  // ============================
   const WORKER_URL = "https://withered-king-c48e.haildir12121.workers.dev/";
   const POLL_MS = 120000;
 
   const REGION_SHEETS = [
-    { id: "ALL", name: "All Areas (Sum)", sheet: null }, // computed
+    { id: "ALL", name: "All Areas (Sum)", sheet: null },
     { id: "CST", name: "Coast", sheet: "CST.Wkly" },
     { id: "EUG", name: "Eugene", sheet: "EUG.Wkly" },
     { id: "RBG", name: "Roseburg", sheet: "RBG.Wkly" },
     { id: "OKRDG", name: "Oakridge", sheet: "OKRDG.Wkly" },
-    { id: "MDVCR", name: "Mid-Valley/Corvallis", sheet: "MDVCR.Wkly" },
     { id: "ALBNY", name: "Albany", sheet: "ALBNY.Wkly" },
     { id: "DMT", name: "DMT", sheet: "DMT.Wkly" }
   ];
 
-  const COLMAP = {
-    weekStart: "P",
-    weekEnd: "Q",
-    driverCount: "R",
-    hoursWorked: "S",
-    payroll: "T",
-    fuel: "U",
-    insurance: "V",
-    maintenance: "W",
-    billbacks: "X",
-    totalExp: "Y",
-    revenue: "Z",
-    margin: "AA",
-    pctMargin: "AB",
-  };
-
-  const CONSOLIDATED_SHEET = "ConsolidatedWkly";
-  const TITLE_CELL = "P1";
-  const SUBTITLE_CELL = "P2";
-
   const RUNNING_SHEET_NAME = "Running Sheet";
-
+  
+  // UPDATED SCHEMA: Fixed letters based on user request
   const RUNNING_SCHEMA = {
-    dataHeaderRowIndex0: 2,  // Row 3
+    dataHeaderRowIndex0: 2, // Row 3
     dateCol: "D",
     areas: [
-      { id:"CST", name:"Coast", start:"EE", end:"NN" },
-      { id:"RBG", name:"Roseburg", start:"PP", end:"YY" },
-      { id:"EUG", name:"Eugene", start:"AA", end:"AJ" },
-      { id:"OKRDG", name:"Oakridge", start:"AL", end:"AU" },
-      { id:"ALBNY", name:"Albany", start:"AW", end:"BF" },
-      { id:"MDVCR", name:"Modivcare", start:"BG", end:"BP" }
+      { id: "CST",   name: "Coast",    start: "E",  end: "O"  },
+      { id: "RBG",   name: "Roseburg", start: "P",  end: "Z"  },
+      { id: "EUG",   name: "Eugene",   start: "AA", end: "AK" },
+      { id: "OKRDG", name: "Oakridge", start: "AL", end: "AV" },
+      { id: "ALBNY", name: "Albany",   start: "AW", end: "BG" },
+      { id: "DMT",   name: "DMT",      start: "BR", end: "CB" }
     ],
-    offsets: {
-      driver: 0,
-      hours: 1,
-      payroll: 2,
-      fuel: 3,
-      insurance: 4,
-      maintenance: 5,
-      totalExp: 7,
-      revenue: 8,
-      margin: 9
-    }
+    offsets: { driver:0, hours:1, payroll:2, fuel:3, insurance:4, maintenance:5, totalExp:7, revenue:8, margin:9 }
   };
 
-  // ============================
+  const COLMAP = {
+    weekStart: "P", weekEnd: "Q", driverCount: "R", hoursWorked: "S",
+    payroll: "T", fuel: "U", insurance: "V", maintenance: "W", billbacks: "X",
+    totalExp: "Y", revenue: "Z", margin: "AA", pctMargin: "AB"
+  };
+
   // STATE
-  // ============================
   let regionSeries = {};
   let activeRegionId = "ALL";
   let weekly = [];
   let latestWeek = null;
+  let activeView = "overview";
+
+  let driverIndex = {};      
+  let activeDriver = "";
+  let driverWeekly = [];     
 
   let trendChart = null;
   let mixChart = null;
   let showBaseline = true;
   let _timer = null;
 
-  let activeView = "overview";
+  // --- HELPERS ---
 
-  // Driver state
-  let driverIndex = {};      // driverName -> { rows: [...] }
-  let activeDriver = "";
-  let driverWeekly = [];     // aggregated weeks for that driver
-
-  // ============================
-  // HELPERS
-  // ============================
-  function setStatus(text){
-    const el = document.getElementById("statusLabel");
-    if (el) el.textContent = `Status: ${text}`;
-  }
-
-  function fmtUSD(n){
-    return Number(n||0).toLocaleString(undefined,{style:"currency",currency:"USD",maximumFractionDigits:0});
-  }
-
-  function safeNum(v){
-    if (typeof v === "number") return isFinite(v) ? v : 0;
-    if (v == null) return 0;
-    const s = String(v).replace(/[^0-9.\-]/g,"");
-    const n = parseFloat(s);
-    return isFinite(n) ? n : 0;
+  function fmtUSD(n){ 
+    return Number(n||0).toLocaleString('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}); 
   }
 
   function asDate(v){
@@ -418,140 +381,74 @@
 
   function niceDate(v){
     const d = asDate(v);
-    if (!d) return String(v||"");
-    return `${d.getMonth()+1}/${d.getDate()}/${d.getFullYear()}`;
+    return d ? `${d.getMonth()+1}/${d.getDate()}/${d.getFullYear()}` : "";
+  }
+
+  function safeNum(v){
+    if(typeof v === 'number') return isFinite(v)?v:0;
+    const s = String(v).replace(/[^0-9.\-]/g,"");
+    const n = parseFloat(s);
+    return isFinite(n)?n:0;
   }
 
   function colToIndex(col){
-    let n = 0;
-    const s = String(col).toUpperCase().trim();
-    for (let i=0;i<s.length;i++) n = n * 26 + (s.charCodeAt(i) - 64);
-    return n - 1;
-  }
-
-  function weekTimestamp(w){
-    const d = asDate(w.weekEnd) || asDate(w.weekStart);
-    return d ? d.getTime() : -Infinity;
+    let n=0; const s=String(col).toUpperCase().trim();
+    for(let i=0;i<s.length;i++) n=n*26+(s.charCodeAt(i)-64);
+    return n-1;
   }
 
   function sortWeeksDesc(arr){
-    return (arr || []).slice().sort((a,b)=> weekTimestamp(b) - weekTimestamp(a));
-  }
-
-  function weekKey(weekStart, weekEnd){
-    return `${niceDate(weekStart)}|${niceDate(weekEnd)}`;
-  }
-
-  function readCell(ws, addr){
-    return ws?.[addr]?.v ?? "";
-  }
-
-  function pmBadge(pm){
-    if (!isFinite(pm)) return { label:"—", cls:"text-white/70" };
-    if (pm < 0) return { label:"LOSS", cls:"text-rose-300" };
-    if (pm < 5) return { label:"RISK", cls:"text-amber-200" };
-    return { label:"OK", cls:"text-emerald-200" };
-  }
-
-  function buildSignal(w){
-    const pm = w.pctMargin || 0;
-    if (pm < 0) return "Loss week. Check payroll, maintenance, and fuel burdens.";
-    if (pm < 5) return "Low margin. Investigate expense spikes and underpriced weeks.";
-    return "Healthy week.";
+    return (arr||[]).slice().sort((a,b)=> {
+      const da = asDate(a.weekEnd)||asDate(a.weekStart);
+      const db = asDate(b.weekEnd)||asDate(b.weekStart);
+      return (db?db.getTime():0) - (da?da.getTime():0);
+    });
   }
 
   function getWeekRangeForDate(d){
     const dt = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 12, 0, 0);
-    const day = dt.getDay();
-    const SAT = 6;
-    const diffToSat = (day - SAT + 7) % 7;
+    const day = dt.getDay(); 
+    const diffToSat = (day - 6 + 7) % 7; 
     const start = new Date(dt); start.setDate(dt.getDate() - diffToSat);
     const end = new Date(start); end.setDate(start.getDate() + 6);
-    return { start, end, key: weekKey(start, end) };
+    return { start, end, key: `${niceDate(start)}|${niceDate(end)}` };
   }
 
-  // ============================
-  // FETCH + XLSX
-  // ============================
-  async function fetchWorkbook(){
-    const res = await fetch(WORKER_URL, { cache: "no-store" });
-    if (!res.ok) throw new Error(`Fetch failed (${res.status})`);
+  // --- DATA PROCESSING ---
 
-    const fileName = res.headers.get("X-File-Name") || "shared-file.xlsx";
-    const fetchedAt = res.headers.get("X-Fetched-At") || new Date().toISOString();
-
-    const bytes = await res.arrayBuffer();
-    const wb = XLSX.read(bytes, { type: "array" });
-
-    return { wb, meta: { fileName, fetchedAt } };
-  }
-
-  // ============================
-  // PARSE REGION WEEKLY TABLE (P..AB)
-  // ============================
   function parseRegionSheet(ws){
     const aoa = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
-
     const idx = {};
     for (const [k, col] of Object.entries(COLMAP)) idx[k] = colToIndex(col);
 
-    const P = idx.weekStart;
-    const Q = idx.weekEnd;
-
-    const hasWord = (v, word) => String(v||"").toLowerCase().includes(word);
-
-    let headerRow = -1;
-    for (let r=0; r<Math.min(140, aoa.length); r++){
-      const row = aoa[r] || [];
-      const z = row[idx.revenue];
-      const aa = row[idx.margin];
-      const ab = row[idx.pctMargin];
-      const p = row[P];
-      const q = row[Q];
-
-      const looksLikeHeader =
-        (hasWord(p,"week") && hasWord(q,"week")) ||
-        (hasWord(z,"revenue") && hasWord(aa,"margin")) ||
-        (hasWord(ab,"margin") && (String(ab).includes("%") || hasWord(ab,"%")));
-
-      if (looksLikeHeader) { headerRow = r; break; }
+    let headerRow = 2; 
+    for (let r=0; r<Math.min(100, aoa.length); r++){
+       const row = aoa[r]||[];
+       if(String(row[idx.pctMargin]||"").includes("%")) { headerRow=r; break; }
     }
-    if (headerRow === -1) headerRow = 2;
-
-    const dataStart = headerRow + 1;
 
     const out = [];
-    for (let r = dataStart; r < aoa.length; r++){
+    for (let r = headerRow + 1; r < aoa.length; r++){
       const row = aoa[r] || [];
-      const wsVal = row[P];
-      const weVal = row[Q];
-
-      if (String(wsVal).trim()==="" && String(weVal).trim()==="") break;
+      const wsVal = row[idx.weekStart];
+      if (!wsVal) continue;
 
       const revenue = safeNum(row[idx.revenue]);
       const totalExp = safeNum(row[idx.totalExp]);
       const margin = safeNum(row[idx.margin]);
-
-      const hasMoney = Math.abs(revenue) > 0.0001 || Math.abs(totalExp) > 0.0001 || Math.abs(margin) > 0.0001;
-      if (!hasMoney) continue;
+      
+      if(Math.abs(revenue)<1 && Math.abs(totalExp)<1) continue;
 
       let pmRaw = row[idx.pctMargin];
       let pm = 0;
       if (typeof pmRaw === "number") pm = pmRaw <= 1.5 ? pmRaw * 100 : pmRaw;
-      else {
-        const n = safeNum(pmRaw);
-        pm = n <= 1.5 ? n * 100 : n;
-      }
-      if (!isFinite(pm)) pm = 0;
+      else { const n = safeNum(pmRaw); pm = n <= 1.5 ? n * 100 : n; }
 
       out.push({
         weekStart: wsVal,
-        weekEnd: weVal,
-        revenue,
-        totalExp,
-        margin,
-        pctMargin: pm,
-        driverCount: Math.round(safeNum(row[idx.driverCount])),
+        weekEnd: row[idx.weekEnd],
+        revenue, totalExp, margin, pctMargin: pm,
+        driverCount: safeNum(row[idx.driverCount]),
         hoursWorked: safeNum(row[idx.hoursWorked]),
         payroll: safeNum(row[idx.payroll]),
         fuel: safeNum(row[idx.fuel]),
@@ -565,66 +462,42 @@
 
   function sumRegionsByWeek(seriesById){
     const map = new Map();
-    for (const [id, series] of Object.entries(seriesById || {})){
+    for (const [id, series] of Object.entries(seriesById)){
       if (id === "ALL") continue;
-      for (const w of (series || [])){
-        const key = weekKey(w.weekStart, w.weekEnd);
-        const cur = map.get(key) || {
-          weekStart: w.weekStart,
-          weekEnd: w.weekEnd,
-          revenue: 0, totalExp: 0, margin: 0, pctMargin: 0,
+      for (const w of series){
+        const key = `${niceDate(w.weekStart)}|${niceDate(w.weekEnd)}`;
+        const cur = map.get(key) || { 
+          weekStart: w.weekStart, weekEnd: w.weekEnd, 
+          revenue:0, totalExp:0, margin:0, 
           payroll:0, fuel:0, insurance:0, maintenance:0, billbacks:0,
-          driverCount:0, hoursWorked:0
+          driverCount:0, hoursWorked:0 
         };
-        cur.revenue += w.revenue || 0;
-        cur.totalExp += w.totalExp || 0;
-        cur.margin += w.margin || 0;
-
-        cur.payroll += w.payroll || 0;
-        cur.fuel += w.fuel || 0;
-        cur.insurance += w.insurance || 0;
-        cur.maintenance += w.maintenance || 0;
-        cur.billbacks += w.billbacks || 0;
-
-        cur.driverCount += w.driverCount || 0;
-        cur.hoursWorked += w.hoursWorked || 0;
-
+        cur.revenue += w.revenue; cur.totalExp += w.totalExp; cur.margin += w.margin;
+        cur.payroll += w.payroll; cur.fuel += w.fuel; cur.insurance += w.insurance;
+        cur.maintenance += w.maintenance; cur.billbacks += w.billbacks;
+        cur.driverCount += w.driverCount; cur.hoursWorked += w.hoursWorked;
         map.set(key, cur);
       }
     }
     const all = Array.from(map.values());
-    for (const w of all){
-      w.pctMargin = ((w.revenue - w.totalExp) / Math.max(1, w.revenue)) * 100;
-      if (!isFinite(w.pctMargin)) w.pctMargin = 0;
-    }
+    for(const w of all) w.pctMargin = w.revenue?((w.revenue-w.totalExp)/w.revenue)*100:0;
     return sortWeeksDesc(all);
   }
 
-  // ============================
-  // RUNNING SHEET PARSER (DRIVERS)
-  // ============================
-  function parseRunningSheetFixed(ws){
+  function parseRunningSheet(ws){
     const aoa = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
     const headerRow = RUNNING_SCHEMA.dataHeaderRowIndex0;
     const dateColIdx = colToIndex(RUNNING_SCHEMA.dateCol);
+    const areas = RUNNING_SCHEMA.areas.map(a => ({...a, startIdx: colToIndex(a.start)}));
 
-    const norm = (v) => String(v || "").trim().toLowerCase();
-
-    const areas = RUNNING_SCHEMA.areas.map(a => ({
-      ...a,
-      startIdx: colToIndex(a.start),
-      endIdx: colToIndex(a.end),
-      driverColIdx: -1
-    }));
-
+    // Find driver column dynamically
     for (const a of areas) {
-      for (let c = a.startIdx; c <= a.endIdx; c++) {
-        if (norm(aoa[headerRow]?.[c]) === "driver") {
-          a.driverColIdx = c;
-          break;
+      a.driverColIdx = a.startIdx; 
+      for (let c = a.startIdx; c <= colToIndex(a.end); c++) {
+        if (String(aoa[headerRow]?.[c]||"").toLowerCase().trim() === "driver") {
+          a.driverColIdx = c; break; 
         }
       }
-      if (a.driverColIdx < 0) a.driverColIdx = a.startIdx;
     }
 
     const out = {};
@@ -643,612 +516,516 @@
         const margin = safeNum(row[base + RUNNING_SCHEMA.offsets.margin]);
         const hours = safeNum(row[base + RUNNING_SCHEMA.offsets.hours]);
 
-        const hasMoney = Math.abs(revenue) > 0.0001 || Math.abs(totalExp) > 0.0001 || Math.abs(margin) > 0.0001 || Math.abs(hours) > 0.0001;
-        if (!hasMoney) continue;
-
-        const entry = {
-          date: d,
-          region: a.name,
-          regionId: a.id,
-          hours,
-          payroll: safeNum(row[base + RUNNING_SCHEMA.offsets.payroll]),
-          fuel: safeNum(row[base + RUNNING_SCHEMA.offsets.fuel]),
-          insurance: safeNum(row[base + RUNNING_SCHEMA.offsets.insurance]),
-          maintenance: safeNum(row[base + RUNNING_SCHEMA.offsets.maintenance]),
-          revenue, totalExp, margin
-        };
+        if (Math.abs(revenue)<0.1 && Math.abs(hours)<0.1) continue;
 
         if (!out[name]) out[name] = { rows: [] };
-        out[name].rows.push(entry);
+        out[name].rows.push({
+          date: d, region: a.name, regionId: a.id,
+          revenue, totalExp, margin, hours
+        });
       }
     }
-
-    for (const k of Object.keys(out)){
-      out[k].rows.sort((a,b)=> b.date.getTime() - a.date.getTime());
-    }
-
     return out;
-  }
-
-  function populateDriverSelect(){
-    const sel = document.getElementById("driverSelect");
-    if (!sel) return;
-
-    const keep = sel.value || "";
-    sel.innerHTML = `<option value="">All Drivers</option>`;
-
-    Object.keys(driverIndex || {})
-      .sort((a,b)=>a.localeCompare(b))
-      .forEach(name => {
-        const opt = document.createElement("option");
-        opt.value = name;
-        opt.textContent = name;
-        sel.appendChild(opt);
-      });
-
-    sel.value = keep;
   }
 
   function getDriverWeekly(driverName){
-    const rows = driverIndex?.[driverName]?.rows || [];
+    const rows = driverIndex[driverName]?.rows || [];
     const map = new Map();
-
     for (const r of rows){
       const wk = getWeekRangeForDate(r.date);
-      const key = wk.key;
-
-      const cur = map.get(key) || {
-        weekStart: wk.start,
-        weekEnd: wk.end,
-        revenue: 0,
-        totalExp: 0,
-        margin: 0,
-        pctMargin: 0,
-        hoursWorked: 0,
-        driverCount: 1
+      const cur = map.get(wk.key) || { 
+        weekStart: wk.start, weekEnd: wk.end, 
+        revenue:0, totalExp:0, margin:0, hoursWorked:0 
       };
-
-      cur.revenue += r.revenue || 0;
-      cur.totalExp += r.totalExp || 0;
-      cur.margin += r.margin || 0;
-      cur.hoursWorked += r.hours || 0;
-
-      map.set(key, cur);
+      cur.revenue += r.revenue; cur.totalExp += r.totalExp; cur.margin += r.margin;
+      cur.hoursWorked += r.hours;
+      map.set(wk.key, cur);
     }
-
-    const out = sortWeeksDesc([...map.values()]);
-    for (const w of out){
-      w.pctMargin = ((w.revenue - w.totalExp) / Math.max(1, w.revenue)) * 100;
-      if (!isFinite(w.pctMargin)) w.pctMargin = 0;
-    }
+    const out = sortWeeksDesc(Array.from(map.values()));
+    for(const w of out) w.pctMargin = w.revenue?((w.revenue-w.totalExp)/w.revenue)*100:0;
     return out;
   }
 
-  function getDriverLatestWeekRegionBreakdown(driverName){
-    const rows = driverIndex?.[driverName]?.rows || [];
-    if (!rows.length) return { regions: [], weekStart:null, weekEnd:null };
+  // --- UI RENDERING ---
 
-    const latest = getWeekRangeForDate(rows[0].date);
-    const key = latest.key;
+  function toggleRegionFolder(id){
+    const el = document.getElementById(`sub-${id}`);
+    const ic = document.getElementById(`icon-${id}`);
+    if(el){
+      el.classList.toggle("hidden");
+      if(ic) ic.style.transform = el.classList.contains("hidden") ? "rotate(0deg)" : "rotate(90deg)";
+    }
+  }
 
-    const map = new Map();
-    for (const r of rows){
-      const wk = getWeekRangeForDate(r.date);
-      if (wk.key !== key) continue;
+  function resetToGlobal(){
+    activeRegionId = "ALL";
+    activeDriver = "";
+    activeView = "overview";
+    setView("overview");
+    weekly = sortWeeksDesc(regionSeries["ALL"] || []);
+    latestWeek = weekly[0];
+    renderRegionTree();
+    renderOverview();
+  }
 
-      const cur = map.get(r.region) || { region: r.region, revenue: 0, totalExp: 0, margin: 0, hours: 0 };
-      cur.revenue += r.revenue || 0;
-      cur.totalExp += r.totalExp || 0;
-      cur.margin += r.margin || 0;
-      cur.hours += r.hours || 0;
-      map.set(r.region, cur);
+  function selectRegion(id){
+    activeRegionId = id;
+    activeDriver = "";
+    activeView = "overview";
+    
+    // Update data for the charts/table
+    weekly = sortWeeksDesc(regionSeries[id] || []);
+    latestWeek = weekly[0] || null;
+
+    setView("overview");
+    renderRegionTree();
+    renderOverview();
+  }
+
+  function selectDriver(rId, dName){
+    activeRegionId = rId;
+    activeDriver = dName;
+    activeView = "drivers";
+    driverWeekly = getDriverWeekly(dName);
+    
+    setView("drivers");
+    renderRegionTree();
+    renderDriversView();
+  }
+
+  function renderRegionTree(){
+    const container = document.getElementById("regionTreeList");
+    const countLabel = document.getElementById("regionCountLabel");
+    if (!container) return;
+    
+    container.innerHTML = "";
+    countLabel.textContent = `${REGION_SHEETS.length - 1} Areas`;
+
+    const map = {};
+    Object.keys(driverIndex).forEach(d => {
+       const rows = driverIndex[d].rows;
+       const counts = {};
+       rows.forEach(r => counts[r.regionId] = (counts[r.regionId]||0)+1);
+       const main = Object.keys(counts).sort((a,b)=>counts[b]-counts[a])[0];
+       if(main){
+         if(!map[main]) map[main] = [];
+         map[main].push(d);
+       }
+    });
+
+    REGION_SHEETS.forEach(r => {
+      if (r.id === "ALL") return;
+      const isActive = (activeRegionId === r.id);
+      const dList = (map[r.id] || []).sort();
+      const isOpen = isActive;
+
+      const div = document.createElement("div");
+      div.className = `rounded-lg transition select-none overflow-hidden ${isActive ? 'bg-white/5 border border-white/5' : 'border border-transparent hover:border-white/5'}`;
+      
+      let html = `
+        <div class="flex items-center justify-between p-2 cursor-pointer hover:bg-white/5 transition" onclick="toggleRegionFolder('${r.id}')">
+          <div class="flex items-center gap-2 overflow-hidden">
+             <svg id="icon-${r.id}" class="w-3 h-3 text-white/40 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="transform:${isOpen?'rotate(90deg)':'rotate(0deg)'}">
+               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+             </svg>
+             <span class="text-sm font-medium ${isActive?'text-white':'text-white/70'} truncate">${r.name}</span>
+          </div>
+          <div class="text-[10px] ${isActive?'text-indigo-400':'text-white/20'}">${dList.length} Drvs</div>
+        </div>
+        
+        <div id="sub-${r.id}" class="${isOpen?'':'hidden'} pl-4 pr-2 pb-2 space-y-1">
+           <button class="w-full text-left flex items-center gap-2 px-2 py-1.5 rounded text-xs transition ${isActive && !activeDriver ? 'bg-indigo-500/20 text-indigo-300 font-semibold':'text-white/50 hover:bg-white/5 hover:text-white'}"
+                   onclick="event.stopPropagation(); selectRegion('${r.id}')">
+              Overview
+           </button>
+      `;
+
+      if(dList.length){
+        html += `<div class="px-2 pt-2 pb-1 text-[9px] font-bold text-white/20 uppercase tracking-widest">Drivers</div>`;
+        dList.forEach(d => {
+           const isMe = (activeDriver === d);
+           html += `
+             <button class="w-full text-left truncate px-2 py-1 rounded text-xs transition ${isMe ? 'bg-emerald-500/10 text-emerald-400 font-medium' : 'text-white/50 hover:bg-white/5 hover:text-white'}"
+                     onclick="event.stopPropagation(); selectDriver('${r.id}', '${d}')">
+               ${d}
+             </button>
+           `;
+        });
+      } else {
+        html += `<div class="px-2 py-1 text-[10px] text-white/30 italic">No drivers</div>`;
+      }
+      
+      html += `</div>`;
+      div.innerHTML = html;
+      container.appendChild(div);
+    });
+  }
+
+  function renderOverview(){
+    filterWeeklyTable();
+    
+    const w = latestWeek;
+    if(w){
+       const pm = w.pctMargin;
+       const kpiM = document.getElementById("kpiMargin");
+       kpiM.textContent = `${pm.toFixed(2)}%`;
+       kpiM.className = `text-2xl font-bold tracking-tight ${pm<0?'text-rose-400':pm<10?'text-amber-400':'text-emerald-400'}`;
+       document.getElementById("kpiMarginSub").textContent = `${fmtUSD(w.margin)} margin`;
+
+       document.getElementById("kpiRevenue").textContent = fmtUSD(w.revenue);
+       document.getElementById("kpiExpense").textContent = fmtUSD(w.totalExp);
+       document.getElementById("kpiExpenseSub").textContent = `${niceDate(w.weekStart)} - ${niceDate(w.weekEnd)}`;
+       
+       document.getElementById("kpiDrivers").textContent = w.driverCount || 0;
+       document.getElementById("kpiDriversSub").textContent = `${Math.round(w.hoursWorked||0)} hrs`;
+    } else {
+       document.getElementById("kpiMargin").textContent = "—";
+       document.getElementById("kpiRevenue").textContent = "—";
+       document.getElementById("kpiExpense").textContent = "—";
+       document.getElementById("kpiDrivers").textContent = "—";
     }
 
-    const regions = [...map.values()].sort((a,b)=> b.revenue - a.revenue);
-    return { regions, weekStart: latest.start, weekEnd: latest.end };
-  }
-
-  // ============================
-  // UI: REGION LIST
-  // ============================
-  function renderRegionSidebar(){
-    const list = document.getElementById("regionList");
-    if (!list) return;
-
-    const filter = String(document.getElementById("regionFilter")?.value || "").trim().toLowerCase();
-    list.innerHTML = "";
-
-    REGION_SHEETS
-      .filter(r => !filter || r.name.toLowerCase().includes(filter) || r.id.toLowerCase().includes(filter))
-      .forEach(r=>{
-        const series = regionSeries[r.id] || [];
-        const w = series[0];
-        const pm = w ? w.pctMargin : NaN;
-        const b = pmBadge(pm);
-
-        const btn = document.createElement("button");
-        btn.className =
-          "card rounded-2xl px-3 py-3 text-left hover:bg-white/5 transition " +
-          (r.id === activeRegionId ? "ring-1 ring-white/20" : "");
-
-        btn.innerHTML = `
-          <div class="flex items-center justify-between gap-3">
-            <div class="min-w-0">
-              <div class="text-sm font-semibold truncate">${r.name}</div>
-              <div class="text-xs text-white/55 truncate">${r.sheet ? r.sheet : "computed sum"}</div>
-            </div>
-            <div class="text-right shrink-0">
-              <div class="text-sm font-bold">${w ? w.pctMargin.toFixed(2)+"%" : "—"}</div>
-              <div class="text-[11px] ${b.cls}">${b.label}</div>
-            </div>
-          </div>
-        `;
-
-        btn.addEventListener("click", ()=>{
-          activeRegionId = r.id;
-          document.getElementById("activeRegionPill").textContent = r.id;
-
-          weekly = sortWeeksDesc(regionSeries[activeRegionId] || []);
-          latestWeek = weekly[0] || null;
-
-          renderRegionSidebar();
-          renderOverview();
-          if (activeView === "loss") renderLossView();
-        });
-
-        list.appendChild(btn);
-      });
-  }
-
-  // ============================
-  // UI: OVERVIEW
-  // ============================
-  function renderKpis(){
-    const w = latestWeek;
-    if (!w) return;
-
-    const rev = w.revenue || 0;
-    const exp = w.totalExp || 0;
-    const pm = isFinite(w.pctMargin) ? w.pctMargin : ((rev-exp)/Math.max(1,rev))*100;
-
-    document.getElementById("kpiRevenue").textContent = fmtUSD(rev);
-    document.getElementById("kpiExpense").textContent = fmtUSD(exp);
-    document.getElementById("kpiExpenseSub").textContent = `TL Exp • ${niceDate(w.weekStart)} → ${niceDate(w.weekEnd)}`;
-    document.getElementById("kpiMargin").textContent = `${pm.toFixed(2)}%`;
-    document.getElementById("kpiMarginSub").textContent = `${fmtUSD(w.margin || 0)} margin`;
-
-    document.getElementById("kpiDrivers").textContent = `${w.driverCount || 0}`;
-    document.getElementById("kpiDriversSub").textContent = `Hours: ${Math.round(w.hoursWorked || 0)} • Cost/Driver: ${fmtUSD((exp/Math.max(1,w.driverCount||0))||0)}`;
-
-    document.getElementById("weekLabel").textContent = `Week: ${niceDate(w.weekStart)} → ${niceDate(w.weekEnd)}`;
+    renderTrendChart();
+    renderMixChart();
+    updateContextLabel();
   }
 
   function renderTrendChart(){
-    const seriesDesc = (weekly || []).filter(w => isFinite(w.pctMargin) && Math.abs(w.revenue) > 0.0001);
-    const take = seriesDesc.slice(0, 16).reverse();
-    const labels = take.map(w => niceDate(w.weekEnd));
-    const data = take.map(w => w.pctMargin);
-    const baseline = data.length ? data.reduce((a,b)=>a+b,0)/data.length : 0;
-
     const canvas = document.getElementById("trendChart");
-    if (!canvas) return;
+    if(!canvas || !weekly.length) return;
+    
     const ctx = canvas.getContext("2d");
-    if (trendChart) trendChart.destroy();
+    if(trendChart) trendChart.destroy();
+    
+    // Prepare Data
+    const subset = weekly.slice(0, 16).reverse();
+    const labels = subset.map(x=>niceDate(x.weekEnd));
+    const vals = subset.map(x=>x.pctMargin);
+    
+    // Gradient
+    const grad = ctx.createLinearGradient(0,0,0,300);
+    grad.addColorStop(0, "rgba(99, 102, 241, 0.5)"); 
+    grad.addColorStop(1, "rgba(99, 102, 241, 0.0)"); 
 
     const datasets = [{
-      label: "% Margin",
-      data,
-      borderColor: "rgba(255,255,255,0.85)",
-      borderWidth: 2,
-      pointRadius: 0,
-      tension: 0.35,
-      fill: true,
-      backgroundColor: "rgba(255,255,255,0.06)"
+       label: "Net Margin",
+       data: vals,
+       borderColor: "#818cf8",
+       backgroundColor: grad,
+       borderWidth: 2,
+       pointRadius: 4, 
+       pointBackgroundColor: "#0f0f0f",
+       pointBorderColor: "#818cf8",
+       pointBorderWidth: 2,
+       fill: true,
+       tension: 0.4
     }];
 
-    if (showBaseline){
-      datasets.push({
-        label: "Baseline",
-        data: Array(data.length).fill(baseline),
-        borderColor: "rgba(255,255,255,0.25)",
-        borderWidth: 1,
-        pointRadius: 0,
-        tension: 0.2
-      });
+    // Baseline (Average)
+    if(showBaseline && vals.length){
+       const avg = vals.reduce((a,b)=>a+b,0)/vals.length;
+       datasets.push({
+         label: "Average",
+         data: Array(vals.length).fill(avg),
+         // CHANGED: Make the average line pop with bright Teal
+         borderColor: "#2dd4bf", 
+         borderWidth: 2,
+         pointRadius: 0,
+         borderDash: [6,6], 
+         fill: false
+       });
     }
 
     trendChart = new Chart(ctx, {
       type: "line",
       data: { labels, datasets },
       options: {
-        plugins: { legend: { display:false } },
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { 
+          legend: { display: false },
+          tooltip: {
+            mode: 'index',
+            intersect: false,
+            callbacks: {
+              label: (ctx) => ` ${ctx.dataset.label || ''}: ${ctx.parsed.y.toFixed(2)}%`
+            }
+          }
+        },
+        layout: {
+          // CHANGED: Added padding to prevent clipping of top dots
+          padding: { left: 10, right: 10, top: 20, bottom: 10 } 
+        },
         scales: {
-          x: { grid:{ display:false }, ticks:{ color:"rgba(255,255,255,0.55)" } },
-          y: { grid:{ color:"rgba(255,255,255,0.08)" }, ticks:{ color:"rgba(255,255,255,0.55)", callback:(v)=>`${v}%` } }
-        }
+          x: { 
+            display: true, // CHANGED: Show X-Axis
+            grid: { display: false },
+            ticks: { 
+               color: '#9ca3af', // Gray-400
+               maxTicksLimit: 8,
+               font: { size: 10 }
+            }
+          },
+          y: { 
+            display: false, 
+            suggestedMin: 0, // Keep baseline at 0 unless negative
+            suggestedMax: Math.max(...vals) + 5 
+          }
+        },
+        interaction: { mode: 'index', intersect: false }
       }
     });
   }
 
   function renderMixChart(){
-    const w = latestWeek;
-    if (!w) return;
-
-    const labels = ["Payroll","Fuel","Insurance","Maintenance","Billbacks","Other"];
-    const vals = [
-      w.payroll||0,
-      w.fuel||0,
-      w.insurance||0,
-      w.maintenance||0,
-      w.billbacks||0
-    ];
-    const known = vals.reduce((a,b)=>a+b,0);
-    const other = Math.max(0, (w.totalExp||0) - known);
-    vals.push(other);
-
     const canvas = document.getElementById("mixChart");
-    if (!canvas) return;
+    const legend = document.getElementById("mixLegend");
+    if(!canvas || !latestWeek) return;
+
+    const w = latestWeek;
     const ctx = canvas.getContext("2d");
-    if (mixChart) mixChart.destroy();
+    if(mixChart) mixChart.destroy();
+
+    const data = [w.payroll, w.fuel, w.insurance, w.maintenance, w.billbacks];
+    const labels = ["Payroll","Fuel","Insure","Maint","Billback"];
+    const sum = data.reduce((a,b)=>a+(b||0),0);
+    const other = Math.max(0, w.totalExp - sum);
+    if(other>100) { data.push(other); labels.push("Other"); }
 
     mixChart = new Chart(ctx, {
-      type: "doughnut",
-      data: { labels, datasets: [{ data: vals }] },
-      options: { plugins: { legend: { display:false } }, cutout: "62%" }
+       type: "doughnut",
+       data: {
+         labels,
+         datasets: [{
+           data,
+           backgroundColor: ["#6366f1","#ec4899","#10b981","#f59e0b","#8b5cf6","#64748b"],
+           borderWidth: 0,
+           hoverOffset: 4
+         }]
+       },
+       options: {
+         responsive: true,
+         maintainAspectRatio: false,
+         cutout: "70%",
+         plugins: { legend: { display: false } }
+       }
     });
 
-    const legend = document.getElementById("mixLegend");
-    if (!legend) return;
     legend.innerHTML = "";
-    const total = Math.max(1, (w.totalExp||0));
-
-    labels.forEach((lab, i)=>{
-      const pct = (vals[i]/total)*100;
-      const div = document.createElement("div");
-      div.className = "chip rounded-xl px-2 py-2";
-      div.innerHTML = `
-        <div class="text-[11px] text-white/60">${lab}</div>
-        <div class="text-sm font-semibold">${pct.toFixed(1)}%</div>
-      `;
-      legend.appendChild(div);
+    labels.forEach((l,i)=>{
+       const v = data[i]||0;
+       const p = (w.totalExp>0 ? (v/w.totalExp)*100 : 0).toFixed(1);
+       legend.innerHTML += `
+         <div class="bg-white/5 rounded px-2 py-1 text-center">
+            <div class="text-[9px] text-white/50 uppercase">${l}</div>
+            <div class="text-xs font-bold">${p}%</div>
+         </div>
+       `;
     });
   }
 
-  function renderWeeklyTable(customData = null){
-    const tbody = document.getElementById("lossTableBody");
-    if (!tbody) return;
-    tbody.innerHTML = "";
-
-    let series = customData || weekly;
-    series = (series || []).filter(w => isFinite(w.pctMargin) && Math.abs(w.revenue) > 0.0001);
-    series = sortWeeksDesc(series);
-
-    const rows = series.slice(0, 80);
-    if (!rows.length){
-      tbody.innerHTML = `<tr><td colspan="6" class="py-4 text-center text-white/50">No data.</td></tr>`;
-      return;
+  function filterWeeklyTable(){
+    const input = document.getElementById("searchInput");
+    let subset = weekly;
+    
+    if(input && input.value){
+       const [y,m,d] = input.value.split('-').map(Number);
+       const t = new Date(y, m-1, d).getTime();
+       subset = weekly.filter(w => {
+          const s = asDate(w.weekStart);
+          const e = asDate(w.weekEnd);
+          if(!s || !e) return false;
+          const sT = new Date(s.getFullYear(), s.getMonth(), s.getDate()).getTime();
+          const eT = new Date(e.getFullYear(), e.getMonth(), e.getDate()).getTime();
+          return t >= sT && t <= eT;
+       });
     }
 
-    rows.forEach(w=>{
-      const b = pmBadge(w.pctMargin);
-      const tr = document.createElement("tr");
-      tr.className = "hover:bg-white/5 transition";
-      tr.innerHTML = `
-        <td class="py-3 pr-3">
-          <div class="font-semibold">${niceDate(w.weekStart)} → ${niceDate(w.weekEnd)}</div>
-          <div class="text-xs text-white/55">Drivers: ${w.driverCount || 0}</div>
-        </td>
-        <td class="py-3 pr-3 font-semibold ${b.cls}">${(w.pctMargin||0).toFixed(2)}%</td>
-        <td class="py-3 pr-3 text-white/85">${fmtUSD(w.revenue)}</td>
-        <td class="py-3 pr-3 text-white/85">${fmtUSD(w.totalExp)}</td>
-        <td class="py-3 pr-3 text-white/85">${fmtUSD(w.margin)}</td>
-        <td class="py-3 pr-3 text-white/70"><div class="max-w-[520px] truncate">${buildSignal(w)}</div></td>
-      `;
-      tbody.appendChild(tr);
-    });
+    renderTable(subset, "lossTableBody");
   }
 
-  function renderOverview(){
-    if (!latestWeek){
-      setStatus("No data");
-      return;
-    }
-    renderKpis();
-    renderTrendChart();
-    renderMixChart();
-    renderWeeklyTable();
-    setStatus(`OK (${activeRegionId})`);
-  }
-
-  // ============================
-  // UI: LOSS VIEW
-  // ============================
-  function renderLossView(){
-    const tbody = document.getElementById("lossAreasBody");
-    if (!tbody) return;
-    tbody.innerHTML = "";
-
-    // If a driver is selected, show driver worst weeks
-    if (activeDriver){
-      let series = (driverWeekly || []).slice().sort((a,b)=> (a.pctMargin - b.pctMargin));
-      const rows = series.slice(0, 80);
-      if (!rows.length){
-        tbody.innerHTML = `<tr><td colspan="6" class="py-4 text-center text-white/50">No driver weeks.</td></tr>`;
-        return;
-      }
-
-      rows.forEach(w=>{
-        const b = pmBadge(w.pctMargin);
+  function renderTable(data, tbodyId){
+     const tbody = document.getElementById(tbodyId);
+     if(!tbody) return;
+     tbody.innerHTML = "";
+     
+     if(!data || !data.length){
+       tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-white/30 italic">No Data</td></tr>`;
+       return;
+     }
+     
+     data.slice(0, 50).forEach(w => {
+        const pm = w.pctMargin;
+        const col = pm<0 ? "text-rose-400" : pm<5 ? "text-amber-400" : "text-emerald-400";
+        const signal = pm<0 ? "CRITICAL LOSS" : pm<5 ? "Low Margin Risk" : "Healthy";
+        
         const tr = document.createElement("tr");
-        tr.className = "hover:bg-white/5 transition";
+        tr.className = "hover:bg-white/5 transition group";
         tr.innerHTML = `
-          <td class="py-3 pr-3">
-            <div class="font-semibold">${niceDate(w.weekStart)} → ${niceDate(w.weekEnd)}</div>
-            <div class="text-xs text-white/55">Driver: ${activeDriver}</div>
+          <td class="py-3 px-4 text-white/90">
+             <div class="font-medium">${niceDate(w.weekStart)}</div>
+             <div class="text-[10px] text-white/40 group-hover:text-white/60">${niceDate(w.weekEnd)}</div>
           </td>
-          <td class="py-3 pr-3 font-semibold ${b.cls}">${(w.pctMargin||0).toFixed(2)}%</td>
-          <td class="py-3 pr-3 text-white/85">${fmtUSD(w.revenue)}</td>
-          <td class="py-3 pr-3 text-white/85">${fmtUSD(w.totalExp)}</td>
-          <td class="py-3 pr-3 text-white/85">${fmtUSD(w.margin)}</td>
-          <td class="py-3 pr-3 text-white/70"><div class="truncate">${buildSignal(w)}</div></td>
+          <td class="py-3 px-4 font-bold ${col}">${pm.toFixed(2)}%</td>
+          <td class="py-3 px-4 text-white/70">${fmtUSD(w.revenue)}</td>
+          <td class="py-3 px-4 text-white/70">${fmtUSD(w.totalExp)}</td>
+          <td class="py-3 px-4 text-white/70">${fmtUSD(w.margin)}</td>
+          <td class="py-3 px-4 text-[11px] opacity-70 ${col}">${signal}</td>
         `;
         tbody.appendChild(tr);
-      });
-      return;
-    }
-
-    // Otherwise: worst weeks for current region
-    let series = (weekly || []).filter(w=>isFinite(w.pctMargin)).slice().sort((a,b)=> (a.pctMargin - b.pctMargin));
-    const rows = series.slice(0, 80);
-    if (!rows.length){
-      tbody.innerHTML = `<tr><td colspan="6" class="py-4 text-center text-white/50">No weeks.</td></tr>`;
-      return;
-    }
-
-    rows.forEach(w=>{
-      const b = pmBadge(w.pctMargin);
-      const tr = document.createElement("tr");
-      tr.className = "hover:bg-white/5 transition";
-      tr.innerHTML = `
-        <td class="py-3 pr-3">
-          <div class="font-semibold">${niceDate(w.weekStart)} → ${niceDate(w.weekEnd)}</div>
-          <div class="text-xs text-white/55">Region: ${activeRegionId}</div>
-        </td>
-        <td class="py-3 pr-3 font-semibold ${b.cls}">${(w.pctMargin||0).toFixed(2)}%</td>
-        <td class="py-3 pr-3 text-white/85">${fmtUSD(w.revenue)}</td>
-        <td class="py-3 pr-3 text-white/85">${fmtUSD(w.totalExp)}</td>
-        <td class="py-3 pr-3 text-white/85">${fmtUSD(w.margin)}</td>
-        <td class="py-3 pr-3 text-white/70"><div class="truncate">${buildSignal(w)}</div></td>
-      `;
-      tbody.appendChild(tr);
-    });
+     });
   }
 
-  // ============================
-  // UI: DRIVER VIEW
-  // ============================
-  function renderDriverWeeklyTable(){
-    const tbody = document.getElementById("driverWeeklyBody");
-    if (!tbody) return;
+  function renderLossView(){
+    const tbody = document.getElementById("lossAreasBody");
+    if(!tbody) return;
     tbody.innerHTML = "";
-
-    if (!activeDriver){
-      tbody.innerHTML = `<tr><td colspan="6" class="py-4 text-center text-white/50">Select a driver.</td></tr>`;
-      return;
-    }
-
-    const rows = (driverWeekly || []).slice(0, 120);
-    if (!rows.length){
-      tbody.innerHTML = `<tr><td colspan="6" class="py-4 text-center text-white/50">No driver rows.</td></tr>`;
-      return;
-    }
-
-    rows.forEach(w=>{
-      const b = pmBadge(w.pctMargin);
-      const tr = document.createElement("tr");
-      tr.className = "hover:bg-white/5 transition";
-      tr.innerHTML = `
-        <td class="py-3 pr-3"><div class="font-semibold">${niceDate(w.weekStart)} → ${niceDate(w.weekEnd)}</div></td>
-        <td class="py-3 pr-3 font-semibold ${b.cls}">${(w.pctMargin||0).toFixed(2)}%</td>
-        <td class="py-3 pr-3 text-white/85">${fmtUSD(w.revenue)}</td>
-        <td class="py-3 pr-3 text-white/85">${fmtUSD(w.totalExp)}</td>
-        <td class="py-3 pr-3 text-white/85">${fmtUSD(w.margin)}</td>
-        <td class="py-3 pr-3 text-white/85">${Math.round(w.hoursWorked||0)}</td>
-      `;
-      tbody.appendChild(tr);
-    });
-  }
-
-  function renderDriverRegionBreakdown(){
-    const tbody = document.getElementById("driverRegionBody");
-    if (!tbody) return;
-    tbody.innerHTML = "";
-
-    if (!activeDriver){
-      tbody.innerHTML = `<tr><td colspan="5" class="py-4 text-center text-white/50">Select a driver.</td></tr>`;
-      return;
-    }
-
-    const br = getDriverLatestWeekRegionBreakdown(activeDriver);
-    if (!br.regions.length){
-      tbody.innerHTML = `<tr><td colspan="5" class="py-4 text-center text-white/50">No region breakdown.</td></tr>`;
-      return;
-    }
-
-    br.regions.forEach(x=>{
-      const tr = document.createElement("tr");
-      tr.className = "hover:bg-white/5 transition";
-      tr.innerHTML = `
-        <td class="py-3 pr-3 font-semibold">${x.region}</td>
-        <td class="py-3 pr-3 text-white/85">${fmtUSD(x.revenue)}</td>
-        <td class="py-3 pr-3 text-white/85">${fmtUSD(x.totalExp)}</td>
-        <td class="py-3 pr-3 text-white/85">${fmtUSD(x.margin)}</td>
-        <td class="py-3 pr-3 text-white/85">${Math.round(x.hours||0)}</td>
-      `;
-      tbody.appendChild(tr);
+    
+    const bad = (weekly||[]).filter(w=>w.pctMargin < 10).sort((a,b)=>a.pctMargin - b.pctMargin);
+    
+    bad.forEach(w => {
+       const pm = w.pctMargin;
+       const col = pm<0 ? "text-rose-400" : "text-amber-400";
+       const tr = document.createElement("tr");
+       tr.className = "hover:bg-white/5 transition";
+       tr.innerHTML = `
+          <td class="py-3 px-4">
+             <div class="font-medium">${niceDate(w.weekStart)}</div>
+             <div class="text-[10px] text-white/40">${activeRegionId}</div>
+          </td>
+          <td class="py-3 px-4 font-bold ${col}">${pm.toFixed(2)}%</td>
+          <td class="py-3 px-4 text-white/70">${fmtUSD(w.revenue)}</td>
+          <td class="py-3 px-4 text-white/70">${fmtUSD(w.totalExp)}</td>
+          <td class="py-3 px-4 text-white/70">${fmtUSD(w.margin)}</td>
+          <td class="py-3 px-4 text-[11px] text-white/50">Check payroll/fuel</td>
+       `;
+       tbody.appendChild(tr);
     });
   }
 
   function renderDriversView(){
-    renderDriverWeeklyTable();
-    renderDriverRegionBreakdown();
-    setStatus(activeDriver ? `OK (Driver: ${activeDriver})` : "OK (No driver selected)");
+     const tbody = document.getElementById("driverWeeklyBody");
+     if(tbody) {
+       tbody.innerHTML = "";
+       driverWeekly.slice(0,50).forEach(w => {
+         const pm = w.pctMargin;
+         const col = pm<0 ? "text-rose-400" : pm<10 ? "text-amber-400" : "text-emerald-400";
+         tbody.innerHTML += `
+           <tr class="hover:bg-white/5 transition">
+             <td class="py-3 px-4 text-white/80">${niceDate(w.weekStart)}</td>
+             <td class="py-3 px-4 font-bold ${col}">${pm.toFixed(1)}%</td>
+             <td class="py-3 px-4 text-white/60">${fmtUSD(w.revenue)}</td>
+             <td class="py-3 px-4 text-white/60">${fmtUSD(w.margin)}</td>
+             <td class="py-3 px-4 text-white/60">${Math.round(w.hoursWorked)}</td>
+           </tr>
+         `;
+       });
+     }
+
+     const regionBody = document.getElementById("driverRegionBody");
+     if(regionBody){
+       regionBody.innerHTML = "";
+       if(activeDriver && driverIndex[activeDriver]){
+         const rows = driverIndex[activeDriver].rows;
+         if(rows.length){
+           const latestDate = rows[0].date.getTime();
+           const latestRows = rows.filter(r=>r.date.getTime()===latestDate);
+           latestRows.forEach(r => {
+              regionBody.innerHTML += `
+                <tr class="hover:bg-white/5">
+                  <td class="py-3 px-4 font-medium">${r.region}</td>
+                  <td class="py-3 px-4 text-white/60">${fmtUSD(r.revenue)}</td>
+                  <td class="py-3 px-4 text-white/60">${fmtUSD(r.margin)}</td>
+                  <td class="py-3 px-4 text-white/60">${r.hours}</td>
+                </tr>
+              `;
+           });
+         }
+       }
+     }
   }
 
-  // ============================
-  // VIEWS
-  // ============================
-  function setView(view){
-    activeView = view;
-    document.querySelectorAll(".navbtn").forEach(btn=>{
-      btn.classList.toggle("active", btn.getAttribute("data-view") === view);
-    });
-    ["overview","loss","drivers"].forEach(v=>{
-      const el = document.getElementById(`view-${v}`);
-      if (!el) return;
-      el.classList.toggle("hiddenView", v !== view);
-    });
-
-    if (view === "overview") renderOverview();
-    if (view === "loss") renderLossView();
-    if (view === "drivers") renderDriversView();
-  }
-
-  // ============================
-  // EVENTS
-  // ============================
-  document.getElementById("toggleBaseline")?.addEventListener("click", ()=>{
-    showBaseline = !showBaseline;
-    renderTrendChart();
-  });
-
-  document.getElementById("exportBtn")?.addEventListener("click", ()=>{
-    const payload = {
-      generatedAt: new Date().toISOString(),
-      activeRegionId,
-      activeDriver,
-      latestWeek,
-      weekly,
-      driverWeekly
-    };
-    const blob = new Blob([JSON.stringify(payload,null,2)], {type:"application/json"});
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `dashboard_snapshot_${activeRegionId}_${activeDriver||"ALL"}.json`;
-    a.click();
-    URL.revokeObjectURL(a.href);
-  });
-
-  document.getElementById("resetBtn")?.addEventListener("click", ()=>{
-    const si = document.getElementById("searchInput");
-    if (si) si.value = "";
-    renderWeeklyTable();
-  });
-
-  document.getElementById("regionFilter")?.addEventListener("input", ()=> renderRegionSidebar());
-
-  document.getElementById("refreshBtn")?.addEventListener("click", ()=> refresh());
-
-  document.querySelectorAll(".navbtn").forEach(btn=>{
-    btn.addEventListener("click", ()=> setView(btn.getAttribute("data-view")));
-  });
-
-  document.getElementById("driverSelect")?.addEventListener("change", (e)=>{
-    activeDriver = e.target.value || "";
-    document.getElementById("activeDriverPill").textContent = activeDriver || "ALL";
-
-    driverWeekly = activeDriver ? getDriverWeekly(activeDriver) : [];
-    if (activeView === "drivers") renderDriversView();
-    if (activeView === "loss") renderLossView();
-  });
-
-  document.getElementById("searchInput")?.addEventListener("change", (e)=>{
-    const val = e.target.value;
-    if (!val) return renderWeeklyTable();
-
-    const inputDate = new Date(val + "T12:00:00");
-    const t = inputDate.getTime();
-
-    const filtered = (weekly || []).filter(w=>{
-      const s = asDate(w.weekStart);
-      const ed = asDate(w.weekEnd);
-      if (!s || !ed) return false;
-      return t >= s.getTime() && t <= ed.getTime();
-    });
-
-    renderWeeklyTable(filtered);
-  });
-
-  // ============================
-  // LIVE LOOP
-  // ============================
-  async function refresh(){
-    try{
-      setStatus("Syncing…");
-      const { wb, meta } = await fetchWorkbook();
-
-      // optional title/subtitle
-      const cws = wb.Sheets[CONSOLIDATED_SHEET];
-      if (cws){
-        const title = readCell(cws, TITLE_CELL);
-        const subtitle = readCell(cws, SUBTITLE_CELL);
-        if (title) document.getElementById("dashTitle").textContent = String(title);
-        if (subtitle) document.getElementById("dashSubtitle").textContent = String(subtitle);
-      }
-
-      // parse region sheets
-      regionSeries = {};
-      for (const r of REGION_SHEETS){
-        if (r.id === "ALL") continue;
-        const ws = wb.Sheets[r.sheet];
-        regionSeries[r.id] = ws ? parseRegionSheet(ws) : [];
-      }
-      regionSeries["ALL"] = sumRegionsByWeek(regionSeries);
-
-      // keep region selection
-      weekly = sortWeeksDesc(regionSeries[activeRegionId] || regionSeries["ALL"] || []);
-      latestWeek = weekly[0] || null;
-
-      // parse drivers from running sheet
-      const rws = wb.Sheets[RUNNING_SHEET_NAME];
-      if (rws){
-        driverIndex = parseRunningSheetFixed(rws);
-        populateDriverSelect();
-      } else {
-        driverIndex = {};
-        populateDriverSelect();
-      }
-
-      // rebuild driverWeekly if driver still selected
-      driverWeekly = activeDriver ? getDriverWeekly(activeDriver) : [];
-
-      const fetchedAt = meta?.fetchedAt ? new Date(meta.fetchedAt) : new Date();
-      const lastSync = document.getElementById("lastSyncLabel");
-      if (lastSync) lastSync.textContent = `Last sync: ${fetchedAt.toLocaleString()} • ${meta.fileName || ""}`;
-
-      document.getElementById("activeRegionPill").textContent = activeRegionId;
-      document.getElementById("activeDriverPill").textContent = activeDriver || "ALL";
-
-      renderRegionSidebar();
-
-      // render active view
-      setView(activeView);
-
-    } catch (err){
-      console.error(err);
-      setStatus(`Sync failed: ${String(err?.message || err)}`);
+  function updateContextLabel(){
+    const el = document.getElementById("activeContextLabel");
+    const rName = REGION_SHEETS.find(r=>r.id===activeRegionId)?.name || activeRegionId;
+    if(activeDriver){
+      el.innerHTML = `<span class="text-emerald-400 font-semibold">${rName}</span> <span class="text-white/30 mx-1">/</span> <span class="text-white">${activeDriver}</span>`;
+    } else {
+      el.innerHTML = `<span class="text-indigo-400 font-semibold">${rName}</span> <span class="text-white/30 mx-1">/</span> <span class="text-white">Overview</span>`;
     }
   }
 
-  function start(){
-    setView("overview");
-    refresh();
-    if (_timer) clearInterval(_timer);
-    _timer = setInterval(refresh, POLL_MS);
+  function setView(v){
+    activeView = v;
+    document.querySelectorAll(".navbtn").forEach(b => {
+      b.classList.toggle("active", b.getAttribute("data-view") === v);
+    });
+    
+    ["overview","loss","drivers"].forEach(id => {
+       const el = document.getElementById("view-"+id);
+       if(el) {
+          if(id===v) el.classList.remove("hiddenView");
+          else el.classList.add("hiddenView");
+       }
+    });
+
+    if(v==="loss") renderLossView();
   }
 
-  start();
-</script>
+  // --- INIT ---
 
+  async function refresh(){
+    const sl = document.getElementById("lastSyncLabel");
+    if(sl) sl.textContent = "Syncing data...";
+
+    try {
+      const res = await fetch(WORKER_URL, {cache:"no-store"});
+      const buf = await res.arrayBuffer();
+      const wb = XLSX.read(buf, {type:"array"});
+
+      // Parse Region Sheets
+      for (const r of REGION_SHEETS){
+         if(r.id==="ALL") continue;
+         const ws = wb.Sheets[r.sheet];
+         regionSeries[r.id] = ws ? parseRegionSheet(ws) : [];
+      }
+      regionSeries["ALL"] = sumRegionsByWeek(regionSeries);
+
+      // Parse Drivers
+      const rws = wb.Sheets[RUNNING_SHEET_NAME];
+      if(rws) driverIndex = parseRunningSheet(rws);
+      
+      // Update Current State
+      if(activeDriver) driverWeekly = getDriverWeekly(activeDriver);
+      else weekly = sortWeeksDesc(regionSeries[activeRegionId]);
+      
+      latestWeek = weekly[0] || null;
+
+      // Render Everything
+      renderRegionTree();
+      
+      if(activeView === "overview") renderOverview();
+      else if(activeView === "loss") renderLossView();
+      else if(activeView === "drivers") renderDriversView();
+
+      if(sl) sl.textContent = "Last sync: " + new Date().toLocaleTimeString();
+
+    } catch(e){
+      console.error(e);
+      if(sl) sl.textContent = "Sync Failed";
+    }
+  }
+
+  document.getElementById("searchInput")?.addEventListener("input", filterWeeklyTable);
+  document.getElementById("toggleBaseline")?.addEventListener("click", ()=>{ showBaseline=!showBaseline; renderTrendChart(); });
+  document.getElementById("refreshBtn")?.addEventListener("click", refresh);
+
+  start();
+  function start(){
+    refresh();
+    setInterval(refresh, POLL_MS);
+  }
+
+</script>
 </body>
 </html>
