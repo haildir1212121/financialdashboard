@@ -70,7 +70,7 @@
     }
     .hiddenView { display:none !important; }
     
-    /* CHART TOGGLES (Fixed CSS) */
+    /* CHART TOGGLES */
     .chart-toggle { 
       padding: 4px 8px; 
       font-size: 10px; 
@@ -123,9 +123,9 @@
                 <svg class="w-3.5 h-3.5 opacity-60 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
                 Overview
               </button>
-              <button class="navbtn group flex items-center gap-2" data-view="loss" onclick="activeView='loss'; setView('loss');">
-                 <svg class="w-3.5 h-3.5 opacity-60 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"></path></svg>
-                 Loss Areas
+              <button class="navbtn group flex items-center gap-2" data-view="drivers" onclick="activeView='drivers'; setView('drivers');">
+                 <svg class="w-3.5 h-3.5 opacity-60 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                 Drivers
               </button>
             </div>
           </div>
@@ -279,31 +279,6 @@
           </div> 
 
 
-          <div id="view-loss" class="view-hidden hiddenView pb-10">
-            <div class="card rounded-2xl p-0 overflow-hidden flex flex-col max-h-[85vh]">
-              <div class="p-4 border-b border-white/5 bg-rose-500/5">
-                <div class="font-bold text-sm text-rose-200">Loss Areas</div>
-                <div class="text-xs text-white/40">Critical alerts (<10% margin)</div>
-              </div>
-              <div class="thin-scroll overflow-y-auto flex-1">
-                <table class="w-full text-left text-xs border-collapse">
-                  <thead class="sticky top-0 bg-[#121212] text-white/40 uppercase tracking-wider z-10">
-                    <tr>
-                      <th class="py-3 px-4">Week / Source</th>
-                      <th class="py-3 px-4">% Margin</th>
-                      <th class="py-3 px-4">Revenue</th>
-                      <th class="py-3 px-4">TL Exp</th>
-                      <th class="py-3 px-4">Margin</th>
-                      <th class="py-3 px-4">Analysis</th>
-                    </tr>
-                  </thead>
-                  <tbody id="lossAreasBody" class="divide-y divide-white/5 text-white/80 font-mono"></tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-
-
           <div id="view-drivers" class="view-hidden hiddenView pb-10">
             <div id="driverTopPerformer" class="mb-3"></div>
 
@@ -416,6 +391,7 @@
   // --- HELPERS ---
 
   function fmtUSD(n){ return Number(n||0).toLocaleString('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}); }
+  function fmtVal(n){ return Number(n||0).toLocaleString('en-US',{maximumFractionDigits:0}); }
   
   function asDate(v){
     if (v instanceof Date && !isNaN(v)) return v;
@@ -512,7 +488,6 @@
   function getLastActiveDate(driverName) {
     const rows = driverIndex[driverName]?.rows || [];
     if(!rows.length) return 0;
-    // rows are not guaranteed sorted by date
     return Math.max(...rows.map(r => r.date.getTime()));
   }
 
@@ -691,7 +666,6 @@
     countLabel.textContent = `${REGION_SHEETS.length - 1} Regions`;
 
     // 1. Determine "Current Month" based on data
-    // Find the absolute latest date in all driver records
     let maxDate = 0;
     Object.keys(driverIndex).forEach(d => {
        const last = getLastActiveDate(d);
@@ -709,7 +683,7 @@
        const isArchive = lastActive < currentMonthStart;
 
        if(isArchive) {
-         archivedDrivers.push({ name: d, risk: getDriverRisk(d) }); // Can still calc risk
+         archivedDrivers.push({ name: d, risk: getDriverRisk(d) }); 
        } else {
          const rows = driverIndex[d].rows;
          const counts = {};
@@ -729,7 +703,6 @@
       let dList = (map[r.id] || []);
       const isOpen = isActive;
 
-      // Risk Sorting
       const rankedDrivers = dList.map(name => ({ name, risk: getDriverRisk(name) })).sort((a,b) => {
           const riskOrder = { "HIGH": 0, "WATCH": 1, "LOW": 2 };
           const ra = riskOrder[a.risk.score] ?? 2;
@@ -785,7 +758,6 @@
       container.appendChild(div);
     });
 
-    // 4. Render Archived Drivers
     archivedDrivers.sort((a,b) => a.name.localeCompare(b.name));
     archivedDrivers.forEach(obj => {
        const d = obj.name;
@@ -800,7 +772,7 @@
 
   function renderOverview(){
     filterWeeklyTable();
-    renderPerformanceList(); // New replacement for Mix Chart
+    renderPerformanceList(); 
     
     const w = latestWeek;
     if(w){
@@ -827,7 +799,6 @@
     updateContextLabel();
   }
 
-  // --- NEW: TOP/BOTTOM DRIVERS ---
   function renderPerformanceList() {
     const topContainer = document.getElementById("topDriversList");
     const botContainer = document.getElementById("bottomDriversList");
@@ -841,22 +812,16 @@
       return;
     }
 
-    // 1. Find all driver data for this week range
     const weekStartT = asDate(latestWeek.weekStart).getTime();
     const weekEndT = asDate(latestWeek.weekEnd).getTime();
     
-    const currentWeekDrivers = [];
-
-    // Scan all drivers
     const driverPerf = {};
     
     Object.keys(driverIndex).forEach(dName => {
        const rows = driverIndex[dName].rows;
        rows.forEach(r => {
           const t = r.date.getTime();
-          // Check Date Match
           if (t >= weekStartT - 86400000 && t <= weekEndT + 86400000) {
-             // Check Region Match
              if(activeRegionId === "ALL" || r.regionId === activeRegionId) {
                 if(!driverPerf[dName]) driverPerf[dName] = { name: dName, margin: 0 };
                 driverPerf[dName].margin += r.margin;
@@ -905,7 +870,6 @@
     const subset = weekly.slice(0, 16).reverse();
     const labels = subset.map(x=>niceDate(x.weekEnd));
     
-    // DATA MAPPING BASED ON MODE
     let vals = [];
     let label = "";
     let color = "";
@@ -914,17 +878,17 @@
     if (trendMode === 'pct') {
         vals = subset.map(x=>x.pctMargin);
         label = "Margin %";
-        color = "#818cf8"; // Indigo
+        color = "#818cf8"; 
         bgColorStr = "99, 102, 241";
     } else if (trendMode === 'net') {
         vals = subset.map(x=>x.margin);
         label = "Net Margin $";
-        color = "#10b981"; // Emerald
+        color = "#10b981"; 
         bgColorStr = "16, 185, 129";
     } else if (trendMode === 'rev') {
         vals = subset.map(x=>x.revenue);
         label = "Revenue $";
-        color = "#3b82f6"; // Blue
+        color = "#3b82f6"; 
         bgColorStr = "59, 130, 246";
     }
     
@@ -985,15 +949,26 @@
             display: true, 
             grid: { display: false },
             ticks: { 
-               color: '#cbd5e1', // Light gray (Slate-300) for better contrast
-               maxTicksLimit: 7, // reduced slightly to prevent crowding
+               color: '#9ca3af', 
+               maxTicksLimit: 7, 
                font: { size: 11, family: "'Inter', sans-serif" },
                maxRotation: 0,
                autoSkip: true
             }
           },
           y: { 
-             display: false, 
+             display: true, // Enabled for readability
+             position: 'right', // Cleaner layout
+             grid: { color: 'rgba(255,255,255,0.05)' },
+             ticks: {
+                color: '#64748b',
+                font: { size: 10 },
+                callback: (v) => {
+                   if(trendMode === 'pct') return v + '%';
+                   if(v >= 1000) return '$' + (v/1000).toFixed(0) + 'k';
+                   return '$' + v;
+                }
+             },
              suggestedMin: 0 
           }
         },
@@ -1037,7 +1012,7 @@
         const col = pm<0 ? "text-rose-400" : pm<5 ? "text-amber-400" : "text-emerald-400";
         const isPositive = pm >= 0;
         const arrow = isPositive ? `<span class="inline-block text-emerald-400 mr-1">↑</span>` : `<span class="inline-block text-rose-400 mr-1">↓</span>`;
-        const signal = pm<0 ? "CRITICAL" : pm<25 ? "RISK" : "OK";
+        const signal = pm<0 ? "CRITICAL" : pm<5 ? "RISK" : "OK";
         
         const tr = document.createElement("tr");
         tr.className = "hover:bg-white/5 transition group";
@@ -1056,33 +1031,6 @@
         `;
         tbody.appendChild(tr);
      });
-  }
-
-  function renderLossView(){
-    const tbody = document.getElementById("lossAreasBody");
-    if(!tbody) return;
-    tbody.innerHTML = "";
-    
-    const bad = (weekly||[]).filter(w=>w.pctMargin < 10).sort((a,b)=>a.pctMargin - b.pctMargin);
-    
-    bad.forEach(w => {
-       const pm = w.pctMargin;
-       const col = pm<0 ? "text-rose-400" : "text-amber-400";
-       const tr = document.createElement("tr");
-       tr.className = "hover:bg-white/5 transition";
-       tr.innerHTML = `
-          <td class="py-3 px-4">
-             <div class="font-medium">${niceDate(w.weekStart)}</div>
-             <div class="text-[10px] text-white/40">${activeRegionId}</div>
-          </td>
-          <td class="py-3 px-4 font-bold ${col}">${pm.toFixed(1)}%</td>
-          <td class="py-3 px-4 text-white/70">${fmtUSD(w.revenue)}</td>
-          <td class="py-3 px-4 text-white/70">${fmtUSD(w.totalExp)}</td>
-          <td class="py-3 px-4 text-white/70">${fmtUSD(w.margin)}</td>
-          <td class="py-3 px-4 text-[10px] text-white/50">Investigate</td>
-       `;
-       tbody.appendChild(tr);
-    });
   }
 
   function renderDriversView(){
@@ -1180,7 +1128,6 @@
           }
        }
     });
-    if(v==="loss") renderLossView();
   }
 
   async function refresh(){
@@ -1220,7 +1167,6 @@
       renderRegionTree();
       
       if(activeView === "overview") renderOverview();
-      else if(activeView === "loss") renderLossView();
       else if(activeView === "drivers") renderDriversView();
 
       if(sl) sl.textContent = "Last sync: " + new Date().toLocaleTimeString();
@@ -1232,7 +1178,6 @@
   }
 
   document.getElementById("searchInput")?.addEventListener("input", filterWeeklyTable);
-  document.getElementById("toggleBaseline")?.addEventListener("click", ()=>{ showBaseline=!showBaseline; renderTrendChart(); });
   document.getElementById("refreshBtn")?.addEventListener("click", refresh);
 
   start();
