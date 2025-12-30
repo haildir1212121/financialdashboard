@@ -26,17 +26,17 @@
 
     /* CARDS */
     .panel { 
-      background: rgba(10, 10, 10, 0.7); 
-      backdrop-filter: blur(14px); 
+      background: rgba(10, 10, 10, 0.75); 
+      backdrop-filter: blur(16px); 
       border: 1px solid rgba(255,255,255,0.08); 
     }
     .card  { 
-      background: rgba(255, 255, 255, 0.02); 
+      background: rgba(255, 255, 255, 0.03); 
       border: 1px solid rgba(255,255,255,0.05); 
       box-shadow: 0 4px 20px rgba(0,0,0,0.3);
       transition: all 0.2s ease;
     }
-    .card:hover { border-color: rgba(255,255,255,0.1); background: rgba(255,255,255,0.03); }
+    .card:hover { border-color: rgba(255,255,255,0.12); background: rgba(255,255,255,0.05); }
     
     /* SCROLLBARS */
     .thin-scroll::-webkit-scrollbar{ width:5px; height:5px; }
@@ -44,55 +44,37 @@
     .thin-scroll::-webkit-scrollbar-thumb{ background: #333; border-radius: 99px; }
     .thin-scroll::-webkit-scrollbar-thumb:hover{ background: #555; }
 
-    /* UTILS */
-    input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; opacity: 0.6; }
-    input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
-    
     .navbtn { width:100%; text-align:left; padding:8px 10px; border-radius:8px; border:1px solid transparent; transition: all 0.2s; color: #94a3b8; font-size: 0.8rem; }
     .navbtn:hover { background: rgba(255,255,255,0.05); color: #fff; }
     .navbtn.active { 
-      background: rgba(99, 102, 241, 0.1); 
-      border-color: rgba(99, 102, 241, 0.25); 
+      background: rgba(99, 102, 241, 0.15); 
+      border-color: rgba(99, 102, 241, 0.3); 
       color: #818cf8; 
       font-weight: 600; 
     }
 
-    /* VIEW TRANSITIONS */
-    .view-container {
-      transition: opacity 0.25s ease;
-      opacity: 1;
-    }
-    .view-hidden {
-      opacity: 0;
-      pointer-events: none;
-      position: absolute; 
-      width: 100%;
-    }
+    .view-hidden { opacity: 0; pointer-events: none; position: absolute; width: 100%; }
     .hiddenView { display:none !important; }
+    .hidden { display: none !important; }
     
     /* CHART TOGGLES */
     .chart-toggle { 
-      padding: 4px 8px; 
-      font-size: 10px; 
-      border: 1px solid rgba(255,255,255,0.1); 
-      border-radius: 6px; 
-      color: rgba(255,255,255,0.5); 
-      background: transparent;
-      text-transform: uppercase; 
-      font-weight: 700; 
-      letter-spacing: 0.05em;
-      transition: all 0.2s;
-      cursor: pointer;
+      padding: 4px 8px; font-size: 10px; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; 
+      color: rgba(255,255,255,0.5); background: transparent; text-transform: uppercase; font-weight: 700; 
+      transition: all 0.2s; cursor: pointer;
     }
-    .chart-toggle:hover { 
-      color: #fff; 
-      background: rgba(255,255,255,0.05); 
+    .chart-toggle:hover { color: #fff; background: rgba(255,255,255,0.05); }
+    .chart-toggle.active { background: rgba(99, 102, 241, 0.2); color: #a5b4fc; border-color: rgba(99, 102, 241, 0.4); }
+    
+    /* CYCLE BUTTON */
+    .cycle-btn {
+      display: flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 8px;
+      font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+      color: #a5b4fc; background: rgba(99, 102, 241, 0.15); border: 1px solid rgba(99, 102, 241, 0.3);
+      transition: all 0.2s; cursor: pointer; select-none: none; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1);
     }
-    .chart-toggle.active { 
-      background: rgba(99, 102, 241, 0.2); 
-      color: #a5b4fc; 
-      border-color: rgba(99, 102, 241, 0.3); 
-    }
+    .cycle-btn:hover { background: rgba(99, 102, 241, 0.25); border-color: rgba(99, 102, 241, 0.5); color: #fff; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3); }
+    .cycle-btn:active { transform: translateY(1px); }
   </style>
 </head>
 
@@ -101,7 +83,6 @@
     <div class="panel rounded-2xl overflow-hidden h-full flex flex-col lg:flex-row shadow-2xl">
 
       <aside class="w-full lg:w-[260px] flex-shrink-0 border-b lg:border-b-0 lg:border-r border-white/10 bg-[#080808] flex flex-col h-full">
-        
         <div class="p-4 border-b border-white/5">
           <div class="flex items-center gap-3">
             <div class="h-9 w-9 rounded-lg bg-gradient-to-br from-indigo-600/30 to-purple-600/30 border border-white/10 grid place-items-center shadow-lg shadow-indigo-900/20">
@@ -115,15 +96,14 @@
         </div>
 
         <div class="flex-1 overflow-y-auto thin-scroll p-2 space-y-4">
-          
           <div>
             <div class="text-[9px] uppercase tracking-widest text-white/30 font-bold mb-1 pl-2">Views</div>
             <div class="space-y-0.5">
-              <button class="navbtn active group flex items-center gap-2" data-view="overview" onclick="resetToGlobal()">
+              <button class="navbtn active group flex items-center gap-2" data-view="overview" onclick="setView('overview')">
                 <svg class="w-3.5 h-3.5 opacity-60 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
                 Overview
               </button>
-              <button class="navbtn group flex items-center gap-2" data-view="drivers" onclick="activeView='drivers'; setView('drivers');">
+              <button class="navbtn group flex items-center gap-2" data-view="drivers" onclick="setView('drivers')">
                  <svg class="w-3.5 h-3.5 opacity-60 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                  Drivers
               </button>
@@ -136,7 +116,6 @@
               <div class="text-[9px] text-white/20" id="regionCountLabel">...</div>
             </div>
             <div id="regionTreeList" class="space-y-0.5"></div>
-            
             <div class="mt-4 pt-2 border-t border-white/5">
                <button onclick="toggleArchive()" class="w-full flex items-center justify-between px-2 py-1 text-[10px] text-white/30 hover:text-white transition">
                  <span>🗄️ Archived Drivers</span>
@@ -145,40 +124,29 @@
                <div id="archiveList" class="hidden space-y-0.5 mt-1 pl-2 border-l border-white/5 ml-2"></div>
             </div>
           </div>
-        
         </div>
 
         <div class="p-3 border-t border-white/5 bg-black/30">
           <div class="text-[9px] text-white/30 mb-2 truncate" id="lastSyncLabel">Waiting for sync...</div>
           <div class="flex gap-2">
-            <button id="refreshBtn" class="flex-1 rounded bg-white/5 border border-white/10 py-1.5 text-[10px] font-semibold text-white/70 hover:bg-white/10 hover:text-white transition">
-              SYNC
-            </button>
-            <button id="exportBtn" class="flex-1 rounded bg-white/5 border border-white/10 py-1.5 text-[10px] font-semibold text-white/70 hover:bg-white/10 hover:text-white transition">
-              EXPORT
-            </button>
+            <button id="refreshBtn" class="flex-1 rounded bg-white/5 border border-white/10 py-1.5 text-[10px] font-semibold text-white/70 hover:bg-white/10 hover:text-white transition">SYNC</button>
+            <button id="exportBtn" class="flex-1 rounded bg-white/5 border border-white/10 py-1.5 text-[10px] font-semibold text-white/70 hover:bg-white/10 hover:text-white transition">EXPORT</button>
           </div>
         </div>
       </aside>
 
       <section class="flex-1 flex flex-col h-full relative overflow-hidden bg-black/20">
-        
         <div class="p-4 border-b border-white/10 flex-shrink-0 z-10 bg-[#0a0a0a]/80 backdrop-blur-md">
           <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
               <div id="dashTitle" class="text-lg font-bold tracking-tight text-white">Weekly Performance</div>
-              <div id="activeContextLabel" class="text-xs font-medium text-indigo-400 mt-0.5 flex items-center gap-2">
-                <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></span>
-                Global • Overview
-              </div>
+              <div id="activeContextLabel" class="text-xs font-medium text-indigo-400 mt-0.5 flex items-center gap-2">Global • Overview</div>
             </div>
-
-            <div class="flex items-center gap-2">
-              <div class="card rounded-lg px-2 py-1.5 flex items-center gap-2">
-                <span class="text-white/30 text-xs font-medium uppercase tracking-wider">Date Filter</span>
-                <input type="date" id="searchInput"
-                       class="bg-transparent outline-none text-xs text-white/90  w-[110px] font-medium" />
-              </div>
+            <div class="flex items-center gap-4">
+              <button id="kpiCycleBtn" onclick="cycleKpiMode()" class="cycle-btn shadow-lg shadow-indigo-500/10">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
+                <span id="kpiCycleLabel">Weekly View</span>
+              </button>
             </div>
           </div>
         </div>
@@ -186,39 +154,34 @@
         <div class="flex-1 overflow-y-auto thin-scroll p-4 scroll-smooth">
 
           <div id="view-overview" class="view-container pb-10 space-y-3">
-
             <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
               <div class="card rounded-2xl p-4 relative overflow-hidden group">
-                <div class="absolute -right-4 -top-4 w-20 h-20 bg-blue-500/10 rounded-full blur-xl group-hover:bg-blue-500/20 transition"></div>
-                <div class="text-[10px] uppercase tracking-wider text-white/50 font-bold mb-1">Revenue</div>
-                <div id="kpiRevenue" class="text-xl font-bold text-white tracking-tight">—</div>
-                <div class="text-[10px] text-white/30 mt-0.5">Current Week</div>
+                <div class="absolute -right-6 -top-6 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl group-hover:bg-blue-500/20 transition"></div>
+                <div class="text-[10px] uppercase tracking-wider text-white/50 font-bold mb-1">Total Revenue</div>
+                <div id="kpiRevenue" class="text-2xl font-bold text-white tracking-tight">—</div>
+                <div id="kpiRevenueLabel" class="text-[10px] text-white/30 mt-0.5">Current Week</div>
               </div>
-              
               <div class="card rounded-2xl p-4 relative overflow-hidden group">
-                <div class="absolute -right-4 -top-4 w-20 h-20 bg-rose-500/10 rounded-full blur-xl group-hover:bg-rose-500/20 transition"></div>
-                <div class="text-[10px] uppercase tracking-wider text-white/50 font-bold mb-1">Expense</div>
-                <div id="kpiExpense" class="text-xl font-bold text-white tracking-tight">—</div>
-                <div id="kpiExpenseSub" class="text-[10px] text-white/30 mt-0.5 truncate">—</div>
+                <div class="absolute -right-6 -top-6 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl group-hover:bg-emerald-500/20 transition"></div>
+                <div class="text-[10px] uppercase tracking-wider text-white/50 font-bold mb-1">Net Margin ($)</div>
+                <div id="kpiMargin" class="text-2xl font-bold tracking-tight text-white">—</div>
+                <div id="kpiMarginLabel" class="text-[10px] text-white/30 mt-0.5 truncate">Profit</div>
               </div>
-
               <div class="card rounded-2xl p-4 relative overflow-hidden group">
-                <div class="absolute -right-4 -top-4 w-20 h-20 bg-emerald-500/10 rounded-full blur-xl group-hover:bg-emerald-500/20 transition"></div>
-                <div class="text-[10px] uppercase tracking-wider text-white/50 font-bold mb-1">Net Margin</div>
-                <div id="kpiMargin" class="text-xl font-bold tracking-tight text-white">—</div>
-                <div id="kpiMarginSub" class="text-[10px] text-white/30 mt-0.5 truncate">—</div>
+                <div class="absolute -right-6 -top-6 w-24 h-24 bg-indigo-500/10 rounded-full blur-2xl group-hover:bg-indigo-500/20 transition"></div>
+                <div class="text-[10px] uppercase tracking-wider text-white/50 font-bold mb-1">Margin (%)</div>
+                <div id="kpiPctMargin" class="text-2xl font-bold text-white tracking-tight">—</div>
+                <div id="kpiPctMarginLabel" class="text-[10px] text-white/30 mt-0.5 truncate">Efficiency</div>
               </div>
-
               <div class="card rounded-2xl p-4 relative overflow-hidden group">
-                <div class="absolute -right-4 -top-4 w-20 h-20 bg-purple-500/10 rounded-full blur-xl group-hover:bg-purple-500/20 transition"></div>
-                <div class="text-[10px] uppercase tracking-wider text-white/50 font-bold mb-1">Active Drivers</div>
-                <div id="kpiDrivers" class="text-xl font-bold text-white tracking-tight">—</div>
-                <div id="kpiDriversSub" class="text-[10px] text-white/30 mt-0.5 truncate">—</div>
+                <div class="absolute -right-6 -top-6 w-24 h-24 bg-purple-500/10 rounded-full blur-2xl group-hover:bg-purple-500/20 transition"></div>
+                <div class="text-[10px] uppercase tracking-wider text-white/50 font-bold mb-1">Projected Margin</div>
+                <div id="kpiProjected" class="text-2xl font-bold text-white tracking-tight">—</div>
+                <div id="kpiProjectedLabel" class="text-[10px] text-white/30 mt-0.5 truncate">Annual Run Rate</div>
               </div>
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
-              
               <div class="card rounded-2xl p-5 lg:col-span-2 flex flex-col">
                 <div class="flex flex-wrap items-end justify-between mb-4">
                    <div class="flex items-end gap-3">
@@ -228,33 +191,27 @@
                       </div>
                       <div id="trendPercent" class="text-sm font-bold mb-0.5 text-white/50">—%</div>
                    </div>
-
-                   <div class="flex gap-1 bg-white/5 p-0.5 rounded-lg mt-2 lg:mt-0">
+                   <div class="flex gap-1 bg-white/5 p-0.5 rounded-lg">
                       <button class="chart-toggle active" id="btnTrendPct" onclick="setTrendMode('pct')">Margin %</button>
                       <button class="chart-toggle" id="btnTrendNet" onclick="setTrendMode('net')">Net $</button>
                       <button class="chart-toggle" id="btnTrendRev" onclick="setTrendMode('rev')">Rev $</button>
                    </div>
                 </div>
-
                 <div class="relative flex-1 min-h-[220px]">
                   <canvas id="trendChart"></canvas>
                 </div>
               </div>
 
-              <div class="card rounded-2xl p-0 flex flex-col overflow-hidden">
+              <div class="card rounded-2xl p-0 flex flex-col overflow-hidden h-[380px]">
                 <div class="p-3 border-b border-white/5 bg-white/5 flex justify-between items-center">
-                  <div class="text-xs font-bold text-white">Performance</div>
-                  <div class="text-[10px] text-white/40">Current Week</div>
+                  <div class="text-xs font-bold text-white">Driver Performance</div>
+                  <div id="perfPeriodLabel" class="text-[10px] text-white/40">Viewed Period</div>
                 </div>
-                
-                <div class="flex-1 overflow-y-auto thin-scroll relative">
-                  <div class="p-3">
-                    <div class="text-[9px] uppercase tracking-widest text-emerald-400 font-bold mb-2">Top Performers (Margin $)</div>
+                <div class="flex-1 overflow-y-auto thin-scroll relative p-3">
+                    <div class="text-[9px] uppercase tracking-widest text-emerald-400 font-bold mb-2">Top 10 Performers</div>
                     <div id="topDriversList" class="space-y-1 mb-4"></div>
-
-                    <div class="text-[9px] uppercase tracking-widest text-rose-400 font-bold mb-2">Lowest Performers</div>
+                    <div class="text-[9px] uppercase tracking-widest text-rose-400 font-bold mb-2">Bottom 10 Performers</div>
                     <div id="bottomDriversList" class="space-y-1"></div>
-                  </div>
                 </div>
               </div>
             </div>
@@ -264,18 +221,10 @@
                 <div class="font-bold text-xs">Weekly History</div>
                 <div class="text-[10px] text-white/40">Full Record</div>
               </div>
-              
               <div class="thin-scroll overflow-y-auto flex-1">
                 <table class="w-full text-left text-xs border-collapse">
                   <thead class="sticky top-0 bg-[#121212] text-white/40 uppercase tracking-wider z-10 shadow-lg font-semibold">
-                    <tr>
-                      <th class="py-3 px-4">Week</th>
-                      <th class="py-3 px-4">% Margin</th>
-                      <th class="py-3 px-4">Revenue</th>
-                      <th class="py-3 px-4">TL Exp</th>
-                      <th class="py-3 px-4">Margin</th>
-                      <th class="py-3 px-4">Signal</th>
-                    </tr>
+                    <tr><th class="py-3 px-4">Week</th><th class="py-3 px-4">% Margin</th><th class="py-3 px-4">Revenue</th><th class="py-3 px-4">TL Exp</th><th class="py-3 px-4">Margin</th><th class="py-3 px-4">Signal</th></tr>
                   </thead>
                   <tbody id="lossTableBody" class="divide-y divide-white/5 text-white/80 font-mono"></tbody>
                 </table>
@@ -283,12 +232,9 @@
             </div>
           </div> 
 
-
           <div id="view-drivers" class="view-hidden hiddenView pb-10">
             <div id="driverTopPerformer" class="mb-3"></div>
-
             <div class="grid grid-cols-1 xl:grid-cols-2 gap-3 h-full">
-              
               <div class="card rounded-2xl p-0 overflow-hidden flex flex-col max-h-[75vh]">
                 <div class="p-3 border-b border-white/5 bg-white/5">
                   <div class="font-bold text-xs">Driver History</div>
@@ -297,19 +243,12 @@
                 <div class="thin-scroll overflow-y-auto flex-1">
                   <table class="w-full text-left text-xs">
                     <thead class="sticky top-0 bg-[#121212] text-white/40 uppercase tracking-wider z-10">
-                      <tr>
-                        <th class="py-2 px-4">Week</th>
-                        <th class="py-2 px-4">% Margin</th>
-                        <th class="py-2 px-4">Revenue</th>
-                        <th class="py-2 px-4">Margin</th>
-                        <th class="py-2 px-4">Hours</th>
-                      </tr>
+                      <tr><th class="py-2 px-4">Week</th><th class="py-2 px-4">% Margin</th><th class="py-2 px-4">Revenue</th><th class="py-2 px-4">Margin</th><th class="py-2 px-4">Hours</th></tr>
                     </thead>
                     <tbody id="driverWeeklyBody" class="divide-y divide-white/5 text-white/80 font-mono"></tbody>
                   </table>
                 </div>
               </div>
-
               <div class="card rounded-2xl p-0 overflow-hidden flex flex-col h-auto">
                 <div class="p-3 border-b border-white/5 bg-white/5">
                   <div class="font-bold text-xs">Region Breakdown</div>
@@ -318,30 +257,102 @@
                 <div class="thin-scroll overflow-y-auto flex-1">
                   <table class="w-full text-left text-xs">
                     <thead class="sticky top-0 bg-[#121212] text-white/40 uppercase tracking-wider z-10">
-                      <tr>
-                        <th class="py-2 px-4">Region</th>
-                        <th class="py-2 px-4">Revenue</th>
-                        <th class="py-2 px-4">Margin</th>
-                        <th class="py-2 px-4">Hours</th>
-                      </tr>
+                      <tr><th class="py-2 px-4">Region</th><th class="py-2 px-4">Revenue</th><th class="py-2 px-4">Margin</th><th class="py-2 px-4">Hours</th></tr>
                     </thead>
                     <tbody id="driverRegionBody" class="divide-y divide-white/5 text-white/80 font-mono"></tbody>
                   </table>
                 </div>
               </div>
-
             </div>
           </div>
-
-        </div> </section>
+        </div> 
+      </section>
     </div>
   </div>
 
 <script>
-  // CONFIG
+  // ============================
+  // GLOBAL FUNCTIONS
+  // ============================
+  // ORDER: 'week' -> 'last_q' -> 'last_y' -> 'this_q' -> 'this_y'
+  window.cycleKpiMode = function() {
+    if(kpiMode === 'week') kpiMode = 'last_q';
+    else if(kpiMode === 'last_q') kpiMode = 'last_y';
+    else if(kpiMode === 'last_y') kpiMode = 'this_q';
+    else if(kpiMode === 'this_q') kpiMode = 'this_y';
+    else kpiMode = 'week';
+    
+    // Label Update
+    let label = "Weekly View";
+    if(kpiMode === 'last_q') label = "Last Quarter";
+    if(kpiMode === 'last_y') label = "Last Year";
+    if(kpiMode === 'this_q') label = "This Quarter";
+    if(kpiMode === 'this_y') label = "This Year";
+    
+    document.getElementById("kpiCycleLabel").textContent = label;
+    renderOverview();
+  };
+
+  window.setTrendMode = function(mode) {
+    trendMode = mode;
+    ['btnTrendPct', 'btnTrendNet', 'btnTrendRev'].forEach(id => document.getElementById(id).classList.remove('active'));
+    if(mode==='pct') document.getElementById('btnTrendPct').classList.add('active');
+    if(mode==='net') document.getElementById('btnTrendNet').classList.add('active');
+    if(mode==='rev') document.getElementById('btnTrendRev').classList.add('active');
+    renderTrendChart();
+  };
+
+  window.toggleRegionFolder = function(id){
+    const el = document.getElementById(`sub-${id}`);
+    const ic = document.getElementById(`icon-${id}`);
+    if(el){ el.classList.toggle("hidden"); if(ic) ic.style.transform = el.classList.contains("hidden") ? "rotate(0deg)" : "rotate(90deg)"; }
+  };
+
+  window.toggleArchive = function() {
+    const el = document.getElementById('archiveList');
+    const ic = document.getElementById('archiveIcon');
+    if(el.classList.contains('hidden')){ el.classList.remove('hidden'); ic.style.transform = "rotate(180deg)"; } 
+    else { el.classList.add('hidden'); ic.style.transform = "rotate(0deg)"; }
+  };
+
+  window.setView = function(v){
+    activeView = v;
+    document.querySelectorAll(".navbtn").forEach(b => b.classList.toggle("active", b.getAttribute("data-view") === v));
+    ["overview","drivers"].forEach(id => {
+       const el = document.getElementById("view-"+id);
+       if(el) {
+          if(id === v) { el.classList.remove("hiddenView"); requestAnimationFrame(() => { el.classList.remove("view-hidden"); el.classList.add("view-container"); }); } 
+          else { el.classList.add("view-hidden"); el.classList.remove("view-container"); setTimeout(() => el.classList.add("hiddenView"), 250); }
+       }
+    });
+  };
+
+  window.selectRegion = function(id){
+    activeRegionId = id; activeDriver = ""; setView("overview");
+    weekly = sortWeeksDesc(regionSeries[id] || []);
+    latestWeek = weekly[0] || null;
+    renderRegionTree(); renderOverview();
+  };
+
+  window.selectDriver = function(rId, dName){
+    activeRegionId = rId; activeDriver = dName; setView("drivers");
+    driverWeekly = getDriverWeekly(dName);
+    renderRegionTree(); renderDriversView();
+  };
+  
+  window.resetToGlobal = function(){
+    activeRegionId = "ALL"; activeDriver = ""; setView("overview");
+    weekly = sortWeeksDesc(regionSeries["ALL"] || []);
+    latestWeek = weekly[0];
+    renderRegionTree(); renderOverview();
+  };
+
+  // ============================
+  // LOGIC
+  // ============================
   const WORKER_URL = "https://withered-king-c48e.haildir12121.workers.dev/";
   const POLL_MS = 120000;
-
+  
   const REGION_SHEETS = [
     { id: "ALL", name: "All Areas (Sum)", sheet: null },
     { id: "CST", name: "Coast", sheet: "CST.Wkly" },
@@ -353,857 +364,249 @@
   ];
 
   const RUNNING_SHEET_NAME = "Running Sheet";
-  
-  const RUNNING_SCHEMA = {
-    dataHeaderRowIndex0: 2, 
-    dateCol: "D",
-    areas: [
-      { id: "CST",   name: "Coast",    start: "E",  end: "O"  },
-      { id: "RBG",   name: "Roseburg", start: "P",  end: "Z"  },
-      { id: "EUG",   name: "Eugene",   start: "AA", end: "AK" },
-      { id: "OKRDG", name: "Oakridge", start: "AL", end: "AV" },
-      { id: "ALBNY", name: "Albany",   start: "AW", end: "BG" },
-      { id: "DMT",   name: "DMT",      start: "BR", end: "CB" }
-    ],
-    offsets: { driver:0, hours:1, payroll:2, fuel:3, insurance:4, maintenance:5, totalExp:7, revenue:8, margin:9 }
-  };
+  const RUNNING_SCHEMA = { dataHeaderRowIndex0: 2, dateCol: "D", areas: [ { id: "CST", name: "Coast", start: "E", end: "O" }, { id: "RBG", name: "Roseburg", start: "P", end: "Z" }, { id: "EUG", name: "Eugene", start: "AA", end: "AK" }, { id: "OKRDG", name: "Oakridge", start: "AL", end: "AV" }, { id: "ALBNY", name: "Albany", start: "AW", end: "BG" }, { id: "DMT", name: "DMT", start: "BR", end: "CB" } ], offsets: { driver:0, hours:1, payroll:2, fuel:3, insurance:4, maintenance:5, totalExp:7, revenue:8, margin:9 } };
+  const COLMAP = { weekStart: "P", weekEnd: "Q", driverCount: "R", hoursWorked: "S", payroll: "T", fuel: "U", insurance: "V", maintenance: "W", billbacks: "X", totalExp: "Y", revenue: "Z", margin: "AA", pctMargin: "AB" };
 
-  const COLMAP = {
-    weekStart: "P", weekEnd: "Q", driverCount: "R", hoursWorked: "S",
-    payroll: "T", fuel: "U", insurance: "V", maintenance: "W", billbacks: "X",
-    totalExp: "Y", revenue: "Z", margin: "AA", pctMargin: "AB"
-  };
-
-  // STATE
-  let regionSeries = {};
-  let activeRegionId = "ALL";
-  let weekly = [];
-  let latestWeek = null;
-  let activeView = "overview";
-
-  let driverIndex = {};      
-  let activeDriver = "";
-  let driverWeekly = [];     
-
-  // Chart State
-  let trendChart = null;
-  let trendMode = "pct"; // 'pct', 'net', 'rev'
-  
-  let showBaseline = true;
-  let _timer = null;
+  let regionSeries = {}; let activeRegionId = "ALL"; let weekly = []; let latestWeek = null; let activeView = "overview";
+  let driverIndex = {}; let activeDriver = ""; let driverWeekly = [];     
+  let trendChart = null; let trendMode = "pct"; let trendZoom = 16; let kpiMode = "week";
   let lastHash = "";
 
-  // --- HELPERS ---
-
   function fmtUSD(n){ return Number(n||0).toLocaleString('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}); }
-  function fmtVal(n){ return Number(n||0).toLocaleString('en-US',{maximumFractionDigits:0}); }
-  
-  function asDate(v){
-    if (v instanceof Date && !isNaN(v)) return v;
-    if (typeof v === "number" && isFinite(v)) {
-      const utcDays = Math.floor(v - 25569);
-      return new Date(utcDays * 86400 * 1000);
-    }
-    const d = new Date(v);
-    return isNaN(d) ? null : d;
-  }
+  function asDate(v){ if (v instanceof Date && !isNaN(v)) return v; if (typeof v === "number" && isFinite(v)) { const utcDays = Math.floor(v - 25569); return new Date(utcDays * 86400 * 1000); } const d = new Date(v); return isNaN(d) ? null : d; }
+  function niceDate(v){ const d = asDate(v); return d ? `${d.getMonth()+1}/${d.getDate()}/${d.getFullYear()}` : ""; }
+  function safeNum(v){ if(typeof v === 'number') return isFinite(v)?v:0; const s = String(v).replace(/[^0-9.\-]/g,""); const n = parseFloat(s); return isFinite(n)?n:0; }
+  function colToIndex(col){ let n=0; const s=String(col).toUpperCase().trim(); for(let i=0;i<s.length;i++) n=n*26+(s.charCodeAt(i)-64); return n-1; }
+  function sortWeeksDesc(arr){ return (arr||[]).slice().sort((a,b)=> { const da = asDate(a.weekEnd)||asDate(a.weekStart); const db = asDate(b.weekEnd)||asDate(b.weekStart); return (db?db.getTime():0) - (da?da.getTime():0); }); }
+  function simpleHash(buffer) { let hash = 0; const arr = new Uint8Array(buffer); const step = Math.ceil(arr.length / 1000) || 1; for (let i = 0; i < arr.length; i+=step) { hash = ((hash << 5) - hash) + arr[i]; hash |= 0; } return hash + "_" + arr.length; }
 
-  function niceDate(v){
-    const d = asDate(v);
-    return d ? `${d.getMonth()+1}/${d.getDate()}/${d.getFullYear()}` : "";
-  }
-
-  function safeNum(v){
-    if(typeof v === 'number') return isFinite(v)?v:0;
-    const s = String(v).replace(/[^0-9.\-]/g,"");
-    const n = parseFloat(s);
-    return isFinite(n)?n:0;
-  }
-
-  function colToIndex(col){
-    let n=0; const s=String(col).toUpperCase().trim();
-    for(let i=0;i<s.length;i++) n=n*26+(s.charCodeAt(i)-64);
-    return n-1;
-  }
-
-  function sortWeeksDesc(arr){
-    return (arr||[]).slice().sort((a,b)=> {
-      const da = asDate(a.weekEnd)||asDate(a.weekStart);
-      const db = asDate(b.weekEnd)||asDate(b.weekStart);
-      return (db?db.getTime():0) - (da?da.getTime():0);
-    });
-  }
-
-  function getWeekRangeForDate(d){
-    const dt = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 12, 0, 0);
-    const day = dt.getDay(); 
-    const diffToSat = (day - 6 + 7) % 7; 
-    const start = new Date(dt); start.setDate(dt.getDate() - diffToSat);
-    const end = new Date(start); end.setDate(start.getDate() + 6);
-    return { start, end, key: `${niceDate(start)}|${niceDate(end)}` };
-  }
-  
-  function simpleHash(buffer) {
-    let hash = 0; const arr = new Uint8Array(buffer); const step = Math.ceil(arr.length / 1000) || 1; 
-    for (let i = 0; i < arr.length; i+=step) { hash = ((hash << 5) - hash) + arr[i]; hash |= 0; }
-    return hash + "_" + arr.length;
-  }
-
-  function setTrendMode(mode) {
-    trendMode = mode;
-    // Update buttons
-    ['btnTrendPct', 'btnTrendNet', 'btnTrendRev'].forEach(id => document.getElementById(id).classList.remove('active'));
-    if(mode==='pct') document.getElementById('btnTrendPct').classList.add('active');
-    if(mode==='net') document.getElementById('btnTrendNet').classList.add('active');
-    if(mode==='rev') document.getElementById('btnTrendRev').classList.add('active');
-    renderTrendChart();
-  }
-
-  function toggleArchive() {
-    const el = document.getElementById('archiveList');
-    const ic = document.getElementById('archiveIcon');
-    if(el.classList.contains('hidden')){
-      el.classList.remove('hidden');
-      ic.style.transform = "rotate(180deg)";
-    } else {
-      el.classList.add('hidden');
-      ic.style.transform = "rotate(0deg)";
-    }
-  }
-
-  // --- RISK & ARCHIVE ENGINE ---
-  
-  function getDriverRisk(driverName) {
-    const weeks = getDriverWeekly(driverName);
-    if (!weeks || weeks.length === 0) return { score: "LOW", label: "OK", color:"text-white/30" };
-
-    let totalRev=0, totalMargin=0, lowWeeks=0;
-    weeks.forEach(w => {
-        totalRev += w.revenue; totalMargin += w.margin;
-        if(w.pctMargin < 5) lowWeeks++;
-    });
-    const avgMargin = totalRev > 0 ? (totalMargin / totalRev) * 100 : 0;
-    const pctLowWeeks = lowWeeks / weeks.length;
-
-    if (avgMargin < 5 || pctLowWeeks > 0.4) return { score: "HIGH", label: "HIGH RISK", color: "text-rose-500", bg: "bg-rose-500/10", border: "border-rose-500/20" };
-    if (avgMargin < 15 || pctLowWeeks > 0.2) return { score: "WATCH", label: "WATCH", color: "text-amber-400", bg: "bg-amber-400/10", border: "border-amber-400/20" };
-    return { score: "LOW", label: "LOW RISK", color: "text-emerald-500", bg: "bg-emerald-500/10", border: "border-emerald-500/20" };
-  }
-
-  function getLastActiveDate(driverName) {
-    const rows = driverIndex[driverName]?.rows || [];
-    if(!rows.length) return 0;
-    return Math.max(...rows.map(r => r.date.getTime()));
-  }
-
-  // --- DATA PROCESSING ---
-
-  function parseRegionSheet(ws){
-    const aoa = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
-    const idx = {};
-    for (const [k, col] of Object.entries(COLMAP)) idx[k] = colToIndex(col);
-
-    let headerRow = 2; 
-    for (let r=0; r<Math.min(100, aoa.length); r++){
-       const row = aoa[r]||[];
-       if(String(row[idx.pctMargin]||"").includes("%")) { headerRow=r; break; }
-    }
-
-    const out = [];
-    for (let r = headerRow + 1; r < aoa.length; r++){
-      const row = aoa[r] || [];
-      const wsVal = row[idx.weekStart];
-      if (!wsVal) continue;
-
-      const revenue = safeNum(row[idx.revenue]);
-      const totalExp = safeNum(row[idx.totalExp]);
-      const margin = safeNum(row[idx.margin]);
-      if(Math.abs(revenue)<1 && Math.abs(totalExp)<1) continue;
-
-      let pmRaw = row[idx.pctMargin];
-      let pm = 0;
-      if (typeof pmRaw === "number") pm = pmRaw <= 1.5 ? pmRaw * 100 : pmRaw;
-      else { const n = safeNum(pmRaw); pm = n <= 1.5 ? n * 100 : n; }
-
-      out.push({
-        weekStart: wsVal,
-        weekEnd: row[idx.weekEnd],
-        revenue, totalExp, margin, pctMargin: pm,
-        driverCount: safeNum(row[idx.driverCount]),
-        hoursWorked: safeNum(row[idx.hoursWorked])
-      });
-    }
-    return sortWeeksDesc(out);
-  }
-
-  function sumRegionsByWeek(seriesById){
-    const map = new Map();
-    for (const [id, series] of Object.entries(seriesById)){
-      if (id === "ALL") continue;
-      for (const w of series){
-        const key = `${niceDate(w.weekStart)}|${niceDate(w.weekEnd)}`;
-        const cur = map.get(key) || { 
-          weekStart: w.weekStart, weekEnd: w.weekEnd, 
-          revenue:0, totalExp:0, margin:0, driverCount:0, hoursWorked:0 
-        };
-        cur.revenue += w.revenue; cur.totalExp += w.totalExp; cur.margin += w.margin;
-        cur.driverCount += w.driverCount; cur.hoursWorked += w.hoursWorked;
-        map.set(key, cur);
-      }
-    }
-    const all = Array.from(map.values());
-    for(const w of all) w.pctMargin = w.revenue?((w.revenue-w.totalExp)/w.revenue)*100:0;
-    return sortWeeksDesc(all);
-  }
-
-  function parseRunningSheet(ws){
-    const aoa = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
-    const headerRow = RUNNING_SCHEMA.dataHeaderRowIndex0;
-    const dateColIdx = colToIndex(RUNNING_SCHEMA.dateCol);
-    const areas = RUNNING_SCHEMA.areas.map(a => ({...a, startIdx: colToIndex(a.start)}));
-
-    for (const a of areas) {
-      a.driverColIdx = a.startIdx; 
-      for (let c = a.startIdx; c <= colToIndex(a.end); c++) {
-        if (String(aoa[headerRow]?.[c]||"").toLowerCase().trim() === "driver") {
-          a.driverColIdx = c; break; 
-        }
-      }
-    }
-
-    const out = {};
-    for (let r = headerRow + 1; r < aoa.length; r++){
-      const row = aoa[r] || [];
-      const d = asDate(row[dateColIdx]);
-      if (!d) continue;
-
-      for (const a of areas){
-        const base = a.driverColIdx;
-        const name = String(row[base + RUNNING_SCHEMA.offsets.driver] || "").trim();
-        if (!name) continue;
-
-        const revenue = safeNum(row[base + RUNNING_SCHEMA.offsets.revenue]);
-        const totalExp = safeNum(row[base + RUNNING_SCHEMA.offsets.totalExp]);
-        const margin = safeNum(row[base + RUNNING_SCHEMA.offsets.margin]);
-        const hours = safeNum(row[base + RUNNING_SCHEMA.offsets.hours]);
-
-        if (Math.abs(revenue)<0.1 && Math.abs(hours)<0.1) continue;
-
-        if (!out[name]) out[name] = { rows: [] };
-        out[name].rows.push({
-          date: d, region: a.name, regionId: a.id,
-          revenue, totalExp, margin, hours
-        });
-      }
-    }
-    return out;
-  }
-
-  function getDriverWeekly(driverName){
-    const rows = driverIndex[driverName]?.rows || [];
-    const map = new Map();
-    for (const r of rows){
-      const wk = getWeekRangeForDate(r.date);
-      const cur = map.get(wk.key) || { 
-        weekStart: wk.start, weekEnd: wk.end, 
-        revenue:0, totalExp:0, margin:0, hoursWorked:0 
-      };
-      cur.revenue += r.revenue; cur.totalExp += r.totalExp; cur.margin += r.margin;
-      cur.hoursWorked += r.hours;
-      map.set(wk.key, cur);
-    }
-    const out = sortWeeksDesc(Array.from(map.values()));
-    for(const w of out) w.pctMargin = w.revenue?((w.revenue-w.totalExp)/w.revenue)*100:0;
-    return out;
-  }
-
-  // --- UI RENDERING ---
-
-  function toggleRegionFolder(id){
-    const el = document.getElementById(`sub-${id}`);
-    const ic = document.getElementById(`icon-${id}`);
-    if(el){
-      el.classList.toggle("hidden");
-      if(ic) ic.style.transform = el.classList.contains("hidden") ? "rotate(0deg)" : "rotate(90deg)";
-    }
-  }
-
-  function resetToGlobal(){
-    activeRegionId = "ALL";
-    activeDriver = "";
-    activeView = "overview";
-    setView("overview");
-    weekly = sortWeeksDesc(regionSeries["ALL"] || []);
-    latestWeek = weekly[0];
-    renderRegionTree();
-    renderOverview();
-  }
-
-  function selectRegion(id){
-    activeRegionId = id;
-    activeDriver = "";
-    activeView = "overview";
-    weekly = sortWeeksDesc(regionSeries[id] || []);
-    latestWeek = weekly[0] || null;
-    setView("overview");
-    renderRegionTree();
-    renderOverview();
-  }
-
-  function selectDriver(rId, dName){
-    activeRegionId = rId;
-    activeDriver = dName;
-    activeView = "drivers";
-    driverWeekly = getDriverWeekly(dName);
-    setView("drivers");
-    renderRegionTree();
-    renderDriversView();
-  }
+  // --- PARSERS ---
+  function parseRegionSheet(ws){ const aoa = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" }); const idx = {}; for (const [k, col] of Object.entries(COLMAP)) idx[k] = colToIndex(col); let headerRow = 2; for (let r=0; r<Math.min(100, aoa.length); r++){ const row = aoa[r]||[]; if(String(row[idx.pctMargin]||"").includes("%")) { headerRow=r; break; } } const out = []; for (let r = headerRow + 1; r < aoa.length; r++){ const row = aoa[r] || []; const wsVal = row[idx.weekStart]; if (!wsVal) continue; const revenue = safeNum(row[idx.revenue]); const totalExp = safeNum(row[idx.totalExp]); const margin = safeNum(row[idx.margin]); if(Math.abs(revenue)<1 && Math.abs(totalExp)<1) continue; let pmRaw = row[idx.pctMargin]; let pm = 0; if (typeof pmRaw === "number") pm = pmRaw <= 1.5 ? pmRaw * 100 : pmRaw; else { const n = safeNum(pmRaw); pm = n <= 1.5 ? n * 100 : n; } out.push({ weekStart: wsVal, weekEnd: row[idx.weekEnd], revenue, totalExp, margin, pctMargin: pm, driverCount: safeNum(row[idx.driverCount]), hoursWorked: safeNum(row[idx.hoursWorked]) }); } return sortWeeksDesc(out); }
+  function sumRegionsByWeek(seriesById){ const map = new Map(); for (const [id, series] of Object.entries(seriesById)){ if (id === "ALL") continue; for (const w of series){ const key = `${niceDate(w.weekStart)}|${niceDate(w.weekEnd)}`; const cur = map.get(key) || { weekStart: w.weekStart, weekEnd: w.weekEnd, revenue:0, totalExp:0, margin:0, driverCount:0, hoursWorked:0 }; cur.revenue += w.revenue; cur.totalExp += w.totalExp; cur.margin += w.margin; cur.driverCount += w.driverCount; cur.hoursWorked += w.hoursWorked; map.set(key, cur); } } const all = Array.from(map.values()); for(const w of all) w.pctMargin = w.revenue?((w.revenue-w.totalExp)/w.revenue)*100:0; return sortWeeksDesc(all); }
+  function parseRunningSheet(ws){ const aoa = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" }); const headerRow = RUNNING_SCHEMA.dataHeaderRowIndex0; const dateColIdx = colToIndex(RUNNING_SCHEMA.dateCol); const areas = RUNNING_SCHEMA.areas.map(a => ({...a, startIdx: colToIndex(a.start)})); for (const a of areas) { a.driverColIdx = a.startIdx; for (let c = a.startIdx; c <= colToIndex(a.end); c++) { if (String(aoa[headerRow]?.[c]||"").toLowerCase().trim() === "driver") { a.driverColIdx = c; break; } } } const out = {}; for (let r = headerRow + 1; r < aoa.length; r++){ const row = aoa[r] || []; const d = asDate(row[dateColIdx]); if (!d) continue; for (const a of areas){ const base = a.driverColIdx; const name = String(row[base + RUNNING_SCHEMA.offsets.driver] || "").trim(); if (!name) continue; const revenue = safeNum(row[base + RUNNING_SCHEMA.offsets.revenue]); const totalExp = safeNum(row[base + RUNNING_SCHEMA.offsets.totalExp]); const margin = safeNum(row[base + RUNNING_SCHEMA.offsets.margin]); const hours = safeNum(row[base + RUNNING_SCHEMA.offsets.hours]); if (Math.abs(revenue)<0.1 && Math.abs(hours)<0.1) continue; if (!out[name]) out[name] = { rows: [] }; out[name].rows.push({ date: d, region: a.name, regionId: a.id, revenue, totalExp, margin, hours }); } } return out; }
+  function getDriverWeekly(driverName){ const rows = driverIndex[driverName]?.rows || []; const map = new Map(); for (const r of rows){ const dt = new Date(r.date.getFullYear(), r.date.getMonth(), r.date.getDate(), 12, 0, 0); const day = dt.getDay(); const diff = (day - 6 + 7) % 7; const start = new Date(dt); start.setDate(dt.getDate() - diff); const end = new Date(start); end.setDate(start.getDate() + 6); const key = `${niceDate(start)}|${niceDate(end)}`; const cur = map.get(key) || { weekStart: start, weekEnd: end, revenue:0, totalExp:0, margin:0, hoursWorked:0 }; cur.revenue += r.revenue; cur.totalExp += r.totalExp; cur.margin += r.margin; cur.hoursWorked += r.hours; map.set(key, cur); } const out = sortWeeksDesc(Array.from(map.values())); for(const w of out) w.pctMargin = w.revenue?((w.revenue-w.totalExp)/w.revenue)*100:0; return out; }
+  function getDriverRisk(driverName) { const weeks = getDriverWeekly(driverName); if (!weeks || weeks.length === 0) return { score: "LOW", label: "OK", color:"text-white/30" }; let totalRev=0, totalMargin=0, lowWeeks=0; weeks.forEach(w => { totalRev += w.revenue; totalMargin += w.margin; if(w.pctMargin < 5) lowWeeks++; }); const avgMargin = totalRev > 0 ? (totalMargin / totalRev) * 100 : 0; const pctLowWeeks = lowWeeks / weeks.length; if (avgMargin < 5 || pctLowWeeks > 0.4) return { score: "HIGH", label: "HIGH RISK", color: "text-rose-500", bg: "bg-rose-500/10", border: "border-rose-500/20" }; if (avgMargin < 15 || pctLowWeeks > 0.2) return { score: "WATCH", label: "WATCH", color: "text-amber-400", bg: "bg-amber-400/10", border: "border-amber-400/20" }; return { score: "LOW", label: "LOW RISK", color: "text-emerald-500", bg: "bg-emerald-500/10", border: "border-emerald-500/20" }; }
+  function getLastActiveDate(driverName) { const rows = driverIndex[driverName]?.rows || []; if(!rows.length) return 0; return Math.max(...rows.map(r => r.date.getTime())); }
 
   function renderRegionTree(){
-    const container = document.getElementById("regionTreeList");
-    const archiveContainer = document.getElementById("archiveList");
-    const countLabel = document.getElementById("regionCountLabel");
-    if (!container) return;
-    
-    container.innerHTML = "";
-    archiveContainer.innerHTML = "";
-    countLabel.textContent = `${REGION_SHEETS.length - 1} Regions`;
-
-    // 1. Determine "Current Month" based on data
-    let maxDate = 0;
-    Object.keys(driverIndex).forEach(d => {
-       const last = getLastActiveDate(d);
-       if(last > maxDate) maxDate = last;
-    });
-    const latestDateObj = new Date(maxDate);
-    const currentMonthStart = new Date(latestDateObj.getFullYear(), latestDateObj.getMonth(), 1).getTime();
-
-    // 2. Prepare Map of Drivers
-    const map = {};
-    const archivedDrivers = [];
-
-    Object.keys(driverIndex).forEach(d => {
-       const lastActive = getLastActiveDate(d);
-       const isArchive = lastActive < currentMonthStart;
-
-       if(isArchive) {
-         archivedDrivers.push({ name: d, risk: getDriverRisk(d) }); 
-       } else {
-         const rows = driverIndex[d].rows;
-         const counts = {};
-         rows.forEach(r => counts[r.regionId] = (counts[r.regionId]||0)+1);
-         const main = Object.keys(counts).sort((a,b)=>counts[b]-counts[a])[0];
-         if(main){
-           if(!map[main]) map[main] = [];
-           map[main].push(d);
-         }
-       }
-    });
-
-    // 3. Render Active Regions
-    REGION_SHEETS.forEach(r => {
-      if (r.id === "ALL") return;
-      const isActive = (activeRegionId === r.id);
-      let dList = (map[r.id] || []);
-      const isOpen = isActive;
-
-      const rankedDrivers = dList.map(name => ({ name, risk: getDriverRisk(name) })).sort((a,b) => {
-          const riskOrder = { "HIGH": 0, "WATCH": 1, "LOW": 2 };
-          const ra = riskOrder[a.risk.score] ?? 2;
-          const rb = riskOrder[b.risk.score] ?? 2;
-          if (ra !== rb) return ra - rb;
-          return a.name.localeCompare(b.name);
-      });
-
-      const div = document.createElement("div");
-      div.className = `rounded-lg transition select-none overflow-hidden ${isActive ? 'bg-white/5 border border-white/5' : 'border border-transparent hover:border-white/5'}`;
-      
-      let html = `
-        <div class="flex items-center justify-between p-2 cursor-pointer hover:bg-white/5 transition" onclick="toggleRegionFolder('${r.id}')">
-          <div class="flex items-center gap-2 overflow-hidden">
-             <svg id="icon-${r.id}" class="w-3 h-3 text-white/40 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="transform:${isOpen?'rotate(90deg)':'rotate(0deg)'}">
-               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-             </svg>
-             <span class="text-xs font-medium ${isActive?'text-white':'text-white/70'} truncate">${r.name}</span>
-          </div>
-          <div class="text-[9px] ${isActive?'text-indigo-400':'text-white/20'}">${rankedDrivers.length} Drvs</div>
-        </div>
-        
-        <div id="sub-${r.id}" class="${isOpen?'':'hidden'} pl-4 pr-2 pb-2 space-y-0.5">
-           <button class="w-full text-left flex items-center gap-2 px-2 py-1 rounded text-[10px] transition ${isActive && !activeDriver ? 'bg-indigo-500/20 text-indigo-300 font-semibold':'text-white/50 hover:bg-white/5 hover:text-white'}"
-                   onclick="event.stopPropagation(); selectRegion('${r.id}')">
-              Overview
-           </button>
-      `;
-
-      if(rankedDrivers.length){
-        html += `<div class="px-2 pt-2 pb-1 text-[8px] font-bold text-white/20 uppercase tracking-widest">Active (Risk)</div>`;
-        rankedDrivers.forEach(obj => {
-           const d = obj.name;
-           const r = obj.risk;
-           const isMe = (activeDriver === d);
-           const dotColor = r.score === "HIGH" ? "bg-rose-500 shadow-rose-500/50 shadow-sm" : 
-                            r.score === "WATCH" ? "bg-amber-400" : "bg-emerald-500/30";
-
-           html += `
-             <button class="w-full text-left truncate px-2 py-1 rounded text-[10px] transition flex items-center gap-2 ${isMe ? 'bg-emerald-500/10 text-emerald-400 font-medium' : 'text-white/60 hover:bg-white/5 hover:text-white'}"
-                     onclick="event.stopPropagation(); selectDriver('${r.id}', '${d}')">
-               <span class="w-1.5 h-1.5 rounded-full ${dotColor}"></span>
-               ${d}
-             </button>
-           `;
-        });
-      } else {
-        html += `<div class="px-2 py-1 text-[9px] text-white/30 italic">No active drivers</div>`;
-      }
-      
-      html += `</div>`;
-      div.innerHTML = html;
-      container.appendChild(div);
-    });
-
-    archivedDrivers.sort((a,b) => a.name.localeCompare(b.name));
-    archivedDrivers.forEach(obj => {
-       const d = obj.name;
-       archiveContainer.innerHTML += `
-         <button class="w-full text-left truncate px-2 py-1 rounded text-[10px] text-white/30 hover:text-white hover:bg-white/5 transition"
-                 onclick="event.stopPropagation(); selectDriver('ALL', '${d}')">
-           ${d}
-         </button>
-       `;
-    });
+    const container = document.getElementById("regionTreeList"); const archiveContainer = document.getElementById("archiveList"); const countLabel = document.getElementById("regionCountLabel");
+    if (!container) return; container.innerHTML = ""; archiveContainer.innerHTML = ""; countLabel.textContent = `${REGION_SHEETS.length - 1} Regions`;
+    let maxDate = 0; Object.keys(driverIndex).forEach(d => { const last = getLastActiveDate(d); if(last > maxDate) maxDate = last; });
+    const latestDateObj = new Date(maxDate); const currentMonthStart = new Date(latestDateObj.getFullYear(), latestDateObj.getMonth(), 1).getTime();
+    const map = {}; const archivedDrivers = [];
+    Object.keys(driverIndex).forEach(d => { const lastActive = getLastActiveDate(d); const isArchive = lastActive < currentMonthStart; if(isArchive) archivedDrivers.push({ name: d, risk: getDriverRisk(d) }); else { const rows = driverIndex[d].rows; const counts = {}; rows.forEach(r => counts[r.regionId] = (counts[r.regionId]||0)+1); const main = Object.keys(counts).sort((a,b)=>counts[b]-counts[a])[0]; if(main){ if(!map[main]) map[main] = []; map[main].push(d); } } });
+    REGION_SHEETS.forEach(r => { if (r.id === "ALL") return; const isActive = (activeRegionId === r.id); let dList = (map[r.id] || []); const rankedDrivers = dList.map(name => ({ name, risk: getDriverRisk(name) })).sort((a,b) => { const riskOrder = { "HIGH": 0, "WATCH": 1, "LOW": 2 }; const ra = riskOrder[a.risk.score] ?? 2; const rb = riskOrder[b.risk.score] ?? 2; if (ra !== rb) return ra - rb; return a.name.localeCompare(b.name); });
+      const div = document.createElement("div"); div.className = `rounded-lg transition select-none overflow-hidden ${isActive ? 'bg-white/5 border border-white/5' : 'border border-transparent hover:border-white/5'}`;
+      let html = `<div class="flex items-center justify-between p-2 cursor-pointer hover:bg-white/5 transition" onclick="toggleRegionFolder('${r.id}')"><div class="flex items-center gap-2 overflow-hidden"><svg id="icon-${r.id}" class="w-3 h-3 text-white/40 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg><span class="text-xs font-medium ${isActive?'text-white':'text-white/70'} truncate">${r.name}</span></div><div class="text-[9px] ${isActive?'text-indigo-400':'text-white/20'}">${rankedDrivers.length} Drvs</div></div><div id="sub-${r.id}" class="${isActive?'':'hidden'} pl-4 pr-2 pb-2 space-y-0.5"><button class="w-full text-left flex items-center gap-2 px-2 py-1 rounded text-[10px] transition ${isActive && !activeDriver ? 'bg-indigo-500/20 text-indigo-300 font-semibold':'text-white/50 hover:bg-white/5 hover:text-white'}" onclick="event.stopPropagation(); selectRegion('${r.id}')">Overview</button>`;
+      if(rankedDrivers.length){ html += `<div class="px-2 pt-2 pb-1 text-[8px] font-bold text-white/20 uppercase tracking-widest">Active (Risk)</div>`; rankedDrivers.forEach(obj => { const d = obj.name; const r = obj.risk; const isMe = (activeDriver === d); const dotColor = r.score === "HIGH" ? "bg-rose-500 shadow-rose-500/50 shadow-sm" : r.score === "WATCH" ? "bg-amber-400" : "bg-emerald-500/30"; html += `<button class="w-full text-left truncate px-2 py-1 rounded text-[10px] transition flex items-center gap-2 ${isMe ? 'bg-emerald-500/10 text-emerald-400 font-medium' : 'text-white/60 hover:bg-white/5 hover:text-white'}" onclick="event.stopPropagation(); selectDriver('${r.id}', '${d}')"><span class="w-1.5 h-1.5 rounded-full ${dotColor}"></span>${d}</button>`; }); } else { html += `<div class="px-2 py-1 text-[9px] text-white/30 italic">No active drivers</div>`; } html += `</div>`; div.innerHTML = html; container.appendChild(div); });
+    archivedDrivers.sort((a,b) => a.name.localeCompare(b.name)); archivedDrivers.forEach(obj => { archiveContainer.innerHTML += `<button class="w-full text-left truncate px-2 py-1 rounded text-[10px] text-white/30 hover:text-white hover:bg-white/5 transition" onclick="event.stopPropagation(); selectDriver('ALL', '${obj.name}')">${obj.name}</button>`; });
   }
 
   function renderOverview(){
-    filterWeeklyTable();
-    renderPerformanceList(); 
+    const anchorWeek = weekly[0]; 
+    if(!anchorWeek) { return; }
     
-    const w = latestWeek;
-    if(w){
-       const pm = w.pctMargin;
-       const kpiM = document.getElementById("kpiMargin");
-       kpiM.textContent = `${pm.toFixed(2)}%`;
-       kpiM.className = `text-xl font-bold tracking-tight ${pm<0?'text-rose-400':pm<10?'text-amber-400':'text-emerald-400'}`;
-       document.getElementById("kpiMarginSub").textContent = `${fmtUSD(w.margin)} margin`;
+    let aggData = { revenue:0, totalExp:0, margin:0, count:0 };
+    let endTime = 0; let startTime = 0; 
+    let projected = 0; let projLabel = "Annual Run Rate";
+    let pacingDiff = 0; // The growth comparison value
 
-       document.getElementById("kpiRevenue").textContent = fmtUSD(w.revenue);
-       document.getElementById("kpiExpense").textContent = fmtUSD(w.totalExp);
-       document.getElementById("kpiExpenseSub").textContent = `${niceDate(w.weekStart)} - ${niceDate(w.weekEnd)}`;
-       
-       document.getElementById("kpiDrivers").textContent = w.driverCount || 0;
-       document.getElementById("kpiDriversSub").textContent = `${Math.round(w.hoursWorked||0)} hrs`;
+    // 1. DETERMINE TIME PERIODS
+    const anchorDate = asDate(anchorWeek.weekEnd);
+    const anchorYear = anchorDate.getFullYear();
+    const anchorMonth = anchorDate.getMonth();
+    const curQ = Math.floor(anchorMonth / 3);
+
+    // Variables for Previous Period Comparison
+    let prevTotalMargin = 0;
+    let prevStartTime = 0;
+    let prevEndTime = 0;
+
+    if (kpiMode === 'week') {
+        // --- WEEKLY MODE ---
+        aggData.revenue = anchorWeek.revenue;
+        aggData.totalExp = anchorWeek.totalExp;
+        aggData.margin = anchorWeek.margin;
+        aggData.count = 1;
+        
+        projected = aggData.margin * 52;
+        projLabel = "Annual Run Rate";
+        trendZoom = 16;
+        startTime = asDate(anchorWeek.weekStart).getTime();
+        endTime = asDate(anchorWeek.weekEnd).getTime();
+        
+        // Pacing vs Last Week
+        if(weekly[1]) prevTotalMargin = weekly[1].margin;
+
     } else {
-       document.getElementById("kpiMargin").textContent = "—";
-       document.getElementById("kpiRevenue").textContent = "—";
-       document.getElementById("kpiExpense").textContent = "—";
-       document.getElementById("kpiDrivers").textContent = "—";
-    }
+        // --- QUARTER / YEAR MODES ---
+        
+        // --- 1. DEFINE CURRENT PERIOD BOUNDS ---
+        if (kpiMode === 'this_q' || kpiMode === 'last_q') {
+            let targetQ = kpiMode === 'this_q' ? curQ : curQ - 1;
+            let targetY = anchorYear;
+            if (targetQ < 0) { targetQ = 3; targetY--; }
+            
+            startTime = new Date(targetY, targetQ * 3, 1).getTime();
+            endTime = new Date(targetY, (targetQ * 3) + 3, 0).getTime();
+            trendZoom = 13;
+            projLabel = kpiMode === 'this_q' ? "Proj. Qtr End" : "Final Result";
 
+            // Define Previous Period for Comparison (Q-1)
+            let prevQ = targetQ - 1;
+            let prevY = targetY;
+            if(prevQ < 0) { prevQ = 3; prevY--; }
+            prevStartTime = new Date(prevY, prevQ * 3, 1).getTime();
+            prevEndTime = new Date(prevY, (prevQ * 3) + 3, 0).getTime();
+
+        } else {
+            // Yearly Modes
+            let targetY = kpiMode === 'this_y' ? anchorYear : anchorYear - 1;
+            startTime = new Date(targetY, 0, 1).getTime();
+            endTime = new Date(targetY, 11, 31).getTime();
+            trendZoom = 52;
+            projLabel = kpiMode === 'this_y' ? "Proj. Year End" : "Final Result";
+
+            // Previous Period (Y-1)
+            prevStartTime = new Date(targetY - 1, 0, 1).getTime();
+            prevEndTime = new Date(targetY - 1, 11, 31).getTime();
+        }
+
+        // --- 2. AGGREGATE CURRENT & PREVIOUS ---
+        // Pad loop end to ensure last day is included
+        const loopEnd = endTime + 86400000; 
+        const prevLoopEnd = prevEndTime + 86400000;
+
+        weekly.forEach(w => {
+           const t = asDate(w.weekEnd).getTime();
+           
+           // Current Period Sum
+           if(t >= startTime && t < loopEnd) {
+               aggData.revenue += w.revenue; 
+               aggData.totalExp += w.totalExp; 
+               aggData.margin += w.margin; 
+               aggData.count++;
+           }
+
+           // Previous Period Sum (For Comparison)
+           if(t >= prevStartTime && t < prevLoopEnd) {
+               prevTotalMargin += w.margin;
+           }
+        });
+
+        // --- 3. PROJECTION LOGIC ---
+        // Only project for "This" periods. For "Last", projected = actual.
+        if (kpiMode.startsWith('this')) {
+            if(aggData.count > 0) {
+                const avgMargin = aggData.margin / aggData.count;
+                const totalWeeks = kpiMode === 'this_q' ? 13 : 52;
+                const remaining = Math.max(0, totalWeeks - aggData.count);
+                projected = aggData.margin + (avgMargin * remaining);
+            }
+        } else {
+            projected = aggData.margin; // Final result
+        }
+    }
+    
+    // --- 4. PACING CALCULATION ---
+    // Compare Projected Finish vs Previous Actual Finish
+    pacingDiff = projected - prevTotalMargin;
+
+    const pctMargin = aggData.revenue > 0 ? (aggData.margin / aggData.revenue) * 100 : 0;
+
+    // UPDATE UI
+    document.getElementById("kpiRevenue").textContent = fmtUSD(aggData.revenue);
+    
+    // Smart Labels
+    let revLabel = "Current Week";
+    if(kpiMode === 'last_q') revLabel = "Last Qtr Total";
+    if(kpiMode === 'last_y') revLabel = "Last Year Total";
+    if(kpiMode === 'this_q') revLabel = "QTD Total";
+    if(kpiMode === 'this_y') revLabel = "YTD Total";
+    document.getElementById("kpiRevenueLabel").textContent = revLabel;
+    
+    document.getElementById("kpiMargin").textContent = fmtUSD(aggData.margin);
+    
+    const kpiPct = document.getElementById("kpiPctMargin"); 
+    kpiPct.textContent = pctMargin.toFixed(2) + "%"; 
+    kpiPct.className = `text-xl font-bold tracking-tight ${pctMargin < 0 ? 'text-rose-400' : 'text-emerald-400'}`;
+    
+    // Pacing Label Injection
+    const sign = pacingDiff >= 0 ? "▲" : "▼";
+    const pColor = pacingDiff >= 0 ? "text-emerald-400" : "text-rose-400";
+    const diffStr = fmtUSD(Math.abs(pacingDiff));
+    let compareLabel = "vs Prev";
+    if(kpiMode === 'week') compareLabel = "vs Last Wk";
+    if(kpiMode.includes('_q')) compareLabel = "vs Prev Qtr";
+    if(kpiMode.includes('_y')) compareLabel = "vs Prev Yr";
+
+    document.getElementById("kpiProjected").textContent = fmtUSD(projected);
+    document.getElementById("kpiProjectedLabel").innerHTML = `<span class="${pColor} font-bold text-xs">${sign} ${diffStr}</span> <span class="text-white/30 text-[10px]">${compareLabel}</span>`;
+
+    renderPerformanceList(startTime, endTime + 86400000);
     renderTrendChart();
+    renderTable(); 
     updateContextLabel();
   }
 
-  function renderPerformanceList() {
-    const topContainer = document.getElementById("topDriversList");
-    const botContainer = document.getElementById("bottomDriversList");
-    if(!topContainer || !botContainer) return;
-    
-    topContainer.innerHTML = "";
-    botContainer.innerHTML = "";
-
-    if(!latestWeek) {
-      topContainer.innerHTML = `<div class="text-white/30 text-[10px] italic">No data selected</div>`;
-      return;
-    }
-
-    const weekStartT = asDate(latestWeek.weekStart).getTime();
-    const weekEndT = asDate(latestWeek.weekEnd).getTime();
-    
-    const driverPerf = {};
-    
-    Object.keys(driverIndex).forEach(dName => {
-       const rows = driverIndex[dName].rows;
-       rows.forEach(r => {
-          const t = r.date.getTime();
-          if (t >= weekStartT - 86400000 && t <= weekEndT + 86400000) {
-             if(activeRegionId === "ALL" || r.regionId === activeRegionId) {
-                if(!driverPerf[dName]) driverPerf[dName] = { name: dName, margin: 0 };
-                driverPerf[dName].margin += r.margin;
-             }
-          }
-       });
-    });
-
-    const sorted = Object.values(driverPerf).sort((a,b) => b.margin - a.margin);
-    
-    if(sorted.length === 0) {
-       topContainer.innerHTML = `<div class="text-white/30 text-[10px] italic">No drivers found for this week</div>`;
-       return;
-    }
-
-    // Top 5
-    sorted.slice(0, 5).forEach(d => {
-       topContainer.innerHTML += `
-         <div class="flex justify-between items-center text-[10px] bg-white/5 px-2 py-1 rounded border border-white/5">
-           <span class="text-white/90 truncate w-24">${d.name}</span>
-           <span class="font-bold text-emerald-400">${fmtUSD(d.margin)}</span>
-         </div>
-       `;
-    });
-
-    // Bottom 5
-    const bottom = sorted.slice(-5).reverse(); 
-    bottom.forEach(d => {
-       const color = d.margin < 0 ? "text-rose-400" : "text-white/60";
-       botContainer.innerHTML += `
-         <div class="flex justify-between items-center text-[10px] bg-white/5 px-2 py-1 rounded border border-white/5">
-           <span class="text-white/90 truncate w-24">${d.name}</span>
-           <span class="font-bold ${color}">${fmtUSD(d.margin)}</span>
-         </div>
-       `;
-    });
-  }
-
   function renderTrendChart(){
-    const canvas = document.getElementById("trendChart");
-    if(!canvas || !weekly.length) return;
+    const canvas = document.getElementById("trendChart"); if(!canvas || !weekly.length) return;
+    const ctx = canvas.getContext("2d"); if(trendChart) trendChart.destroy();
     
-    const ctx = canvas.getContext("2d");
-    if(trendChart) trendChart.destroy();
-    
-    const subset = weekly.slice(0, 16).reverse();
+    const zoomLimit = trendZoom === 999 ? weekly.length : trendZoom;
+    const subset = weekly.slice(0, zoomLimit).reverse(); 
     const labels = subset.map(x=>niceDate(x.weekEnd));
+    let vals = []; let label = ""; let color = ""; let bgColorStr = "";
+    if (trendMode === 'pct') { vals = subset.map(x=>x.pctMargin); label = "Margin %"; color = "#818cf8"; bgColorStr = "99, 102, 241"; } 
+    else if (trendMode === 'net') { vals = subset.map(x=>x.margin); label = "Net Margin $"; color = "#10b981"; bgColorStr = "16, 185, 129"; } 
+    else if (trendMode === 'rev') { vals = subset.map(x=>x.revenue); label = "Revenue $"; color = "#3b82f6"; bgColorStr = "59, 130, 246"; }
     
-    let vals = [];
-    let label = "";
-    let color = "";
-    let bgColorStr = "";
+    const lastVal = vals[vals.length-1] || 0; const prevVal = vals[vals.length-2] || 0;
+    let bigNumStr = trendMode === 'pct' ? lastVal.toFixed(2) + "%" : fmtUSD(lastVal);
+    let diffStr = "—"; let diffColor = "text-white/50";
+    if(prevVal !== 0) { const pctChange = ((lastVal - prevVal) / Math.abs(prevVal)) * 100; const sign = pctChange >= 0 ? "▲" : "▼"; diffColor = pctChange >= 0 ? "text-emerald-400" : "text-rose-400"; diffStr = `${sign} ${Math.abs(pctChange).toFixed(1)}%`; }
+    document.getElementById("trendBigNumber").textContent = bigNumStr; const elP = document.getElementById("trendPercent"); elP.textContent = diffStr; elP.className = `text-sm font-bold mb-0.5 ${diffColor}`;
 
-    if (trendMode === 'pct') {
-        vals = subset.map(x=>x.pctMargin);
-        label = "Margin %";
-        color = "#818cf8"; 
-        bgColorStr = "99, 102, 241";
-    } else if (trendMode === 'net') {
-        vals = subset.map(x=>x.margin);
-        label = "Net Margin $";
-        color = "#10b981"; 
-        bgColorStr = "16, 185, 129";
-    } else if (trendMode === 'rev') {
-        vals = subset.map(x=>x.revenue);
-        label = "Revenue $";
-        color = "#3b82f6"; 
-        bgColorStr = "59, 130, 246";
-    }
-    
-    // UPDATE BIG NUMBER AND %
-    const lastVal = vals[vals.length-1] || 0;
-    const prevVal = vals[vals.length-2] || 0;
-    let diffStr = "";
-    let diffColor = "text-white/50";
-    
-    // Format Big Number
-    let bigNumStr = "";
-    if(trendMode === 'pct') bigNumStr = lastVal.toFixed(2) + "%";
-    else bigNumStr = fmtUSD(lastVal);
-    
-    // Format Percentage Change
-    if(prevVal !== 0) {
-       const pctChange = ((lastVal - prevVal) / Math.abs(prevVal)) * 100;
-       const sign = pctChange >= 0 ? "▲" : "▼";
-       diffColor = pctChange >= 0 ? "text-emerald-400" : "text-rose-400";
-       diffStr = `${sign} ${Math.abs(pctChange).toFixed(1)}%`;
-    } else {
-       diffStr = "—";
-    }
-
-    document.getElementById("trendBigNumber").textContent = bigNumStr;
-    const elP = document.getElementById("trendPercent");
-    elP.textContent = diffStr;
-    elP.className = `text-sm font-bold mb-0.5 ${diffColor}`;
-
-    const grad = ctx.createLinearGradient(0,0,0,300);
-    grad.addColorStop(0, `rgba(${bgColorStr}, 0.5)`); 
-    grad.addColorStop(1, `rgba(${bgColorStr}, 0.0)`); 
-
-    const datasets = [{
-       label: label,
-       data: vals,
-       borderColor: color,
-       backgroundColor: grad,
-       borderWidth: 2,
-       pointRadius: 4, 
-       pointBackgroundColor: "#0f0f0f",
-       pointBorderColor: color,
-       pointBorderWidth: 2,
-       fill: true,
-       tension: 0.3
-    }];
-
-    trendChart = new Chart(ctx, {
-      type: "line",
-      data: { labels, datasets },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { 
-          legend: { display: false },
-          tooltip: {
-            mode: 'index',
-            intersect: false,
-            callbacks: {
-              label: (ctx) => {
-                 let v = ctx.parsed.y;
-                 if(trendMode === 'pct') return ` ${v.toFixed(2)}%`;
-                 return ` $${v.toLocaleString()}`;
-              }
-            }
-          }
-        },
-        layout: { padding: { left: 5, right: 10, top: 10, bottom: 5 } },
-        scales: {
-          x: { 
-            display: true, 
-            grid: { display: false },
-            ticks: { 
-               color: '#9ca3af', 
-               maxTicksLimit: 7, 
-               font: { size: 11, family: "'Inter', sans-serif" },
-               maxRotation: 0,
-               autoSkip: true
-            }
-          },
-          y: { 
-             display: true, // Enabled Y-Axis
-             position: 'right', // Cleaner layout
-             grid: { color: 'rgba(255,255,255,0.05)' },
-             ticks: {
-                color: '#64748b',
-                font: { size: 10 },
-                callback: (v) => {
-                   if(trendMode === 'pct') return v + '%';
-                   if(Math.abs(v) >= 1000) return '$' + (v/1000).toFixed(0) + 'k';
-                   return '$' + v;
-                }
-             },
-             suggestedMin: 0 
-          }
-        },
-        interaction: { mode: 'index', intersect: false }
-      }
-    });
+    const grad = ctx.createLinearGradient(0,0,0,300); grad.addColorStop(0, `rgba(${bgColorStr}, 0.5)`); grad.addColorStop(1, `rgba(${bgColorStr}, 0.0)`); 
+    trendChart = new Chart(ctx, { type: "line", data: { labels, datasets: [{ label, data: vals, borderColor: color, backgroundColor: grad, borderWidth: 2, pointRadius: 4, pointBackgroundColor: "#0f0f0f", pointBorderColor: color, pointBorderWidth: 2, fill: true, tension: 0.3 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false } }, layout: { padding: { left: 5, right: 10, top: 10, bottom: 5 } }, scales: { x: { display: true, grid: { display: false }, ticks: { color: '#9ca3af', maxTicksLimit: 7, font: { size: 11, family: "'Inter', sans-serif" } } }, y: { display: true, position: 'right', grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b', font: { size: 10 }, callback: (v) => trendMode === 'pct' ? v + '%' : (Math.abs(v) >= 1000 ? '$' + (v/1000).toFixed(0) + 'k' : '$' + v) } } }, interaction: { mode: 'index', intersect: false } } });
   }
 
-  function filterWeeklyTable(){
-    const input = document.getElementById("searchInput");
-    let subset = weekly;
-    
-    if(input && input.value){
-       const [y,m,d] = input.value.split('-').map(Number);
-       const t = new Date(y, m-1, d).getTime();
-       subset = weekly.filter(w => {
-          const s = asDate(w.weekStart);
-          const e = asDate(w.weekEnd);
-          if(!s || !e) return false;
-          const sT = new Date(s.getFullYear(), s.getMonth(), s.getDate()).getTime();
-          const eT = new Date(e.getFullYear(), e.getMonth(), e.getDate()).getTime();
-          return t >= sT && t <= eT;
-       });
-    }
-
-    renderTable(subset, "lossTableBody");
+  function renderPerformanceList(startTime, endTime) {
+    const topContainer = document.getElementById("topDriversList"); const botContainer = document.getElementById("bottomDriversList");
+    if(!topContainer || !botContainer) return; topContainer.innerHTML = ""; botContainer.innerHTML = "";
+    if(!weekly.length) { topContainer.innerHTML = `<div class="text-white/30 text-[10px] italic">No data</div>`; return; }
+    const startObj = new Date(startTime); const endObj = new Date(endTime);
+    document.getElementById("perfPeriodLabel").textContent = `${startObj.toLocaleDateString()} — ${endObj.toLocaleDateString()}`;
+    const driverPerf = {};
+    Object.keys(driverIndex).forEach(dName => { const rows = driverIndex[dName].rows; rows.forEach(r => { const t = r.date.getTime(); if (t >= startTime && t <= endTime) { if(activeRegionId === "ALL" || r.regionId === activeRegionId) { if(!driverPerf[dName]) driverPerf[dName] = { name: dName, margin: 0 }; driverPerf[dName].margin += r.margin; } } }); });
+    const sorted = Object.values(driverPerf).sort((a,b) => b.margin - a.margin);
+    if(sorted.length === 0) { topContainer.innerHTML = `<div class="text-white/30 text-[10px] italic">No drivers found</div>`; return; }
+    sorted.slice(0, 10).forEach(d => { topContainer.innerHTML += `<div class="flex justify-between items-center text-[10px] bg-white/5 px-2 py-1 rounded border border-white/5"><span class="text-white/90 truncate w-32">${d.name}</span><span class="font-bold text-emerald-400">${fmtUSD(d.margin)}</span></div>`; });
+    sorted.slice(-10).reverse().forEach(d => { const color = d.margin < 0 ? "text-rose-400" : "text-white/60"; botContainer.innerHTML += `<div class="flex justify-between items-center text-[10px] bg-white/5 px-2 py-1 rounded border border-white/5"><span class="text-white/90 truncate w-32">${d.name}</span><span class="font-bold ${color}">${fmtUSD(d.margin)}</span></div>`; });
   }
 
-  function renderTable(data, tbodyId){
-     const tbody = document.getElementById(tbodyId);
-     if(!tbody) return;
-     tbody.innerHTML = "";
-     
-     if(!data || !data.length){
-       tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-white/30 italic">No Data</td></tr>`;
-       return;
-     }
-     
-     data.slice(0, 50).forEach(w => {
-        const pm = w.pctMargin;
-        const col = pm<0 ? "text-rose-400" : pm<5 ? "text-amber-400" : "text-emerald-400";
-        const isPositive = pm >= 0;
-        const arrow = isPositive ? `<span class="inline-block text-emerald-400 mr-1">↑</span>` : `<span class="inline-block text-rose-400 mr-1">↓</span>`;
-        const signal = pm<0 ? "CRITICAL" : pm<5 ? "RISK" : "OK";
-        
-        const tr = document.createElement("tr");
-        tr.className = "hover:bg-white/5 transition group";
-        tr.innerHTML = `
-          <td class="py-2 px-4 text-white/90">
-             <div class="font-medium">${niceDate(w.weekStart)}</div>
-             <div class="text-[9px] text-white/40">${niceDate(w.weekEnd)}</div>
-          </td>
-          <td class="py-2 px-4 font-bold ${col}">
-             ${arrow} ${pm.toFixed(1)}%
-          </td>
-          <td class="py-2 px-4 text-white/70">${fmtUSD(w.revenue)}</td>
-          <td class="py-2 px-4 text-white/70">${fmtUSD(w.totalExp)}</td>
-          <td class="py-2 px-4 text-white/70">${fmtUSD(w.margin)}</td>
-          <td class="py-2 px-4 text-[9px] opacity-70 ${col} font-bold tracking-wide">${signal}</td>
-        `;
-        tbody.appendChild(tr);
-     });
-  }
-
-  function renderDriversView(){
-     // Render Top Performer Badge
-     const topContainer = document.getElementById("driverTopPerformer");
-     if(topContainer) {
-       topContainer.innerHTML = "";
-       if(driverWeekly && driverWeekly.length > 0) {
-         const best = driverWeekly.reduce((prev, curr) => (curr.margin > prev.margin) ? curr : prev, driverWeekly[0]);
-         if(best && best.margin > 0) {
-             topContainer.innerHTML = `
-               <div class="relative overflow-hidden rounded-2xl p-4 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border border-indigo-500/20 flex items-center justify-between">
-                  <div class="relative z-10 flex items-center gap-3">
-                    <div class="h-10 w-10 rounded-full bg-indigo-500/20 flex items-center justify-center border border-indigo-500/30 text-xl">🏆</div>
-                    <div>
-                      <div class="text-[10px] text-indigo-300 font-bold uppercase tracking-wider">Best Week Record</div>
-                      <div class="text-white font-semibold text-sm">${niceDate(best.weekStart)}</div>
-                    </div>
-                  </div>
-                  <div class="relative z-10 text-right">
-                    <div class="text-2xl font-bold text-white tracking-tight">${fmtUSD(best.margin)}</div>
-                    <div class="text-[10px] text-indigo-200/50 font-medium">Net Margin</div>
-                  </div>
-               </div>
-             `;
-         }
-       }
-     }
-
-     const tbody = document.getElementById("driverWeeklyBody");
-     if(tbody) {
-       tbody.innerHTML = "";
-       driverWeekly.slice(0,50).forEach(w => {
-         const pm = w.pctMargin;
-         const col = pm<0 ? "text-rose-400" : pm<10 ? "text-amber-400" : "text-emerald-400";
-         tbody.innerHTML += `
-           <tr class="hover:bg-white/5 transition">
-             <td class="py-2 px-4 text-white/80">${niceDate(w.weekStart)}</td>
-             <td class="py-2 px-4 font-bold ${col}">${pm.toFixed(1)}%</td>
-             <td class="py-2 px-4 text-white/60">${fmtUSD(w.revenue)}</td>
-             <td class="py-2 px-4 text-white/60">${fmtUSD(w.margin)}</td>
-             <td class="py-2 px-4 text-white/60">${Math.round(w.hoursWorked)}</td>
-           </tr>
-         `;
-       });
-     }
-
-     const regionBody = document.getElementById("driverRegionBody");
-     if(regionBody){
-       regionBody.innerHTML = "";
-       if(activeDriver && driverIndex[activeDriver]){
-         const rows = driverIndex[activeDriver].rows;
-         if(rows.length){
-           const latestDate = rows[0].date.getTime();
-           const latestRows = rows.filter(r=>r.date.getTime()===latestDate);
-           latestRows.forEach(r => {
-              regionBody.innerHTML += `
-                <tr class="hover:bg-white/5">
-                  <td class="py-2 px-4 font-medium">${r.region}</td>
-                  <td class="py-2 px-4 text-white/60">${fmtUSD(r.revenue)}</td>
-                  <td class="py-2 px-4 text-white/60">${fmtUSD(r.margin)}</td>
-                  <td class="py-2 px-4 text-white/60">${r.hours}</td>
-                </tr>
-              `;
-           });
-         }
-       }
-     }
-  }
-
-  function updateContextLabel(){
-    const el = document.getElementById("activeContextLabel");
-    const rName = REGION_SHEETS.find(r=>r.id===activeRegionId)?.name || activeRegionId;
-    if(activeDriver){
-      const r = getDriverRisk(activeDriver);
-      const badge = `<span class="px-1.5 py-0.5 rounded text-[9px] ${r.bg} ${r.color} border ${r.border} font-bold ml-2 tracking-wide">${r.label}</span>`;
-      el.innerHTML = `<div class="flex items-center"><span class="text-emerald-400 font-semibold">${rName}</span><span class="text-white/30 mx-1">/</span><span class="text-white">${activeDriver}</span>${badge}</div>`;
-    } else {
-      el.innerHTML = `<span class="text-indigo-400 font-semibold">${rName}</span> <span class="text-white/30 mx-1">/</span> <span class="text-white">Overview</span>`;
-    }
-  }
-
-  function setView(v){
-    activeView = v;
-    document.querySelectorAll(".navbtn").forEach(b => b.classList.toggle("active", b.getAttribute("data-view") === v));
-    ["overview","loss","drivers"].forEach(id => {
-       const el = document.getElementById("view-"+id);
-       if(el) {
-          if(id === v) {
-            el.classList.remove("hiddenView"); 
-            requestAnimationFrame(() => { el.classList.remove("view-hidden"); el.classList.add("view-container"); });
-          } else {
-            el.classList.add("view-hidden"); el.classList.remove("view-container");
-            setTimeout(() => el.classList.add("hiddenView"), 250);
-          }
-       }
-    });
-  }
+  function renderTable(){ const tbody = document.getElementById("lossTableBody"); if(tbody) { tbody.innerHTML = ""; weekly.slice(0, 50).forEach(w => { const pm = w.pctMargin; const col = pm<0 ? "text-rose-400" : pm<5 ? "text-amber-400" : "text-emerald-400"; const arrow = pm >= 0 ? `<span class="inline-block text-emerald-400 mr-1">↑</span>` : `<span class="inline-block text-rose-400 mr-1">↓</span>`; const signal = pm<0 ? "CRITICAL" : pm<5 ? "RISK" : "OK"; const tr = document.createElement("tr"); tr.className = "hover:bg-white/5 transition group"; tr.innerHTML = `<td class="py-2 px-4 text-white/90"><div class="font-medium">${niceDate(w.weekStart)}</div><div class="text-[9px] text-white/40">${niceDate(w.weekEnd)}</div></td><td class="py-2 px-4 font-bold ${col}">${arrow} ${pm.toFixed(1)}%</td><td class="py-2 px-4 text-white/70">${fmtUSD(w.revenue)}</td><td class="py-2 px-4 text-white/70">${fmtUSD(w.totalExp)}</td><td class="py-2 px-4 text-white/70">${fmtUSD(w.margin)}</td><td class="py-2 px-4 text-[9px] opacity-70 ${col} font-bold tracking-wide">${signal}</td>`; tbody.appendChild(tr); }); } }
+  function renderDriversView(){ const topContainer = document.getElementById("driverTopPerformer"); if(topContainer) { topContainer.innerHTML = ""; if(driverWeekly && driverWeekly.length > 0) { const best = driverWeekly.reduce((prev, curr) => (curr.margin > prev.margin) ? curr : prev, driverWeekly[0]); if(best && best.margin > 0) { topContainer.innerHTML = `<div class="relative overflow-hidden rounded-2xl p-4 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border border-indigo-500/20 flex items-center justify-between"><div class="relative z-10 flex items-center gap-3"><div class="h-10 w-10 rounded-full bg-indigo-500/20 flex items-center justify-center border border-indigo-500/30 text-xl">🏆</div><div><div class="text-[10px] text-indigo-300 font-bold uppercase tracking-wider">Best Week Record</div><div class="text-white font-semibold text-sm">${niceDate(best.weekStart)}</div></div></div><div class="relative z-10 text-right"><div class="text-2xl font-bold text-white tracking-tight">${fmtUSD(best.margin)}</div><div class="text-[10px] text-indigo-200/50 font-medium">Net Margin</div></div></div>`; } } } const tbody = document.getElementById("driverWeeklyBody"); if(tbody) { tbody.innerHTML = ""; driverWeekly.slice(0,50).forEach(w => { const pm = w.pctMargin; const col = pm<0 ? "text-rose-400" : pm<10 ? "text-amber-400" : "text-emerald-400"; tbody.innerHTML += `<tr class="hover:bg-white/5 transition"><td class="py-2 px-4 text-white/80">${niceDate(w.weekStart)}</td><td class="py-2 px-4 font-bold ${col}">${pm.toFixed(1)}%</td><td class="py-2 px-4 text-white/60">${fmtUSD(w.revenue)}</td><td class="py-2 px-4 text-white/60">${fmtUSD(w.margin)}</td><td class="py-2 px-4 text-white/60">${Math.round(w.hoursWorked)}</td></tr>`; }); } const regionBody = document.getElementById("driverRegionBody"); if(regionBody){ regionBody.innerHTML = ""; if(activeDriver && driverIndex[activeDriver]){ const rows = driverIndex[activeDriver].rows; if(rows.length){ const latestDate = rows[0].date.getTime(); const latestRows = rows.filter(r=>r.date.getTime()===latestDate); latestRows.forEach(r => { regionBody.innerHTML += `<tr class="hover:bg-white/5"><td class="py-2 px-4 font-medium">${r.region}</td><td class="py-2 px-4 text-white/60">${fmtUSD(r.revenue)}</td><td class="py-2 px-4 text-white/60">${fmtUSD(r.margin)}</td><td class="py-2 px-4 text-white/60">${r.hours}</td></tr>`; }); } } } }
+  function updateContextLabel(){ const el = document.getElementById("activeContextLabel"); const rName = REGION_SHEETS.find(r=>r.id===activeRegionId)?.name || activeRegionId; if(activeDriver){ const r = getDriverRisk(activeDriver); const badge = `<span class="px-1.5 py-0.5 rounded text-[9px] ${r.bg} ${r.color} border ${r.border} font-bold ml-2 tracking-wide">${r.label}</span>`; el.innerHTML = `<div class="flex items-center"><span class="text-emerald-400 font-semibold">${rName}</span><span class="text-white/30 mx-1">/</span><span class="text-white">${activeDriver}</span>${badge}</div>`; } else { el.innerHTML = `<span class="text-indigo-400 font-semibold">${rName}</span> <span class="text-white/30 mx-1">/</span> <span class="text-white">Overview</span>`; } }
 
   async function refresh(){
-    const sl = document.getElementById("lastSyncLabel");
-    if(sl) sl.textContent = "Syncing...";
-
-    if(weekly.length === 0 && document.getElementById("lossTableBody")) {
-       document.getElementById("lossTableBody").innerHTML = `<tr><td colspan="6" class="p-4"><div class="animate-pulse h-4 bg-white/10 rounded w-1/2 mx-auto"></div></td></tr>`;
-    }
-
+    const sl = document.getElementById("lastSyncLabel"); if(sl) sl.textContent = "Syncing...";
     try {
-      const res = await fetch(WORKER_URL, {cache:"no-store"});
-      const buf = await res.arrayBuffer();
-      const newHash = simpleHash(buf);
-      if(newHash === lastHash && lastHash !== "") {
-         if(sl) sl.textContent = "Ready (Cached)";
-         return; 
-      }
-      lastHash = newHash;
-
+      const res = await fetch(WORKER_URL, {cache:"no-store"}); const buf = await res.arrayBuffer(); const newHash = simpleHash(buf);
+      if(newHash === lastHash && lastHash !== "") { if(sl) sl.textContent = "Ready (Cached)"; return; } lastHash = newHash;
       const wb = XLSX.read(buf, {type:"array"});
-
-      for (const r of REGION_SHEETS){
-         if(r.id==="ALL") continue;
-         const ws = wb.Sheets[r.sheet];
-         regionSeries[r.id] = ws ? parseRegionSheet(ws) : [];
-      }
+      for (const r of REGION_SHEETS){ if(r.id==="ALL") continue; const ws = wb.Sheets[r.sheet]; regionSeries[r.id] = ws ? parseRegionSheet(ws) : []; }
       regionSeries["ALL"] = sumRegionsByWeek(regionSeries);
-
-      const rws = wb.Sheets[RUNNING_SHEET_NAME];
-      if(rws) driverIndex = parseRunningSheet(rws);
-      
-      if(activeDriver) driverWeekly = getDriverWeekly(activeDriver);
-      else weekly = sortWeeksDesc(regionSeries[activeRegionId]);
-      latestWeek = weekly[0] || null;
-
-      renderRegionTree();
-      
-      if(activeView === "overview") renderOverview();
-      else if(activeView === "drivers") renderDriversView();
-
+      const rws = wb.Sheets[RUNNING_SHEET_NAME]; if(rws) driverIndex = parseRunningSheet(rws);
+      if(activeDriver) driverWeekly = getDriverWeekly(activeDriver); else weekly = sortWeeksDesc(regionSeries[activeRegionId]); latestWeek = weekly[0] || null;
+      renderRegionTree(); if(activeView === "overview") renderOverview(); else if(activeView === "drivers") renderDriversView();
       if(sl) sl.textContent = "Last sync: " + new Date().toLocaleTimeString();
-
-    } catch(e){
-      console.error(e);
-      if(sl) sl.textContent = "Sync Failed";
-    }
+    } catch(e){ console.error(e); if(sl) sl.textContent = "Sync Failed"; }
   }
-
-  document.getElementById("searchInput")?.addEventListener("input", filterWeeklyTable);
+  
   document.getElementById("refreshBtn")?.addEventListener("click", refresh);
-
+  function start(){ refresh(); setInterval(refresh, POLL_MS); }
   start();
-  function start(){
-    refresh();
-    setInterval(refresh, POLL_MS);
-  }
 </script>
 </body>
 </html>
-
