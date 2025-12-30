@@ -163,7 +163,7 @@
 
       <section class="flex-1 flex flex-col h-full relative overflow-hidden bg-black/20">
         
-        <div class="p-4 border-b border-white/5 flex-shrink-0 z-10 bg-[#0a0a0a]/80 backdrop-blur-md">
+        <div class="p-4 border-b border-white/10 flex-shrink-0 z-10 bg-[#0a0a0a]/80 backdrop-blur-md">
           <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
               <div id="dashTitle" class="text-lg font-bold tracking-tight text-white">Weekly Performance</div>
@@ -219,19 +219,24 @@
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
               
-              <div class="card rounded-2xl p-4 lg:col-span-2 flex flex-col">
-                <div class="flex items-center justify-between mb-3">
-                  <div>
-                    <div class="text-xs font-bold text-white">Trend Analysis</div>
-                    <div class="text-[10px] text-white/40">16 Week History</div>
-                  </div>
-                  <div class="flex gap-1 bg-white/5 p-0.5 rounded-lg">
-                    <button class="chart-toggle active" id="btnTrendPct" onclick="setTrendMode('pct')">Margin %</button>
-                    <button class="chart-toggle" id="btnTrendNet" onclick="setTrendMode('net')">Net $</button>
-                    <button class="chart-toggle" id="btnTrendRev" onclick="setTrendMode('rev')">Rev $</button>
-                  </div>
+              <div class="card rounded-2xl p-5 lg:col-span-2 flex flex-col">
+                <div class="flex flex-wrap items-end justify-between mb-4">
+                   <div class="flex items-end gap-3">
+                      <div>
+                         <h3 class="text-xs font-bold text-white/50 uppercase tracking-widest mb-1">Trend Analysis</h3>
+                         <h4 id="trendBigNumber" class="text-3xl font-bold text-white leading-none">$0</h4>
+                      </div>
+                      <div id="trendPercent" class="text-sm font-bold mb-0.5 text-white/50">—%</div>
+                   </div>
+
+                   <div class="flex gap-1 bg-white/5 p-0.5 rounded-lg mt-2 lg:mt-0">
+                      <button class="chart-toggle active" id="btnTrendPct" onclick="setTrendMode('pct')">Margin %</button>
+                      <button class="chart-toggle" id="btnTrendNet" onclick="setTrendMode('net')">Net $</button>
+                      <button class="chart-toggle" id="btnTrendRev" onclick="setTrendMode('rev')">Rev $</button>
+                   </div>
                 </div>
-                <div class="relative flex-1 min-h-[200px]">
+
+                <div class="relative flex-1 min-h-[220px]">
                   <canvas id="trendChart"></canvas>
                 </div>
               </div>
@@ -892,6 +897,32 @@
         bgColorStr = "59, 130, 246";
     }
     
+    // UPDATE BIG NUMBER AND %
+    const lastVal = vals[vals.length-1] || 0;
+    const prevVal = vals[vals.length-2] || 0;
+    let diffStr = "";
+    let diffColor = "text-white/50";
+    
+    // Format Big Number
+    let bigNumStr = "";
+    if(trendMode === 'pct') bigNumStr = lastVal.toFixed(2) + "%";
+    else bigNumStr = fmtUSD(lastVal);
+    
+    // Format Percentage Change
+    if(prevVal !== 0) {
+       const pctChange = ((lastVal - prevVal) / Math.abs(prevVal)) * 100;
+       const sign = pctChange >= 0 ? "▲" : "▼";
+       diffColor = pctChange >= 0 ? "text-emerald-400" : "text-rose-400";
+       diffStr = `${sign} ${Math.abs(pctChange).toFixed(1)}%`;
+    } else {
+       diffStr = "—";
+    }
+
+    document.getElementById("trendBigNumber").textContent = bigNumStr;
+    const elP = document.getElementById("trendPercent");
+    elP.textContent = diffStr;
+    elP.className = `text-sm font-bold mb-0.5 ${diffColor}`;
+
     const grad = ctx.createLinearGradient(0,0,0,300);
     grad.addColorStop(0, `rgba(${bgColorStr}, 0.5)`); 
     grad.addColorStop(1, `rgba(${bgColorStr}, 0.0)`); 
@@ -909,19 +940,6 @@
        fill: true,
        tension: 0.3
     }];
-
-    if(showBaseline && vals.length){
-       const avg = vals.reduce((a,b)=>a+b,0)/vals.length;
-       datasets.push({
-         label: "Average",
-         data: Array(vals.length).fill(avg),
-         borderColor: "rgba(255,255,255,0.4)", 
-         borderWidth: 1,
-         pointRadius: 0,
-         borderDash: [4,4], 
-         fill: false
-       });
-    }
 
     trendChart = new Chart(ctx, {
       type: "line",
@@ -957,7 +975,7 @@
             }
           },
           y: { 
-             display: true, // Enabled for readability
+             display: true, // Enabled Y-Axis
              position: 'right', // Cleaner layout
              grid: { color: 'rgba(255,255,255,0.05)' },
              ticks: {
@@ -965,7 +983,7 @@
                 font: { size: 10 },
                 callback: (v) => {
                    if(trendMode === 'pct') return v + '%';
-                   if(v >= 1000) return '$' + (v/1000).toFixed(0) + 'k';
+                   if(Math.abs(v) >= 1000) return '$' + (v/1000).toFixed(0) + 'k';
                    return '$' + v;
                 }
              },
