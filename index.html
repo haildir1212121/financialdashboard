@@ -86,7 +86,7 @@
         <div class="p-4 border-b border-white/5">
           <div class="flex items-center gap-3">
             <div class="h-9 w-9 rounded-lg bg-gradient-to-br from-indigo-600/30 to-purple-600/30 border border-white/10 grid place-items-center shadow-lg shadow-indigo-900/20">
-              <span class="font-extrabold tracking-wide text-indigo-400 text-xs">DLX</span>
+              <span id="brandBadge" class="font-extrabold tracking-wide text-indigo-400 text-xs">DLX</span>
             </div>
             <div>
               <div class="text-sm font-bold tracking-tight text-white">Dashboard</div>
@@ -143,6 +143,14 @@
               <div id="activeContextLabel" class="text-xs font-medium text-indigo-400 mt-0.5 flex items-center gap-2">Global • Overview</div>
             </div>
             <div class="flex items-center gap-4">
+                            <div class="flex items-center gap-2">
+                <div class="text-[10px] uppercase tracking-widest text-white/30 font-bold">Data</div>
+                <button id="dataToggleBtn" onclick="toggleDataSource()"
+                  class="bg-white/5 border border-white/10 text-white/80 text-[11px] font-semibold rounded-lg px-3 py-1 hover:bg-white/10 transition focus:outline-none focus:ring-2 focus:ring-indigo-500/40">
+                  <span id="dataToggleLabel">DLX</span>
+                </button>
+              </div>
+
               <button id="kpiCycleBtn" onclick="cycleKpiMode()" class="cycle-btn shadow-lg shadow-indigo-500/10">
                 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
                 <span id="kpiCycleLabel">Weekly View</span>
@@ -350,27 +358,103 @@
   // ============================
   // LOGIC
   // ============================
-  const WORKER_URL = "https://withered-king-c48e.haildir12121.workers.dev/";
-  const POLL_MS = 120000;
+  // DATA SOURCES (set these to your Cloudflare Worker endpoints that return an .xlsx file)
+  // Keep DLX as the current working URL so nothing breaks.
+  const WORKER_URL_DLX = "https://withered-king-c48e.haildir12121.workers.dev/";
+  // If your DMT workbook is served by a different worker, put it here.
+  // If it is the same worker with a query param, set it like: WORKER_URL_DMT = WORKER_URL_DLX + "?file=dmt";
+  const WORKER_URL_DMT = "https://spring-grass-bbc2.haildir12121.workers.dev/";
+
+  const DATA_SOURCES = {
+    DLX: { key: "DLX", label: "DLX", workerUrl: WORKER_URL_DLX },
+    DMT: { key: "DMT", label: "DMT", workerUrl: WORKER_URL_DMT }
+  };
+
+  let activeDataSourceKey = localStorage.getItem("dash_data_source") || "DLX";
+  // No auto-polling. Manual SYNC only.
   
-  const REGION_SHEETS = [
-    { id: "ALL", name: "All Areas (Sum)", sheet: null },
-    { id: "CST", name: "Coast", sheet: "CST.Wkly" },
-    { id: "EUG", name: "Eugene", sheet: "EUG.Wkly" },
-    { id: "RBG", name: "Roseburg", sheet: "RBG.Wkly" },
-    { id: "OKRDG", name: "Oakridge", sheet: "OKRDG.Wkly" },
-    { id: "ALBNY", name: "Albany", sheet: "ALBNY.Wkly" },
-    { id: "DMT", name: "DMT", sheet: "DMT.Wkly" }
-  ];
+  let REGION_SHEETS = []; // built dynamically from workbook sheets
 
   const RUNNING_SHEET_NAME = "Running Sheet";
   const RUNNING_SCHEMA = { dataHeaderRowIndex0: 2, dateCol: "D", areas: [ { id: "CST", name: "Coast", start: "E", end: "O" }, { id: "RBG", name: "Roseburg", start: "P", end: "Z" }, { id: "EUG", name: "Eugene", start: "AA", end: "AK" }, { id: "OKRDG", name: "Oakridge", start: "AL", end: "AV" }, { id: "ALBNY", name: "Albany", start: "AW", end: "BG" }, { id: "DMT", name: "DMT", start: "BR", end: "CB" } ], offsets: { driver:0, hours:1, payroll:2, fuel:3, insurance:4, maintenance:5, totalExp:7, revenue:8, margin:9 } };
   const COLMAP = { weekStart: "P", weekEnd: "Q", driverCount: "R", hoursWorked: "S", payroll: "T", fuel: "U", insurance: "V", maintenance: "W", billbacks: "X", totalExp: "Y", revenue: "Z", margin: "AA", pctMargin: "AB" };
 
+  // Human-friendly names for region sheet prefixes
+  const REGION_LABELS = {
+    CST: "Coast",
+    EUG: "Eugene",
+    RBG: "Roseburg",
+    OKRDG: "Oakridge",
+    ALBNY: "Albany",
+    MDVCR: "Medford",
+    DMT: "DMT",
+    NV: "Nevada"
+  };
+
+  function buildRegionSheetsFromWorkbook(wb){
+    // Pick up any sheets that look like "XXX.Wkly"
+    const wklySheets = (wb.SheetNames || []).filter(n => /\.Wkly$/i.test(n));
+    // Stable preferred order (whatever exists gets included)
+    const preferred = ["CST","EUG","RBG","OKRDG","ALBNY","MDVCR","DMT"];
+    const foundPrefixes = new Set(wklySheets.map(n => String(n).split(".")[0].toUpperCase().trim()));
+
+    const regions = [];
+    preferred.forEach(p => { if(foundPrefixes.has(p)) regions.push(p); });
+    // Include any other weekly prefixes not in preferred list
+    Array.from(foundPrefixes).sort().forEach(p => { if(!regions.includes(p)) regions.push(p); });
+
+    const out = [{ id: "ALL", name: "All Areas (Sum)", sheet: null }];
+    regions.forEach(p => {
+      const sheetName = wklySheets.find(n => String(n).toUpperCase() === (p + ".WKLY")) || (p + ".Wkly");
+      out.push({ id: p, name: REGION_LABELS[p] || p, sheet: sheetName });
+    });
+    return out;
+  }
+
+  function applyDataSourceUI(){
+    const badge = document.getElementById("brandBadge");
+    const title = document.getElementById("dashTitle");
+    const lbl = document.getElementById("dataToggleLabel");
+    if(lbl) lbl.textContent = activeDataSourceKey;
+    if(badge) badge.textContent = activeDataSourceKey;
+    if(title) title.textContent = "Weekly Performance";
+    document.title = `NEMT Dashboard — ${activeDataSourceKey}`;
+  }
+
+  window.setDataSource = function(key){
+    const k = (key || "").toUpperCase().trim();
+    if(!DATA_SOURCES[k]) return;
+    activeDataSourceKey = k;
+    localStorage.setItem("dash_data_source", activeDataSourceKey);
+
+    // reset selection safely
+    activeRegionId = "ALL";
+    activeDriver = "";
+    activeView = "overview";
+
+    applyDataSourceUI();
+    // IMPORTANT: do NOT re-fetch if we already have this source cached
+    if(dataCache[k] && dataCache[k].loaded){
+      applyActiveDataFromCache();
+    } else {
+      refresh(true); // fetch once for this source
+    }
+  };
+
+  window.toggleDataSource = function(){
+    const next = (activeDataSourceKey === "DLX") ? "DMT" : "DLX";
+    window.setDataSource(next);
+  };
+
+
   let regionSeries = {}; let activeRegionId = "ALL"; let weekly = []; let latestWeek = null; let activeView = "overview";
   let driverIndex = {}; let activeDriver = ""; let driverWeekly = [];     
   let trendChart = null; let trendMode = "pct"; let trendZoom = 16; let kpiMode = "week";
   let lastHash = "";
+  const dataCache = {
+    DLX: { loaded: false, lastHash: "", REGION_SHEETS: [], regionSeries: {}, driverIndex: {} },
+    DMT: { loaded: false, lastHash: "", REGION_SHEETS: [], regionSeries: {}, driverIndex: {} },
+  };
 
   function fmtUSD(n){ return Number(n||0).toLocaleString('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}); }
   function asDate(v){ if (v instanceof Date && !isNaN(v)) return v; if (typeof v === "number" && isFinite(v)) { const utcDays = Math.floor(v - 25569); return new Date(utcDays * 86400 * 1000); } const d = new Date(v); return isNaN(d) ? null : d; }
@@ -589,23 +673,78 @@
   function renderDriversView(){ const topContainer = document.getElementById("driverTopPerformer"); if(topContainer) { topContainer.innerHTML = ""; if(driverWeekly && driverWeekly.length > 0) { const best = driverWeekly.reduce((prev, curr) => (curr.margin > prev.margin) ? curr : prev, driverWeekly[0]); if(best && best.margin > 0) { topContainer.innerHTML = `<div class="relative overflow-hidden rounded-2xl p-4 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border border-indigo-500/20 flex items-center justify-between"><div class="relative z-10 flex items-center gap-3"><div class="h-10 w-10 rounded-full bg-indigo-500/20 flex items-center justify-center border border-indigo-500/30 text-xl">🏆</div><div><div class="text-[10px] text-indigo-300 font-bold uppercase tracking-wider">Best Week Record</div><div class="text-white font-semibold text-sm">${niceDate(best.weekStart)}</div></div></div><div class="relative z-10 text-right"><div class="text-2xl font-bold text-white tracking-tight">${fmtUSD(best.margin)}</div><div class="text-[10px] text-indigo-200/50 font-medium">Net Margin</div></div></div>`; } } } const tbody = document.getElementById("driverWeeklyBody"); if(tbody) { tbody.innerHTML = ""; driverWeekly.slice(0,50).forEach(w => { const pm = w.pctMargin; const col = pm<0 ? "text-rose-400" : pm<10 ? "text-amber-400" : "text-emerald-400"; tbody.innerHTML += `<tr class="hover:bg-white/5 transition"><td class="py-2 px-4 text-white/80">${niceDate(w.weekStart)}</td><td class="py-2 px-4 font-bold ${col}">${pm.toFixed(1)}%</td><td class="py-2 px-4 text-white/60">${fmtUSD(w.revenue)}</td><td class="py-2 px-4 text-white/60">${fmtUSD(w.margin)}</td><td class="py-2 px-4 text-white/60">${Math.round(w.hoursWorked)}</td></tr>`; }); } const regionBody = document.getElementById("driverRegionBody"); if(regionBody){ regionBody.innerHTML = ""; if(activeDriver && driverIndex[activeDriver]){ const rows = driverIndex[activeDriver].rows; if(rows.length){ const latestDate = rows[0].date.getTime(); const latestRows = rows.filter(r=>r.date.getTime()===latestDate); latestRows.forEach(r => { regionBody.innerHTML += `<tr class="hover:bg-white/5"><td class="py-2 px-4 font-medium">${r.region}</td><td class="py-2 px-4 text-white/60">${fmtUSD(r.revenue)}</td><td class="py-2 px-4 text-white/60">${fmtUSD(r.margin)}</td><td class="py-2 px-4 text-white/60">${r.hours}</td></tr>`; }); } } } }
   function updateContextLabel(){ const el = document.getElementById("activeContextLabel"); const rName = REGION_SHEETS.find(r=>r.id===activeRegionId)?.name || activeRegionId; if(activeDriver){ const r = getDriverRisk(activeDriver); const badge = `<span class="px-1.5 py-0.5 rounded text-[9px] ${r.bg} ${r.color} border ${r.border} font-bold ml-2 tracking-wide">${r.label}</span>`; el.innerHTML = `<div class="flex items-center"><span class="text-emerald-400 font-semibold">${rName}</span><span class="text-white/30 mx-1">/</span><span class="text-white">${activeDriver}</span>${badge}</div>`; } else { el.innerHTML = `<span class="text-indigo-400 font-semibold">${rName}</span> <span class="text-white/30 mx-1">/</span> <span class="text-white">Overview</span>`; } }
 
-  async function refresh(){
-    const sl = document.getElementById("lastSyncLabel"); if(sl) sl.textContent = "Syncing...";
+  async function refresh(force=false){
+    const sl = document.getElementById("lastSyncLabel"); 
+    if(sl) sl.textContent = "Syncing...";
+
+    const key = activeDataSourceKey;
+    const cache = dataCache[key] || (dataCache[key] = { loaded:false, lastHash:"", REGION_SHEETS:[], regionSeries:{}, driverIndex:{} });
+
     try {
-      const res = await fetch(WORKER_URL, {cache:"no-store"}); const buf = await res.arrayBuffer(); const newHash = simpleHash(buf);
-      if(newHash === lastHash && lastHash !== "") { if(sl) sl.textContent = "Ready (Cached)"; return; } lastHash = newHash;
+      const res = await fetch(DATA_SOURCES[key].workerUrl, {cache:"no-store"}); 
+      const buf = await res.arrayBuffer(); 
+      const newHash = simpleHash(buf);
+
+      if(!force && cache.loaded && (newHash === cache.lastHash) && cache.lastHash !== "") { 
+        if(sl) sl.textContent = "Ready (Cached)"; 
+        applyActiveDataFromCache();
+        return; 
+      }
+
+      cache.lastHash = newHash;
+
       const wb = XLSX.read(buf, {type:"array"});
-      for (const r of REGION_SHEETS){ if(r.id==="ALL") continue; const ws = wb.Sheets[r.sheet]; regionSeries[r.id] = ws ? parseRegionSheet(ws) : []; }
-      regionSeries["ALL"] = sumRegionsByWeek(regionSeries);
-      const rws = wb.Sheets[RUNNING_SHEET_NAME]; if(rws) driverIndex = parseRunningSheet(rws);
-      if(activeDriver) driverWeekly = getDriverWeekly(activeDriver); else weekly = sortWeeksDesc(regionSeries[activeRegionId]); latestWeek = weekly[0] || null;
-      renderRegionTree(); if(activeView === "overview") renderOverview(); else if(activeView === "drivers") renderDriversView();
+      cache.REGION_SHEETS = buildRegionSheetsFromWorkbook(wb);
+
+      const rs = {};
+      for (const r of cache.REGION_SHEETS){ 
+        if(r.id==="ALL") continue; 
+        const ws = wb.Sheets[r.sheet]; 
+        rs[r.id] = ws ? parseRegionSheet(ws) : []; 
+      }
+      rs["ALL"] = sumRegionsByWeek(rs);
+
+      cache.regionSeries = rs;
+
+      const rws = wb.Sheets[RUNNING_SHEET_NAME]; 
+      cache.driverIndex = rws ? parseRunningSheet(rws) : {};
+
+      cache.loaded = true;
+
       if(sl) sl.textContent = "Last sync: " + new Date().toLocaleTimeString();
-    } catch(e){ console.error(e); if(sl) sl.textContent = "Sync Failed"; }
+      applyActiveDataFromCache();
+    } catch(e){ 
+      console.error(e); 
+      if(sl) sl.textContent = "Sync Failed"; 
+    }
   }
-  
-  document.getElementById("refreshBtn")?.addEventListener("click", refresh);
-  function start(){ refresh(); setInterval(refresh, POLL_MS); }
+
+  function applyActiveDataFromCache(){
+    const key = activeDataSourceKey;
+    const cache = dataCache[key];
+    if(!cache || !cache.loaded) return;
+
+    REGION_SHEETS = cache.REGION_SHEETS || [];
+    regionSeries = cache.regionSeries || {};
+    driverIndex = cache.driverIndex || {};
+
+    // re-derive active view data without fetching
+    if(activeDriver) driverWeekly = getDriverWeekly(activeDriver); 
+    else weekly = sortWeeksDesc((regionSeries[activeRegionId] || []));
+
+    latestWeek = weekly[0] || null;
+
+    renderRegionTree(); 
+    if(activeView === "overview") renderOverview(); 
+    else if(activeView === "drivers") renderDriversView();
+  }
+
+  document.getElementById("refreshBtn")?.addEventListener("click", () => refresh(true));("click", () => refresh(true));
+  function start(){ 
+    applyDataSourceUI(); 
+    // Sync ONCE on load for the active source. No polling.
+    refresh(true); 
+  }
   start();
 </script>
 </body>
