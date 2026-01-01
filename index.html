@@ -117,11 +117,7 @@
             </div>
             <div id="regionTreeList" class="space-y-0.5"></div>
             <div class="mt-4 pt-2 border-t border-white/5">
-               <button onclick="toggleArchive()" class="w-full flex items-center justify-between px-2 py-1 text-[10px] text-white/30 hover:text-white transition">
-                 <span>🗄️ Archived Drivers</span>
-                 <svg id="archiveIcon" class="w-3 h-3 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-               </button>
-               <div id="archiveList" class="hidden space-y-0.5 mt-1 pl-2 border-l border-white/5 ml-2"></div>
+                              <div id="archiveList" class="hidden space-y-0.5 mt-1 pl-2 border-l border-white/5 ml-2"></div>
             </div>
           </div>
         </div>
@@ -278,6 +274,8 @@
     </div>
   </div>
 
+
+
 <script>
   // ============================
   // CONFIGURATION
@@ -327,8 +325,6 @@
   let activeDataSourceKey = localStorage.getItem("dash_data_source") || "DLX";
   let activeRegionId = "ALL";
   let activeDriver = "";
-  let activeView = "overview";
-  
   let kpiMode = "week"; // 'week', 'this_q', 'last_q', 'this_y', 'last_y'
   let trendMode = "pct"; // 'pct', 'net', 'rev'
 
@@ -458,9 +454,16 @@
   // AGGREGATION
   // ============================
   function processData() {
-    const contextRows = activeRegionId === "ALL" 
-      ? rawRows 
-      : rawRows.filter(r => r.regionId === activeRegionId);
+    // Filter by Region or Driver if selected
+    let contextRows = rawRows;
+    
+    if (activeRegionId !== "ALL") {
+        contextRows = contextRows.filter(r => r.regionId === activeRegionId);
+    }
+    
+    if (activeDriver !== "") {
+        contextRows = contextRows.filter(r => r.driver === activeDriver);
+    }
 
     const weekMap = new Map();
     contextRows.forEach(r => {
@@ -479,8 +482,10 @@
     weeklyData = Array.from(weekMap.values()).sort((a,b) => b.weekEnd - a.weekEnd);
     weeklyData.forEach(w => w.pctMargin = w.revenue !== 0 ? (w.margin / w.revenue) * 100 : 0);
 
+    // Build Driver Index (Global context for Roster)
     driverData = {};
-    contextRows.forEach(r => {
+    const globalRows = activeRegionId !== "ALL" ? rawRows.filter(r => r.regionId === activeRegionId) : rawRows;
+    globalRows.forEach(r => {
       if(!driverData[r.driver]) driverData[r.driver] = { rows: [], risk: null };
       driverData[r.driver].rows.push(r);
     });
@@ -493,37 +498,61 @@
     const anchorWeek = weeklyData[0];
     const anchorDate = anchorWeek.weekEnd;
     
-    let start, end;
+    let start, end, prevStart, prevEnd;
     let label = "Current Week";
 
     if(kpiMode === 'week') {
-      return { ...anchorWeek, label: "Current Week" };
+      start = asDate(anchorWeek.weekStart);
+      end = asDate(anchorWeek.weekEnd);
+      
+      // Prev week logic
+      prevEnd = new Date(start); prevEnd.setDate(start.getDate() - 1);
+      prevStart = new Date(prevEnd); prevStart.setDate(prevEnd.getDate() - 6);
+      
+      label = "Current Week";
+    } else {
+        const y = anchorDate.getFullYear();
+        const m = anchorDate.getMonth();
+        const q = Math.floor(m / 3);
+
+        if(kpiMode === 'this_q') {
+          start = new Date(y, q*3, 1); end = new Date(y, (q*3)+3, 0); label = "This Quarter";
+          // Prev Q
+          const pq = q-1 < 0 ? 3 : q-1; const py = q-1 < 0 ? y-1 : y;
+          prevStart = new Date(py, pq*3, 1); prevEnd = new Date(py, (pq*3)+3, 0);
+        } else if(kpiMode === 'last_q') {
+          const lq = q-1 < 0 ? 3 : q-1; const ly = q-1 < 0 ? y-1 : y;
+          start = new Date(ly, lq*3, 1); end = new Date(ly, (lq*3)+3, 0); label = "Last Quarter";
+           // Prev Prev Q
+           const ppq = lq-1 < 0 ? 3 : lq-1; const ppy = lq-1 < 0 ? ly-1 : ly;
+           prevStart = new Date(ppy, ppq*3, 1); prevEnd = new Date(ppy, (ppq*3)+3, 0);
+        } else if(kpiMode === 'this_y') {
+          start = new Date(y, 0, 1); end = new Date(y, 11, 31); label = "This Year";
+          prevStart = new Date(y-1, 0, 1); prevEnd = new Date(y-1, 11, 31);
+        } else if(kpiMode === 'last_y') {
+          start = new Date(y-1, 0, 1); end = new Date(y-1, 11, 31); label = "Last Year";
+          prevStart = new Date(y-2, 0, 1); prevEnd = new Date(y-2, 11, 31);
+        }
     }
 
-    const y = anchorDate.getFullYear();
-    const m = anchorDate.getMonth();
-    const q = Math.floor(m / 3);
-
-    if(kpiMode === 'this_q') {
-      start = new Date(y, q*3, 1); end = new Date(y, (q*3)+3, 0); label = "This Quarter";
-    } else if(kpiMode === 'last_q') {
-      const lq = q-1 < 0 ? 3 : q-1; const ly = q-1 < 0 ? y-1 : y;
-      start = new Date(ly, lq*3, 1); end = new Date(ly, (lq*3)+3, 0); label = "Last Quarter";
-    } else if(kpiMode === 'this_y') {
-      start = new Date(y, 0, 1); end = new Date(y, 11, 31); label = "This Year";
-    } else if(kpiMode === 'last_y') {
-      start = new Date(y-1, 0, 1); end = new Date(y-1, 11, 31); label = "Last Year";
-    }
-
-    const agg = { revenue:0, margin:0, totalExp:0, rows:[] };
+    const agg = { revenue:0, margin:0, totalExp:0, rows:[], prevRevenue:0, prevMargin:0 };
+    
+    // Aggregation loop
     weeklyData.forEach(w => {
+      // Current Period
       if(w.weekEnd >= start && w.weekEnd <= end) {
         agg.revenue += w.revenue; agg.margin += w.margin; agg.totalExp += w.totalExp;
         agg.rows = agg.rows.concat(w.rows);
       }
+      // Previous Period (for comparison)
+      if(w.weekEnd >= prevStart && w.weekEnd <= prevEnd) {
+         agg.prevRevenue += w.revenue;
+         agg.prevMargin += w.margin;
+      }
     });
 
     agg.pctMargin = agg.revenue ? (agg.margin / agg.revenue)*100 : 0;
+    agg.prevPctMargin = agg.prevRevenue ? (agg.prevMargin / agg.prevRevenue)*100 : 0;
     agg.label = label;
     return agg;
   }
@@ -534,17 +563,26 @@
   function renderUI() {
     renderRegionTree();
     updateLabels();
-    if(activeView === "overview") renderOverview();
-    else if (activeView === "drivers") renderDriverView();
+    
+    // Always render overview (Driver view removed)
+    renderOverview();
+    
+    // Hide old nav elements if they exist
+    const dBtn = document.querySelector('[data-view="drivers"]');
+    if(dBtn) dBtn.style.display = 'none';
+    const oBtn = document.querySelector('[data-view="overview"]');
+    if(oBtn) oBtn.click(); // Force click overview
   }
 
   function renderOverview() {
     const kpi = getKpiAggregates();
+    
     if(!kpi) {
       document.getElementById("kpiRevenue").textContent = "—";
       return;
     }
 
+    // --- CARDS ---
     document.getElementById("kpiRevenue").textContent = fmtUSD(kpi.revenue);
     document.getElementById("kpiRevenueLabel").textContent = kpi.label;
     document.getElementById("kpiMargin").textContent = fmtUSD(kpi.margin);
@@ -556,8 +594,37 @@
     const projVal = kpiMode === 'week' ? kpi.margin * 52 : kpi.margin;
     document.getElementById("kpiProjected").textContent = fmtUSD(projVal);
 
+    // --- TREND STATS FIX ---
+    // Update the Big Number based on the selected mode
+    let trendVal = 0, trendPrev = 0, trendLabel = "";
+    if (trendMode === 'pct') { 
+        trendVal = kpi.pctMargin; trendPrev = kpi.prevPctMargin; trendLabel = "%"; 
+    } else if (trendMode === 'net') { 
+        trendVal = kpi.margin; trendPrev = kpi.prevMargin; trendLabel = "$"; 
+    } else if (trendMode === 'rev') { 
+        trendVal = kpi.revenue; trendPrev = kpi.prevRevenue; trendLabel = "$"; 
+    }
+
+    const bigStr = trendMode === 'pct' ? trendVal.toFixed(2)+"%" : fmtUSD(trendVal);
+    document.getElementById("trendBigNumber").textContent = bigStr;
+
+    // Calculate Diff
+    let diffStr = "—", diffClass = "text-white/50";
+    if (trendPrev !== 0) {
+        const diff = ((trendVal - trendPrev) / Math.abs(trendPrev)) * 100;
+        const sign = diff >= 0 ? "▲" : "▼";
+        diffClass = diff >= 0 ? "text-emerald-400" : "text-rose-400";
+        diffStr = `${sign} ${Math.abs(diff).toFixed(1)}%`;
+    }
+    const elP = document.getElementById("trendPercent");
+    if(elP) { elP.textContent = diffStr; elP.className = `text-sm font-bold mb-0.5 ${diffClass}`; }
+
+
+    // --- CHART ---
     renderChart();
 
+
+    // --- TABLE ---
     const tbody = document.getElementById("lossTableBody");
     tbody.innerHTML = "";
     weeklyData.slice(0,50).forEach(w => {
@@ -573,6 +640,7 @@
        `;
     });
 
+    // --- DRIVERS LIST (From KPI period) ---
     const topList = document.getElementById("topDriversList");
     const botList = document.getElementById("bottomDriversList");
     topList.innerHTML=""; botList.innerHTML="";
@@ -592,18 +660,15 @@
     });
   }
 
-  // --- FIXED CHART RENDERER ---
   function renderChart() {
     const ctx = document.getElementById("trendChart").getContext("2d");
     if(chartInst) chartInst.destroy();
     
-    // Zoom/Slice based on KPI mode or 16 weeks default
+    // If KPI mode is Yearly, show more data points (52 weeks), else standard 16
     const limit = (kpiMode==='this_y' || kpiMode==='last_y') ? 52 : 16;
     const data = weeklyData.slice(0, limit).reverse(); 
     
-    // Configure based on trendMode (pct, net, rev)
     let vals = [], label = "", color = "", bgStr = "";
-    
     if (trendMode === 'pct') { 
         vals = data.map(d => d.pctMargin); label = "Margin %"; color = "#818cf8"; bgStr = "129, 140, 248";
     } else if (trendMode === 'net') { 
@@ -612,28 +677,6 @@
         vals = data.map(d => d.revenue); label = "Revenue $"; color = "#3b82f6"; bgStr = "59, 130, 246";
     }
 
-    // Update Big Number above chart
-    const currentVal = vals[vals.length-1] || 0;
-    const prevVal = vals[vals.length-2] || 0;
-    
-    let bigNum = trendMode === 'pct' ? currentVal.toFixed(2)+"%" : fmtUSD(currentVal);
-    let diffStr = "—"; let diffClass = "text-white/50";
-    
-    if(prevVal !== 0) {
-        const diff = ((currentVal - prevVal) / Math.abs(prevVal)) * 100;
-        const sign = diff >= 0 ? "▲" : "▼";
-        diffClass = diff >= 0 ? "text-emerald-400" : "text-rose-400";
-        diffStr = `${sign} ${Math.abs(diff).toFixed(1)}%`;
-    }
-    
-    document.getElementById("trendBigNumber").textContent = bigNum;
-    const elP = document.getElementById("trendPercent");
-    if(elP) {
-        elP.textContent = diffStr;
-        elP.className = `text-sm font-bold mb-0.5 ${diffClass}`;
-    }
-
-    // Create Chart
     const grad = ctx.createLinearGradient(0,0,0,300);
     grad.addColorStop(0, `rgba(${bgStr}, 0.2)`);
     grad.addColorStop(1, `rgba(${bgStr}, 0.0)`); 
@@ -734,43 +777,6 @@
     archived.sort().forEach(d => arc.innerHTML += `<button class="w-full text-left text-[10px] py-1 px-2 text-white/30 hover:text-white" onclick="selectDriver('ALL','${d}')">${d}</button>`);
   }
 
-  function renderDriverView() {
-    if(!activeDriver) return;
-    const dRows = driverData[activeDriver].rows;
-    const dWeeks = {};
-    dRows.forEach(r => {
-      const k = r.week.key;
-      if(!dWeeks[k]) dWeeks[k] = { end: r.week.end, rev:0, mar:0, hrs:0 };
-      dWeeks[k].rev += r.revenue;
-      dWeeks[k].mar += r.margin;
-      dWeeks[k].hrs += r.hours;
-    });
-    
-    const dWeeklyList = Object.values(dWeeks).sort((a,b)=>b.end - a.end);
-    const tbody = document.getElementById("driverWeeklyBody");
-    tbody.innerHTML = "";
-    dWeeklyList.forEach(w => {
-       const pct = w.rev? (w.mar/w.rev)*100 : 0;
-       const col = pct<25?"text-rose-400":"text-emerald-400";
-       tbody.innerHTML += `
-         <tr class="hover:bg-white/5 border-b border-white/5 text-xs">
-            <td class="py-2 px-4 text-white/80">${niceDate(w.end)}</td>
-            <td class="py-2 px-4 font-bold ${col}">${pct.toFixed(1)}%</td>
-            <td class="py-2 px-4 text-white/60">${fmtUSD(w.rev)}</td>
-            <td class="py-2 px-4 text-white/60">${fmtUSD(w.mar)}</td>
-            <td class="py-2 px-4 text-white/60">${w.hrs.toFixed(1)}</td>
-         </tr>
-       `;
-    });
-    
-    const best = dWeeklyList.reduce((a,b)=> a.mar>b.mar?a:b, dWeeklyList[0]);
-    document.getElementById("driverTopPerformer").innerHTML = best ? `
-      <div class="p-4 rounded-xl bg-gradient-to-r from-indigo-900/40 to-purple-900/40 border border-white/10 flex justify-between items-center">
-        <div><div class="text-[10px] text-indigo-300 uppercase font-bold">Best Week</div><div class="text-white font-bold">${niceDate(best.end)}</div></div>
-        <div class="text-right"><div class="text-2xl font-bold text-white">${fmtUSD(best.mar)}</div><div class="text-[10px] text-white/40">Net Margin</div></div>
-      </div>
-    ` : "";
-  }
 
   // ============================
   // INTERACTION HANDLERS
@@ -779,9 +785,10 @@
   window.toggleDataSource = function() {
     activeDataSourceKey = activeDataSourceKey==="DLX"?"DMT":"DLX";
     localStorage.setItem("dash_data_source", activeDataSourceKey);
+    
+    // Reset selection but keep cache
     activeRegionId = "ALL";
     activeDriver = "";
-    activeView = "overview";
     
     if (dataCache[activeDataSourceKey].loaded) {
         restoreFromCache();
@@ -799,7 +806,8 @@
     if(mode==='net') document.getElementById('btnTrendNet').classList.add('active');
     if(mode==='rev') document.getElementById('btnTrendRev').classList.add('active');
     
-    renderChart();
+    // Re-render overview to update Big Number and Chart
+    renderOverview();
   };
 
   window.cycleKpiMode = function() {
@@ -820,22 +828,17 @@
   }
 
   window.selectRegion = function(id) {
-    activeRegionId = id; activeDriver = ""; activeView = "overview";
-    setView('overview');
+    activeRegionId = id; activeDriver = "";
     processData();
   };
 
   window.selectDriver = function(rid, name) {
-    activeRegionId = rid; activeDriver = name; activeView = "drivers";
-    setView('drivers');
+    activeRegionId = rid; activeDriver = name;
     processData();
   };
-
-  window.setView = function(v) {
-    activeView = v;
-    document.getElementById("view-overview").classList.toggle("hidden", v!=="overview");
-    document.getElementById("view-drivers").classList.toggle("hidden", v!=="drivers");
-  };
+  
+  // Note: setView is no longer really used as we locked to Overview, but kept for safety
+  window.setView = function(v) {}; 
 
   function updateLabels() {
     document.getElementById("brandBadge").textContent = activeDataSourceKey;
@@ -852,6 +855,10 @@
   syncAll();
 
 </script>
+
+
+
+
 
 
 </body>
