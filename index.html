@@ -202,7 +202,7 @@
               </div>
               <div class="card rounded-2xl p-4 relative overflow-hidden group">
                 <div class="absolute -right-6 -top-6 w-24 h-24 bg-purple-500/10 rounded-full blur-2xl group-hover:bg-purple-500/20 transition"></div>
-                <div class="text-[10px] uppercase tracking-wider text-white/50 font-bold mb-1">Projected Annual</div>
+                <div id="kpiProjectedTitle" class="text-[10px] uppercase tracking-wider text-white/50 font-bold mb-1">Projected Annual</div>
                 <div class="mt-1">
                    <div id="kpiProjected" class="text-2xl font-bold text-indigo-300 tracking-tight bg-indigo-500/15 border border-indigo-500/20 inline-block px-3 py-0.5 rounded-lg shadow-[0_0_15px_rgba(99,102,241,0.2)]">—</div>
                 </div>
@@ -539,8 +539,21 @@
   }
 
   function applyData() {
-      if(activeDriver) driverWeekly = getDriverWeekly(activeDriver);
-      else weekly = sortWeeksDesc(regionSeries[activeRegionId] || []);
+      let raw = [];
+      if(activeDriver) {
+         driverWeekly = getDriverWeekly(activeDriver);
+         raw = driverWeekly;
+      } else {
+         raw = regionSeries[activeRegionId] || [];
+      }
+
+      // GLOBAL 2020 FILTER:
+      // Remove any data point where the Year is 2020.
+      weekly = sortWeeksDesc(raw).filter(w => {
+          const d = asDate(w.weekEnd);
+          return d && d.getUTCFullYear() !== 2020;
+      });
+
       renderRegionList();
       if(activeView === "overview") renderOverview();
       updateContextLabel();
@@ -563,10 +576,14 @@
     const m = latestDate.getUTCMonth(); 
     const q = Math.floor(m/3);
     
-    let startTime, endTime, prevStartTime, prevEndDate, label;
+    let startTime, endTime, prevStartTime, prevEndTime, label;
     let isBarChart = false;
     let curr = {}, prev = {};
-    let runRate = 0;
+    let runRateMargin = 0, runRateRevenue = 0;
+    
+    // Default Titles
+    let projTitle = "Projected Annual";
+    let projLabel = "Run Rate";
 
     if (kpiMode === 'week') {
         const w0 = weekly[0];
@@ -575,7 +592,11 @@
         prev = { rev: w1.revenue, marg: w1.margin, pct: w1.pctMargin };
         startTime = asDate(w0.weekStart).getTime(); endTime = asDate(w0.weekEnd).getTime();
         label = "Current Week";
-        runRate = curr.marg * 52;
+        runRateMargin = curr.marg * 52;
+        runRateRevenue = curr.rev * 52;
+        projTitle = "Projected Annual";
+        projLabel = "Est. Annual Run Rate";
+        
     } else {
         if (kpiMode.includes('q')) {
             isBarChart = true; 
@@ -593,6 +614,11 @@
                 prevEndTime = Date.UTC(targetY-1, 12, 0, 23, 59, 59); 
             }
             label = kpiMode === 'this_q' ? "QTD" : "Last Qtr";
+            
+            // Dynamic Label Logic
+            projTitle = kpiMode === 'this_q' ? "Projected Quarter" : "Quarter Total";
+            projLabel = kpiMode === 'this_q' ? "Est. Quarter Run Rate" : "Actual";
+            
         } else { 
             isBarChart = true;
             const targetY = kpiMode === 'this_y' ? y : y-1;
@@ -602,6 +628,10 @@
             prevStartTime = Date.UTC(targetY-1, 0, 1); 
             prevEndTime = Date.UTC(targetY-1, 11, 31, 23, 59, 59);
             label = kpiMode === 'this_y' ? "YTD" : "Last Year";
+            
+            // Dynamic Label Logic
+            projTitle = kpiMode === 'this_y' ? "Projected Annual" : "Annual Total";
+            projLabel = kpiMode === 'this_y' ? "Est. Annual Run Rate" : "Actual";
         }
 
         const getStats = (s, e) => {
@@ -620,14 +650,18 @@
 
         // Run Rate Logic
         if (kpiMode === 'this_y') {
-             runRate = curr.count > 0 ? (curr.marg / curr.count) * 52 : 0;
+             runRateMargin = curr.count > 0 ? (curr.marg / curr.count) * 52 : 0;
+             runRateRevenue = curr.count > 0 ? (curr.rev / curr.count) * 52 : 0;
         } else if (kpiMode === 'this_q') {
-             runRate = curr.count > 0 ? (curr.marg / curr.count) * 13 : 0;
+             runRateMargin = curr.count > 0 ? (curr.marg / curr.count) * 13 : 0;
+             runRateRevenue = curr.count > 0 ? (curr.rev / curr.count) * 13 : 0;
         } else {
-             runRate = curr.marg;
+             runRateMargin = curr.marg;
+             runRateRevenue = curr.rev;
         }
     }
 
+    // UPDATE KPIS
     document.getElementById("kpiRevenue").textContent = fmtUSD(curr.rev);
     document.getElementById("kpiRevenueLabel").textContent = label + " Revenue";
     document.getElementById("kpiMargin").textContent = fmtUSD(curr.marg);
@@ -637,21 +671,40 @@
     const pctDiff = curr.pct - prev.pct;
     document.getElementById("kpiPctMarginLabel").innerHTML = `<span class="${pctDiff>=0?'text-emerald-400':'text-rose-400'}">${pctDiff>=0?'▲':'▼'} ${Math.abs(pctDiff).toFixed(1)}%</span> <span class="text-white/30">pts vs prior</span>`;
     
-    document.getElementById("kpiProjected").textContent = fmtUSD(runRate);
-    document.getElementById("kpiProjectedLabel").textContent = (kpiMode.includes('this') || kpiMode === 'week') ? "Est. Annual Run Rate" : "Period Total";
+    // UPDATE PROJECTED KPI WITH DYNAMIC LABELS (Showing Margin Run Rate for Consistency)
+    document.getElementById("kpiProjected").textContent = fmtUSD(runRateMargin);
+    document.getElementById("kpiProjectedTitle").textContent = projTitle;
+    document.getElementById("kpiProjectedLabel").textContent = projLabel;
 
-    // Pass timestamps to driver list (add buffer for end time)
-    renderTrendChart(isBarChart, startTime, endTime);
+    // UPDATE CHARTS
+    renderTrendChart(isBarChart, startTime, endTime, runRateMargin, runRateRevenue);
     renderAreaBreakdown(startTime, endTime); 
     renderPerformanceList(startTime, endTime + 86400000); // Add buffer for safety
     renderTable();
     updateContextLabel();
   }
 
-  function renderTrendChart(isBar, startDate, endDate){
+  // Helper to create striped pattern for the projection bar
+  function getDiagonalPattern(color) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 10;
+      canvas.height = 10;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = color;
+      ctx.fillRect(0,0,10,10);
+      ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(0, 10);
+      ctx.lineTo(10, 0);
+      ctx.stroke();
+      return ctx.createPattern(canvas, 'repeat');
+  }
+
+  function renderTrendChart(isBar, startDate, endDate, runRateMargin, runRateRevenue){
     const canvas = document.getElementById("trendChart"); 
     if(trendChart) trendChart.destroy();
-    let labels=[], data=[];
+    let labels=[], datasets=[];
     
     if(isBar) {
         // Prepare groups
@@ -685,38 +738,136 @@
         }
 
         labels = sortedKeys.map(k => groups[k].label);
-        data = sortedKeys.map(k => trendMode==='pct' ? (groups[k].marg/groups[k].rev)*100 : (trendMode==='rev'?groups[k].rev:groups[k].marg));
+        
+        // Identify "Current" Period Key based on LATEST DATA DATE, NOT TODAY
+        const latestWeek = weekly[0];
+        const latestDate = asDate(latestWeek.weekEnd);
+        let currentKey = "";
+        if(kpiMode.includes('y')) currentKey = latestDate.getUTCFullYear().toString();
+        else currentKey = `${latestDate.getUTCFullYear()}-Q${Math.floor(latestDate.getUTCMonth()/3)+1}`;
+
+        // Base Data (Actuals)
+        const baseData = sortedKeys.map(k => {
+            const grp = groups[k];
+            return trendMode==='pct' ? (grp.marg/grp.rev)*100 : (trendMode==='rev'?grp.rev:grp.marg);
+        });
+
+        // Determine correct Run Rate to use based on mode
+        let activeRunRate = 0;
+        if(trendMode === 'net') activeRunRate = runRateMargin;
+        if(trendMode === 'rev') activeRunRate = runRateRevenue;
+
+        // Projected Data (Top Stack)
+        const projectedData = sortedKeys.map((k, i) => {
+            // Only add projection to the *Current* period key if valid mode & positive delta
+            if(k === currentKey && activeRunRate > baseData[i]) {
+                return activeRunRate - baseData[i]; 
+            }
+            return 0;
+        });
+
+        const color = trendMode==='pct'?'#818cf8':(trendMode==='net'?'#10b981':'#3b82f6');
+        
+        datasets.push({
+            label: "Actual",
+            data: baseData,
+            backgroundColor: color,
+            borderColor: color,
+            borderWidth: 1,
+            stack: 'stack1'
+        });
+
+        // Add Projection Stack
+        // Only if not pct mode
+        if(trendMode !== 'pct') {
+            datasets.push({
+                label: "Projected To-Go",
+                data: projectedData,
+                backgroundColor: getDiagonalPattern(color), // Use pattern helper
+                borderColor: color,
+                borderWidth: 1,
+                stack: 'stack1'
+            });
+        }
+
     } else {
+        // Line Chart (Weekly)
         const subset = weekly.slice(0, 16).reverse(); 
         labels = subset.map(w => niceDate(w.weekEnd));
-        data = subset.map(w => trendMode==='pct' ? w.pctMargin : (trendMode==='rev'?w.revenue:w.margin));
+        const data = subset.map(w => trendMode==='pct' ? w.pctMargin : (trendMode==='rev'?w.revenue:w.margin));
+        const color = trendMode==='pct'?'#818cf8':(trendMode==='net'?'#10b981':'#3b82f6');
+        
+        datasets.push({
+            label: trendMode,
+            data: data,
+            backgroundColor: 'rgba(129, 140, 248, 0.1)',
+            borderColor: color,
+            borderWidth: 2,
+            tension: 0.3,
+            fill: true
+        });
     }
 
     const ctx = canvas.getContext("2d");
-    const color = trendMode==='pct'?'#818cf8':(trendMode==='net'?'#10b981':'#3b82f6');
+    
     trendChart = new Chart(ctx, {
         type: isBar ? 'bar' : 'line',
-        data: { labels, datasets: [{ label: trendMode, data, backgroundColor: isBar ? color : 'rgba(129, 140, 248, 0.1)', borderColor: color, borderWidth: 2, tension: 0.3, fill: !isBar }] },
+        data: { labels, datasets },
         options: {
             responsive: true, maintainAspectRatio: false,
             plugins: { 
                 legend: { display: false }, 
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) { label += ': '; }
+                            if (context.parsed.y !== null) { label += fmtUSD(context.parsed.y); }
+                            return label;
+                        }
+                    }
+                },
                 datalabels: { 
                     color: '#fff', 
                     anchor: isBar ? 'end' : 'top', 
                     align: isBar ? 'top' : 'top', 
                     offset: 8, 
                     font: { size: 10, weight: 'bold' }, 
-                    formatter: (v) => trendMode==='pct' ? v.toFixed(1)+'%' : fmtUSD(v) 
+                    formatter: (v, ctx) => {
+                        // For Stacked Bars:
+                        if(isBar) {
+                            // If it's the "Projected" segment (index 1), show Total
+                            if(ctx.datasetIndex === 1 && v > 0) {
+                                const total = v + ctx.chart.data.datasets[0].data[ctx.dataIndex];
+                                return "Proj: " + fmtUSD(total);
+                            }
+                            // If it's "Actual" segment (index 0) AND there is a projection on top, HIDE it to avoid clutter
+                            if(ctx.datasetIndex === 0) {
+                                // Check if there is a corresponding value in dataset 1
+                                const projVal = ctx.chart.data.datasets[1]?.data[ctx.dataIndex];
+                                if (projVal > 0) return null; // Hide actual label if projected label exists
+                                return trendMode==='pct' ? v.toFixed(1)+'%' : fmtUSD(v);
+                            }
+                            return null;
+                        }
+                        return trendMode==='pct' ? v.toFixed(1)+'%' : fmtUSD(v);
+                    } 
                 } 
             },
-            scales: { x: { grid: { display:false }, ticks: { color:'#64748b', font:{size:10} } }, y: { grid: { color:'rgba(255,255,255,0.05)' }, ticks: { color:'#64748b', font:{size:10} } } },
+            scales: { 
+                x: { grid: { display:false }, ticks: { color:'#64748b', font:{size:10} }, stacked: true }, 
+                y: { grid: { color:'rgba(255,255,255,0.05)' }, ticks: { color:'#64748b', font:{size:10} }, stacked: true } 
+            },
             layout: { padding: { top: 20 } }
         }
     });
     
     // Big number at top
-    const latestVal = data[data.length-1] || 0;
+    // If bar, show last actual.
+    // If line, show last point.
+    let latestVal = 0;
+    if(datasets[0].data.length > 0) latestVal = datasets[0].data[datasets[0].data.length-1];
+    
     document.getElementById("trendBigNumber").textContent = trendMode==='pct' ? latestVal.toFixed(1)+'%' : fmtUSD(latestVal);
   }
 
