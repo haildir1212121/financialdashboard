@@ -757,36 +757,37 @@
         if(trendMode === 'net') activeRunRate = runRateMargin;
         if(trendMode === 'rev') activeRunRate = runRateRevenue;
 
-        // Projected Data (Top Stack)
+        // Projected Data (Side-by-Side: Only for Current Period)
         const projectedData = sortedKeys.map((k, i) => {
-            // Only add projection to the *Current* period key if valid mode & positive delta
-            if(k === currentKey && activeRunRate > baseData[i]) {
-                return activeRunRate - baseData[i]; 
+            // Only show projection bar for the *Current* period if valid mode
+            if(k === currentKey && (trendMode === 'net' || trendMode === 'rev')) {
+                return activeRunRate; // Full Projected Value
             }
-            return 0;
+            return null; // Hide for past periods
         });
 
-        const color = trendMode==='pct'?'#818cf8':(trendMode==='net'?'#10b981':'#3b82f6');
-        
+        const colorActual = "#10b981"; // Emerald
+        const colorProjected = "#818cf8"; // Indigo
+
+        // DATASET 1: Actuals
         datasets.push({
             label: "Actual",
             data: baseData,
-            backgroundColor: color,
-            borderColor: color,
+            backgroundColor: colorActual,
+            borderColor: colorActual,
             borderWidth: 1,
-            stack: 'stack1'
+            // No stack property = grouped/side-by-side
         });
 
-        // Add Projection Stack
-        // Only if not pct mode
+        // DATASET 2: Projected (Only visible for current period)
         if(trendMode !== 'pct') {
             datasets.push({
-                label: "Projected To-Go",
+                label: "Projected Total",
                 data: projectedData,
-                backgroundColor: getDiagonalPattern(color), // Use pattern helper
-                borderColor: color,
+                backgroundColor: getDiagonalPattern(colorProjected),
+                borderColor: colorProjected,
                 borderWidth: 1,
-                stack: 'stack1'
+                // No stack property = grouped/side-by-side
             });
         }
 
@@ -831,32 +832,18 @@
                     color: '#fff', 
                     anchor: isBar ? 'end' : 'top', 
                     align: isBar ? 'top' : 'top', 
-                    offset: 8, 
+                    offset: 4, 
                     font: { size: 10, weight: 'bold' }, 
                     formatter: (v, ctx) => {
-                        // For Stacked Bars:
-                        if(isBar) {
-                            // If it's the "Projected" segment (index 1), show Total
-                            if(ctx.datasetIndex === 1 && v > 0) {
-                                const total = v + ctx.chart.data.datasets[0].data[ctx.dataIndex];
-                                return "Proj: " + fmtUSD(total);
-                            }
-                            // If it's "Actual" segment (index 0) AND there is a projection on top, HIDE it to avoid clutter
-                            if(ctx.datasetIndex === 0) {
-                                // Check if there is a corresponding value in dataset 1
-                                const projVal = ctx.chart.data.datasets[1]?.data[ctx.dataIndex];
-                                if (projVal > 0) return null; // Hide actual label if projected label exists
-                                return trendMode==='pct' ? v.toFixed(1)+'%' : fmtUSD(v);
-                            }
-                            return null;
-                        }
+                        if (v === null) return null;
                         return trendMode==='pct' ? v.toFixed(1)+'%' : fmtUSD(v);
                     } 
                 } 
             },
             scales: { 
-                x: { grid: { display:false }, ticks: { color:'#64748b', font:{size:10} }, stacked: true }, 
-                y: { grid: { color:'rgba(255,255,255,0.05)' }, ticks: { color:'#64748b', font:{size:10} }, stacked: true } 
+                // Explicitly disable stacking to ensure side-by-side
+                x: { grid: { display:false }, ticks: { color:'#64748b', font:{size:10} }, stacked: false }, 
+                y: { grid: { color:'rgba(255,255,255,0.05)' }, ticks: { color:'#64748b', font:{size:10} }, stacked: false } 
             },
             layout: { padding: { top: 20 } }
         }
@@ -866,7 +853,10 @@
     // If bar, show last actual.
     // If line, show last point.
     let latestVal = 0;
-    if(datasets[0].data.length > 0) latestVal = datasets[0].data[datasets[0].data.length-1];
+    // Safety check for empty data
+    if(datasets[0] && datasets[0].data.length > 0) {
+        latestVal = datasets[0].data[datasets[0].data.length-1];
+    }
     
     document.getElementById("trendBigNumber").textContent = trendMode==='pct' ? latestVal.toFixed(1)+'%' : fmtUSD(latestVal);
   }
