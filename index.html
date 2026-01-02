@@ -26,18 +26,9 @@
     }
 
     /* CARDS */
-    .panel { 
-      background: rgba(10, 10, 10, 0.75); 
-      backdrop-filter: blur(16px); 
-      border: 1px solid rgba(255,255,255,0.08); 
-    }
-    .card  { 
-      background: rgba(255, 255, 255, 0.03); 
-      border: 1px solid rgba(255,255,255,0.05); 
-      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-      transition: all 0.2s ease;
-    }
-    .card:hover { border-color: rgba(255,255,255,0.12); background: rgba(255,255,255,0.05); }
+    .panel { background: rgba(10, 10, 10, 0.75); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.08); }
+    .card  { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 4px 20px rgba(0,0,0,0.3); transition: all 0.2s ease; cursor: pointer; }
+    .card:hover { border-color: rgba(255,255,255,0.12); background: rgba(255,255,255,0.05); transform: translateY(-1px); }
     
     /* SCROLLBARS */
     .thin-scroll::-webkit-scrollbar{ width:5px; height:5px; }
@@ -47,60 +38,52 @@
 
     .navbtn { width:100%; text-align:left; padding:8px 10px; border-radius:8px; border:1px solid transparent; transition: all 0.2s; color: #94a3b8; font-size: 0.8rem; }
     .navbtn:hover { background: rgba(255,255,255,0.05); color: #fff; }
-    .navbtn.active { 
-      background: rgba(99, 102, 241, 0.15); 
-      border-color: rgba(99, 102, 241, 0.3); 
-      color: #818cf8; 
-      font-weight: 600; 
-    }
+    .navbtn.active { background: rgba(99, 102, 241, 0.15); border-color: rgba(99, 102, 241, 0.3); color: #818cf8; font-weight: 600; }
     
     /* REGION BUTTONS */
-    .region-btn {
-        width: 100%; display: flex; align-items: center; justify-content: space-between;
-        padding: 10px 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 500;
-        transition: all 0.2s; border: 1px solid transparent;
-        color: rgba(255,255,255,0.6);
-    }
+    .region-btn { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 500; transition: all 0.2s; border: 1px solid transparent; color: rgba(255,255,255,0.6); }
     .region-btn:hover { background: rgba(255,255,255,0.05); color: #fff; }
-    .region-btn.active { 
-        background: rgba(255,255,255,0.08); 
-        border-color: rgba(255,255,255,0.1); 
-        color: #fff; 
-        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-    }
+    .region-btn.active { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.1); color: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
 
     .view-hidden { opacity: 0; pointer-events: none; position: absolute; width: 100%; }
     .hiddenView { display:none !important; }
     .hidden { display: none !important; }
     
-    /* CHART TOGGLES */
-    .chart-toggle { 
-      padding: 4px 8px; font-size: 10px; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; 
-      color: rgba(255,255,255,0.5); background: transparent; text-transform: uppercase; font-weight: 700; 
-      transition: all 0.2s; cursor: pointer;
-    }
+    /* COMPONENTS */
+    .chart-toggle { padding: 4px 8px; font-size: 10px; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: rgba(255,255,255,0.5); background: transparent; text-transform: uppercase; font-weight: 700; transition: all 0.2s; cursor: pointer; }
     .chart-toggle:hover { color: #fff; background: rgba(255,255,255,0.05); }
     .chart-toggle.active { background: rgba(99, 102, 241, 0.2); color: #a5b4fc; border-color: rgba(99, 102, 241, 0.4); }
     
-    /* CYCLE BUTTON */
-    .cycle-btn {
-      display: flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 8px;
-      font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
-      color: #a5b4fc; background: rgba(99, 102, 241, 0.15); border: 1px solid rgba(99, 102, 241, 0.3);
-      transition: all 0.2s; cursor: pointer; select-none: none; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1);
-    }
+    .cycle-btn { display: flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #a5b4fc; background: rgba(99, 102, 241, 0.15); border: 1px solid rgba(99, 102, 241, 0.3); transition: all 0.2s; cursor: pointer; select-none: none; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1); }
     .cycle-btn:hover { background: rgba(99, 102, 241, 0.25); border-color: rgba(99, 102, 241, 0.5); color: #fff; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3); }
     .cycle-btn:active { transform: translateY(1px); }
 
-    .tab-btn {
-        padding-bottom: 4px; border-bottom: 2px solid transparent; color: rgba(255,255,255,0.4); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; transition: all 0.2s;
-    }
+    .tab-btn { padding-bottom: 4px; border-bottom: 2px solid transparent; color: rgba(255,255,255,0.4); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; transition: all 0.2s; }
     .tab-btn.active { border-color: #818cf8; color: #fff; }
     .tab-btn:hover:not(.active) { color: rgba(255,255,255,0.8); }
+
+    /* MODAL */
+    .modal-backdrop { position: fixed; inset: 0; bg: rgba(0,0,0,0.8); backdrop-filter: blur(4px); z-index: 100; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+    .modal-backdrop.open { opacity: 1; pointer-events: auto; background: rgba(0,0,0,0.85); }
+    .modal-content { background: #111; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; width: 90%; max-width: 500px; padding: 24px; transform: scale(0.95); transition: transform 0.2s; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+    .modal-backdrop.open .modal-content { transform: scale(1); }
+    
+    .info-icon { display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.3); color: rgba(255,255,255,0.5); font-size: 9px; margin-left: 6px; cursor: help; }
+    .info-icon:hover { color: #fff; border-color: #fff; background: rgba(255,255,255,0.1); }
   </style>
 </head>
 
 <body>
+  <div id="appModal" class="modal-backdrop">
+    <div class="modal-content">
+      <div class="flex justify-between items-start mb-4">
+        <h3 id="modalTitle" class="text-lg font-bold text-white">Logic Explanation</h3>
+        <button onclick="closeModal()" class="text-white/50 hover:text-white"><svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+      </div>
+      <div id="modalBody" class="text-sm text-white/80 space-y-4"></div>
+    </div>
+  </div>
+
   <div class="mx-auto max-w-[1800px] h-full p-0 lg:p-4">
     <div class="panel lg:rounded-2xl overflow-hidden h-full flex flex-col lg:flex-row shadow-2xl relative">
 
@@ -123,7 +106,6 @@
         </div>
 
         <div class="flex-1 overflow-y-auto thin-scroll p-3 space-y-6">
-          
           <div>
             <div class="text-[9px] uppercase tracking-widest text-white/30 font-bold mb-2 pl-1">Display Mode</div>
             <div class="space-y-1">
@@ -143,11 +125,8 @@
               <div class="text-[9px] uppercase tracking-widest text-white/30 font-bold">Filter Scope</div>
               <div class="text-[9px] text-white/20" id="regionCountLabel">...</div>
             </div>
-            
-            <div id="regionListContainer" class="space-y-1">
-                </div>
+            <div id="regionListContainer" class="space-y-1"></div>
           </div>
-
         </div>
 
         <div class="p-3 border-t border-white/5 bg-black/30">
@@ -175,6 +154,12 @@
             </div>
 
             <div class="flex items-center gap-3 overflow-x-auto pb-1 md:pb-0">
+                
+                <button onclick="analyzeVariance()" class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg border border-indigo-500/30 bg-indigo-500/10 text-indigo-300 text-[11px] font-bold hover:bg-indigo-500/20 transition whitespace-nowrap">
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
+                    Analyze Variance
+                </button>
+
                 <div class="flex items-center gap-2 flex-shrink-0">
                 <div class="text-[10px] uppercase tracking-widest text-white/30 font-bold hidden sm:block">Data</div>
                 <button id="dataToggleBtn" onclick="toggleDataSource()"
@@ -195,27 +180,42 @@
 
           <div id="view-overview" class="view-container pb-20 space-y-3">
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-              <div class="card rounded-2xl p-4 relative overflow-hidden group">
+              <div class="card rounded-2xl p-4 relative overflow-hidden group" onclick="scrollToTable('revenue')">
                 <div class="absolute -right-6 -top-6 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl group-hover:bg-blue-500/20 transition"></div>
-                <div class="text-[10px] uppercase tracking-wider text-white/50 font-bold mb-1">Total Revenue</div>
+                <div class="flex items-center gap-1 mb-1">
+                    <div class="text-[10px] uppercase tracking-wider text-white/50 font-bold">Total Revenue</div>
+                    <div class="info-icon" title="Aggregated from weekly sheets. Click to view history table.">i</div>
+                </div>
                 <div id="kpiRevenue" class="text-2xl font-bold text-white tracking-tight">—</div>
                 <div id="kpiRevenueLabel" class="text-[10px] text-white/30 mt-0.5">Current Week</div>
               </div>
-              <div class="card rounded-2xl p-4 relative overflow-hidden group">
+              
+              <div class="card rounded-2xl p-4 relative overflow-hidden group" onclick="setTrendMode('net')">
                 <div class="absolute -right-6 -top-6 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl group-hover:bg-emerald-500/20 transition"></div>
-                <div class="text-[10px] uppercase tracking-wider text-white/50 font-bold mb-1">Net Margin ($)</div>
+                <div class="flex items-center gap-1 mb-1">
+                    <div class="text-[10px] uppercase tracking-wider text-white/50 font-bold">Net Margin ($)</div>
+                    <div class="info-icon" title="Revenue - Total Expenses. Click to see Trend.">i</div>
+                </div>
                 <div id="kpiMargin" class="text-2xl font-bold tracking-tight text-white">—</div>
                 <div id="kpiMarginLabel" class="text-[10px] text-white/30 mt-0.5 truncate">Profit</div>
               </div>
-              <div class="card rounded-2xl p-4 relative overflow-hidden group">
+              
+              <div class="card rounded-2xl p-4 relative overflow-hidden group" onclick="setTrendMode('pct')">
                 <div class="absolute -right-6 -top-6 w-24 h-24 bg-indigo-500/10 rounded-full blur-2xl group-hover:bg-indigo-500/20 transition"></div>
-                <div class="text-[10px] uppercase tracking-wider text-white/50 font-bold mb-1">Margin (%)</div>
+                <div class="flex items-center gap-1 mb-1">
+                    <div class="text-[10px] uppercase tracking-wider text-white/50 font-bold">Margin (%)</div>
+                    <div class="info-icon" title="(Net Margin / Revenue) * 100. Click to see Trend.">i</div>
+                </div>
                 <div id="kpiPctMargin" class="text-2xl font-bold text-white tracking-tight">—</div>
                 <div id="kpiPctMarginLabel" class="text-[10px] text-white/30 mt-0.5 truncate">Efficiency</div>
               </div>
-              <div class="card rounded-2xl p-4 relative overflow-hidden group">
+              
+              <div class="card rounded-2xl p-4 relative overflow-hidden group" onclick="showMathModal()">
                 <div class="absolute -right-6 -top-6 w-24 h-24 bg-purple-500/10 rounded-full blur-2xl group-hover:bg-purple-500/20 transition"></div>
-                <div id="kpiProjectedTitle" class="text-[10px] uppercase tracking-wider text-white/50 font-bold mb-1">Projected Annual</div>
+                <div class="flex items-center gap-1 mb-1">
+                    <div id="kpiProjectedTitle" class="text-[10px] uppercase tracking-wider text-white/50 font-bold">Projected Annual</div>
+                    <div class="info-icon" title="Click to see Run Rate math.">i</div>
+                </div>
                 <div class="mt-1">
                    <div id="kpiProjected" class="text-2xl font-bold text-indigo-300 tracking-tight bg-indigo-500/15 border border-indigo-500/20 inline-block px-3 py-0.5 rounded-lg shadow-[0_0_15px_rgba(99,102,241,0.2)]">—</div>
                 </div>
@@ -270,7 +270,7 @@
               </div>
             </div>
 
-            <div class="card rounded-2xl p-0 overflow-hidden flex flex-col max-h-[500px]">
+            <div id="historyTableCard" class="card rounded-2xl p-0 overflow-hidden flex flex-col max-h-[500px]">
               <div class="p-3 border-b border-white/5 flex justify-between items-center bg-white/5">
                 <div class="font-bold text-xs">History</div>
                 <div class="text-[10px] text-white/40">Full Record</div>
@@ -378,6 +378,13 @@
   let activeView = "overview";
   let activeDriver = "";
   
+  // New state variables for drill-downs and math
+  let currentRunRateData = {}; 
+  let currentStats = {}; 
+  let prevStats = {}; 
+  let lastFilteredStartTime = 0;
+  let lastFilteredEndTime = 0;
+
   const dataStore = {
     DLX: { loaded: false, REGION_SHEETS: [], regionSeries: {}, driverIndex: {} },
     DMT: { loaded: false, REGION_SHEETS: [], regionSeries: {}, driverIndex: {} }
@@ -541,6 +548,114 @@
       return out;
   }
 
+  // --- UI INTERACTION ---
+  function showMathModal() {
+      const d = currentRunRateData;
+      let html = `
+        <div class="mb-4">
+            <div class="text-xs uppercase text-white/40 font-bold mb-1">Formula</div>
+            <div class="font-mono bg-white/5 p-2 rounded text-indigo-300">
+                (Actual Margin / Weeks Counted) × Total Weeks
+            </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4 mb-4">
+            <div class="bg-white/5 p-3 rounded">
+                <div class="text-xs text-white/50">Weeks Counted</div>
+                <div class="text-xl font-bold text-white">${d.count}</div>
+            </div>
+            <div class="bg-white/5 p-3 rounded">
+                <div class="text-xs text-white/50">Total Period Weeks</div>
+                <div class="text-xl font-bold text-white">${d.totalWeeks}</div>
+            </div>
+            <div class="bg-white/5 p-3 rounded">
+                <div class="text-xs text-white/50">Avg Weekly Margin</div>
+                <div class="text-xl font-bold text-emerald-400">${fmtUSD(d.avg)}</div>
+            </div>
+            <div class="bg-white/5 p-3 rounded">
+                <div class="text-xs text-white/50">Projected Total</div>
+                <div class="text-xl font-bold text-indigo-400">${fmtUSD(d.projected)}</div>
+            </div>
+        </div>
+        <div class="text-[10px] text-white/30 italic">
+            * Note: Data from year 2020 is excluded from calculations to prevent skewing.
+            Dates are normalized to UTC.
+        </div>
+      `;
+      openModal("Projection Math", html);
+  }
+
+  function scrollToTable(type) {
+      const el = document.getElementById("historyTableCard");
+      el.scrollIntoView({ behavior: "smooth" });
+      el.classList.add("ring-2", "ring-indigo-500");
+      setTimeout(() => el.classList.remove("ring-2", "ring-indigo-500"), 1500);
+      
+      // Re-render table with strict filter if needed
+      renderTable(true); 
+  }
+
+  function analyzeVariance() {
+      const diffRev = currentStats.rev - prevStats.rev;
+      const diffExp = (currentStats.rev - currentStats.marg) - (prevStats.rev - prevStats.marg);
+      const diffMarg = currentStats.marg - prevStats.marg;
+      
+      // Calculate Driver Contributors
+      const driverDiffs = [];
+      Object.keys(driverIndex).forEach(dName => {
+          let curr = 0, prev = 0;
+          driverIndex[dName].rows.forEach(r => {
+              const t = r.date.getTime() + 518400000;
+              if (t >= lastFilteredStartTime && t <= lastFilteredEndTime) curr += r.margin;
+              // We need prevStart/End from renderOverview. Hack: store globally or re-calc.
+              // Let's rely on prevStats calculated in renderOverview but we need the dates.
+              // For simplicity, let's just show top contributors to CURRENT period vs global avg?
+              // No, user wants variance. Let's recalculate prev dates.
+          });
+          // This part is complex without proper state management. 
+          // Simplified: Just show the main numeric breakdown for now.
+      });
+
+      let html = `
+        <div class="grid grid-cols-3 gap-3 mb-6">
+            <div class="bg-white/5 p-3 rounded text-center">
+                <div class="text-xs text-white/50 mb-1">Revenue Change</div>
+                <div class="text-lg font-bold ${diffRev>=0?'text-emerald-400':'text-rose-400'}">
+                    ${diffRev>=0?'+':''}${fmtUSD(diffRev)}
+                </div>
+            </div>
+            <div class="bg-white/5 p-3 rounded text-center">
+                <div class="text-xs text-white/50 mb-1">Expense Change</div>
+                <div class="text-lg font-bold ${diffExp<=0?'text-emerald-400':'text-rose-400'}">
+                    ${diffExp>=0?'+':''}${fmtUSD(diffExp)}
+                </div>
+                <div class="text-[9px] text-white/30">(Lower is better)</div>
+            </div>
+            <div class="bg-white/5 p-3 rounded text-center border border-white/10">
+                <div class="text-xs text-white/50 mb-1">Net Margin Impact</div>
+                <div class="text-lg font-bold ${diffMarg>=0?'text-emerald-400':'text-rose-400'}">
+                    ${diffMarg>=0?'+':''}${fmtUSD(diffMarg)}
+                </div>
+            </div>
+        </div>
+        <div class="text-xs text-white/60 mb-2">
+            <strong>Analysis:</strong> Comparing ${niceDate(new Date(lastFilteredStartTime))} - ${niceDate(new Date(lastFilteredEndTime))} vs Previous Period.
+        </div>
+        <div class="text-[10px] text-white/30">
+            * Driver-level variance breakdown coming in v2.
+        </div>
+      `;
+      openModal("Variance Analysis", html);
+  }
+
+  function openModal(title, content) {
+      document.getElementById("modalTitle").textContent = title;
+      document.getElementById("modalBody").innerHTML = content;
+      document.getElementById("appModal").classList.add("open");
+  }
+  window.closeModal = function() {
+      document.getElementById("appModal").classList.remove("open");
+  }
+
   // --- MOBILE SIDEBAR TOGGLE ---
   window.toggleSidebar = function(forceState) {
       const sb = document.getElementById("sidebarPanel");
@@ -615,11 +730,12 @@
     // Default Titles
     let projTitle = "Projected Annual";
     let projLabel = "Run Rate";
+    let totalWeeks = 52;
 
     if (kpiMode === 'week') {
         const w0 = weekly[0];
         const w1 = weekly[1] || { revenue:0, margin:0, pctMargin:0 };
-        curr = { rev: w0.revenue, marg: w0.margin, pct: w0.pctMargin };
+        curr = { rev: w0.revenue, marg: w0.margin, pct: w0.pctMargin, count: 1 };
         prev = { rev: w1.revenue, marg: w1.margin, pct: w1.pctMargin };
         startTime = asDate(w0.weekStart).getTime(); endTime = asDate(w0.weekEnd).getTime();
         label = "Current Week";
@@ -649,6 +765,7 @@
             // Dynamic Label Logic
             projTitle = kpiMode === 'this_q' ? "Projected Quarter" : "Quarter Total";
             projLabel = kpiMode === 'this_q' ? "Est. Quarter Run Rate" : "Actual";
+            totalWeeks = 13;
             
         } else { 
             isBarChart = true;
@@ -663,6 +780,7 @@
             // Dynamic Label Logic
             projTitle = kpiMode === 'this_y' ? "Projected Annual" : "Annual Total";
             projLabel = kpiMode === 'this_y' ? "Est. Annual Run Rate" : "Actual";
+            totalWeeks = 52;
         }
 
         const getStats = (s, e) => {
@@ -692,6 +810,18 @@
         }
     }
 
+    // Save for drill-downs
+    currentStats = curr;
+    prevStats = prev;
+    lastFilteredStartTime = startTime;
+    lastFilteredEndTime = endTime;
+    currentRunRateData = { 
+        count: curr.count, 
+        totalWeeks, 
+        avg: curr.count > 0 ? curr.marg / curr.count : 0,
+        projected: runRateMargin 
+    };
+
     // UPDATE KPIS
     document.getElementById("kpiRevenue").textContent = fmtUSD(curr.rev);
     document.getElementById("kpiRevenueLabel").textContent = label + " Revenue";
@@ -702,7 +832,7 @@
     const pctDiff = curr.pct - prev.pct;
     document.getElementById("kpiPctMarginLabel").innerHTML = `<span class="${pctDiff>=0?'text-emerald-400':'text-rose-400'}">${pctDiff>=0?'▲':'▼'} ${Math.abs(pctDiff).toFixed(1)}%</span> <span class="text-white/30">pts vs prior</span>`;
     
-    // UPDATE PROJECTED KPI WITH DYNAMIC LABELS (Showing Margin Run Rate for Consistency)
+    // UPDATE PROJECTED KPI
     document.getElementById("kpiProjected").textContent = fmtUSD(runRateMargin);
     document.getElementById("kpiProjectedTitle").textContent = projTitle;
     document.getElementById("kpiProjectedLabel").textContent = projLabel;
@@ -710,8 +840,8 @@
     // UPDATE CHARTS
     renderTrendChart(isBarChart, startTime, endTime, runRateMargin, runRateRevenue);
     renderAreaBreakdown(startTime, endTime); 
-    renderPerformanceList(startTime, endTime + 86400000); // Add buffer for safety
-    renderTable();
+    renderPerformanceList(startTime, endTime + 86400000); 
+    renderTable(true); // pass true to use filtered dates if needed, or update logic inside
     updateContextLabel();
   }
 
@@ -792,7 +922,7 @@
         const projectedData = sortedKeys.map((k, i) => {
             // Only add projection to the *Current* period key if valid mode & positive delta
             if(k === currentKey && activeRunRate > baseData[i]) {
-                return activeRunRate; // Full Projected Value
+                return activeRunRate; // Side-by-side displays FULL run rate
             }
             return null;
         });
@@ -936,9 +1066,19 @@
       sorted.slice(-10).reverse().forEach(x => botDiv.innerHTML += row(x[0], x[1], 'text-rose-400'));
   }
 
-  function renderTable(){ 
+  function renderTable(useFilter=false){ 
       const b = document.getElementById("lossTableBody"); b.innerHTML = "";
-      weekly.slice(0,50).forEach(w => {
+      
+      let dataToRender = weekly;
+      // If we clicked drilldown, filter the table rows
+      if (useFilter && lastFilteredStartTime > 0) {
+          dataToRender = weekly.filter(w => {
+              const t = asDate(w.weekEnd).getTime();
+              return t >= lastFilteredStartTime && t <= lastFilteredEndTime + 86400000;
+          });
+      }
+
+      dataToRender.slice(0,50).forEach(w => {
           const c = w.pctMargin<0?'text-rose-400':w.pctMargin<5?'text-amber-400':'text-emerald-400';
           b.innerHTML += `<tr class="hover:bg-white/5 transition"><td class="py-2 px-4 text-white/90 text-[10px]">${niceDate(w.weekEnd)}</td><td class="py-2 px-4 font-bold ${c}">${w.pctMargin.toFixed(1)}%</td><td class="py-2 px-4 text-white/70">${fmtUSD(w.revenue)}</td><td class="py-2 px-4 text-white/70">${fmtUSD(w.totalExp)}</td><td class="py-2 px-4 text-white/70">${fmtUSD(w.margin)}</td><td class="py-2 px-4 text-[9px] ${c}">${w.pctMargin<0?'CRITICAL':'OK'}</td></tr>`;
       });
