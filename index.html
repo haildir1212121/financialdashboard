@@ -124,7 +124,7 @@
             <div class="text-[9px] uppercase tracking-widest text-white/30 font-bold mb-2 pl-1">Display Mode</div>
             <div class="space-y-1">
               <button class="navbtn active group flex items-center gap-2" data-view="overview" onclick="setView('overview'); toggleSidebar(false)">
-                <svg class="w-3.5 h-3.5 opacity-60 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                <svg class="w-3.5 h-3.5 opacity-60 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
                 Overview
               </button>
               <button class="navbtn group flex items-center gap-2" data-view="drivers" onclick="setView('drivers'); toggleSidebar(false)">
@@ -424,6 +424,7 @@
   let driverIndex = {}; 
   let weekly = []; 
   let driverWeekly = [];     
+  let dailyHistory = []; // New: Stores aggregated daily data from Running Sheet
 
   let trendChart = null; 
   let areaBreakdownChart = null;
@@ -459,21 +460,20 @@
     const map = COLMAPS[activeDataSourceKey] || COLMAPS.DLX;
     const aoa = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" }); 
     const idx = {}; for (const [k, col] of Object.entries(map)) idx[k] = colToIndex(col); 
+    
     let headerRow = 2; 
     for (let r=0; r<Math.min(100, aoa.length); r++){ const row = aoa[r]||[]; if(String(row[idx.pctMargin]||"").includes("%")) { headerRow=r; break; } } 
+    
     const out = []; 
     for (let r = headerRow + 1; r < aoa.length; r++){ 
       const row = aoa[r] || []; 
       const wsVal = row[idx.weekStart]; 
-      if (!wsVal) continue; 
       
-      const dObj = normalizeDate(asDate(wsVal)); // Snaps to Sunday?
-      // Actually, per user request, we want to align EXACTLY with the sheet.
-      // If the sheet says 1/4 - 1/10, we should preserve that. 
-      // normalizeDate aligns to Monday usually.
-      // Let's rely on the sheet's value if it's correct.
-      // But user said "Consolidated Weekly" is authoritative.
-      // So we parse P and Q directly.
+      // CRASH FIX: Check if date exists and is valid
+      const dObj = normalizeDate(asDate(wsVal));
+      if (!dObj) continue; 
+      
+      // Exact alignment with Sheet columns P & Q
       const dStart = asDate(row[idx.weekStart]);
       const dEnd = asDate(row[idx.weekEnd]);
 
@@ -484,8 +484,8 @@
       if(pm <= 1.5 && pm >= -1.5) pm = pm * 100;
 
       out.push({ 
-          weekStart: dStart, 
-          weekEnd: dEnd,
+          weekStart: dStart || dObj, // Fallback if col Q missing
+          weekEnd: dEnd || new Date(dObj.getTime() + 6*86400000),
           revenue, totalExp, margin: safeNum(row[idx.margin]), pctMargin: pm 
       }); 
     } 
@@ -499,7 +499,6 @@
     const dateColIdx = colToIndex(schema.dateCol); 
     const areas = schema.areas.map(a => ({...a, startIdx: colToIndex(a.start)})); 
     
-    // SMART FILL DOWN LOGIC
     let lastValidDate = null;
     const checkIdx = areas[0].startIdx;
 
@@ -516,6 +515,7 @@
         const base = a.driverColIdx; 
         const name = String(row[base + schema.offsets.driver] || "").trim(); 
         if (!name) continue; 
+        
         const revenue = safeNum(row[base + schema.offsets.revenue]); 
         if (Math.abs(revenue)<0.1) continue; 
         if (!out[name]) out[name] = { rows: [] }; 
@@ -527,6 +527,48 @@
 
   function sumRegionsByWeek(seriesById){ const map = new Map(); for (const [id, series] of Object.entries(seriesById)){ if (id === "ALL") continue; for (const w of series){ const key = `${niceDate(w.weekStart)}|${niceDate(w.weekEnd)}`; const cur = map.get(key) || { weekStart: w.weekStart, weekEnd: w.weekEnd, revenue:0, totalExp:0, margin:0, driverCount:0, hoursWorked:0 }; cur.revenue += w.revenue; cur.totalExp += w.totalExp; cur.margin += w.margin; cur.driverCount += w.driverCount; cur.hoursWorked += w.hoursWorked; map.set(key, cur); } } const all = Array.from(map.values()); for(const w of all) w.pctMargin = w.revenue?((w.revenue-w.totalExp)/w.revenue)*100:0; return sortWeeksDesc(all); }
   function getDriverWeekly(driverName){ const rows = driverIndex[driverName]?.rows || []; const map = new Map(); for (const r of rows){ const dt = new Date(r.date.getFullYear(), r.date.getMonth(), r.date.getDate(), 12, 0, 0); const day = dt.getDay(); const diff = (day - 6 + 7) % 7; const start = new Date(dt); start.setDate(dt.getDate() - diff); const end = new Date(start); end.setDate(start.getDate() + 6); const key = `${niceDate(start)}|${niceDate(end)}`; const cur = map.get(key) || { weekStart: start, weekEnd: end, revenue:0, totalExp:0, margin:0, hoursWorked:0 }; cur.revenue += r.revenue; cur.totalExp += r.totalExp; cur.margin += r.margin; cur.hoursWorked += r.hours; map.set(key, cur); } const out = sortWeeksDesc(Array.from(map.values())); for(const w of out) w.pctMargin = w.revenue?((w.revenue-w.totalExp)/w.revenue)*100:0; return out; }
+
+  // NEW: Aggregate Daily History from Running Sheet
+  function aggregateDailyHistory(dIndex) {
+      const map = new Map();
+      Object.values(dIndex).forEach(driver => {
+          driver.rows.forEach(r => {
+              const key = r.date.getTime();
+              const cur = map.get(key) || { date: r.date, revenue:0, margin:0, totalExp:0 };
+              cur.revenue += r.revenue;
+              cur.margin += r.margin;
+              // inferred expense if not present
+              cur.totalExp += (r.revenue - r.margin);
+              map.set(key, cur);
+          });
+      });
+      const arr = Array.from(map.values()).sort((a,b) => b.date - a.date);
+      arr.forEach(d => d.pctMargin = d.revenue ? (d.margin/d.revenue)*100 : 0);
+      return arr;
+  }
+
+  function aggregateRunningSheetToRegionSeries(dIndex, sourceKey) {
+      const rs = {};
+      const schema = SCHEMAS[sourceKey];
+      schema.areas.forEach(a => rs[a.id] = []);
+      const regionMaps = {}; 
+      Object.values(dIndex).forEach(driver => {
+          driver.rows.forEach(row => {
+              if(!regionMaps[row.regionId]) regionMaps[row.regionId] = new Map();
+              const ws = normalizeDate(row.date);
+              const key = ws.getTime();
+              const cur = regionMaps[row.regionId].get(key) || { weekStart: ws, weekEnd: new Date(ws.getTime() + 6*86400000), revenue:0, margin:0, totalExp:0 };
+              cur.revenue += row.revenue; cur.margin += row.margin; cur.totalExp += (row.revenue - row.margin); 
+              regionMaps[row.regionId].set(key, cur);
+          });
+      });
+      Object.keys(regionMaps).forEach(rid => {
+          const arr = Array.from(regionMaps[rid].values());
+          arr.forEach(w => w.pctMargin = w.revenue ? (w.margin/w.revenue)*100 : 0);
+          rs[rid] = sortWeeksDesc(arr);
+      });
+      return rs;
+  }
 
   async function forceSync() {
     document.getElementById("lastSyncLabel").textContent = "Syncing all sources...";
@@ -554,8 +596,8 @@
              rs["ALL"] = parseRegionSheet(wb.Sheets[primarySheetName]);
              usedPrimary = true;
              
+             // Keep DMT region logic for breakdowns
              if (key === "DMT") {
-                 // Keep DMT region logic for breakdowns
                  const runAgg = aggregateRunningSheetToRegionSeries(dIndex, key);
                  Object.keys(runAgg).forEach(k => rs[k] = runAgg[k]);
                  regionSheets = SCHEMAS.DMT.areas.map(a => ({ id: a.id, name: a.name, sheet: null }));
@@ -563,7 +605,6 @@
              } else {
                  // DLX: Still use .wkly sheets for region breakdowns if available
                  regionSheets = buildRegionSheetsFromWorkbook(wb, key);
-                 // But overwrite ALL with Consolidated data
              }
         } 
         
@@ -588,6 +629,8 @@
         dataStore[key].REGION_SHEETS = regionSheets;
         dataStore[key].regionSeries = rs;
         dataStore[key].driverIndex = dIndex;
+        // Pre-calc daily history for table
+        dataStore[key].dailyHistory = aggregateDailyHistory(dIndex);
         dataStore[key].loaded = true;
     } catch(e) { console.error(e); dataStore[key].loaded = false; }
   }
@@ -661,7 +704,13 @@
       activeDataSourceKey = key; localStorage.setItem("dash_data_source", key);
       document.getElementById("dataToggleLabel").textContent = key; document.getElementById("brandBadge").textContent = key; document.title = `NEMT Dashboard — ${key}`;
       activeRegionId = "ALL"; activeDriver = "";
-      if (dataStore[key].loaded) { regionSeries = dataStore[key].regionSeries; driverIndex = dataStore[key].driverIndex; window.REGION_SHEETS = dataStore[key].REGION_SHEETS; applyData(); } 
+      if (dataStore[key].loaded) { 
+          regionSeries = dataStore[key].regionSeries; 
+          driverIndex = dataStore[key].driverIndex; 
+          dailyHistory = dataStore[key].dailyHistory || [];
+          window.REGION_SHEETS = dataStore[key].REGION_SHEETS; 
+          applyData(); 
+      } 
       else { fetchDataForSource(key).then(() => switchDataSourceDisplay(key)); }
   }
 
@@ -961,6 +1010,26 @@
       const b = document.getElementById("lossTableBody"); b.innerHTML = "";
       let dataToRender = weekly;
       if (useFilter && lastFilteredStartTime > 0) { dataToRender = weekly.filter(w => { const t = asDate(w.weekEnd).getTime(); return t >= lastFilteredStartTime && t <= lastFilteredEndTime + 86400000; }); }
+      
+      // NEW: Show daily detail for Weekly View? User requested "each day" for weekly view.
+      // But consolidated only has weekly. If we are in 'week' mode, we could swap to dailyHistory if we had it.
+      // We do have `dailyHistory` in dataStore.
+      if (kpiMode === 'week') {
+         // Show daily breakdown from Running Sheet aggregation
+         const dh = dataStore[activeDataSourceKey].dailyHistory || [];
+         // Filter for current week range
+         const start = lastFilteredStartTime; const end = lastFilteredEndTime + 86400000;
+         const dailyRecs = dh.filter(d => { const t = d.date.getTime(); return t >= start && t < end; });
+         
+         if(dailyRecs.length > 0) {
+             dailyRecs.forEach(d => {
+                const c = d.pctMargin<0?'text-rose-400':d.pctMargin<5?'text-amber-400':'text-emerald-400';
+                b.innerHTML += `<tr class="hover:bg-white/5 transition"><td class="py-2 px-4 text-white/90 text-[10px] font-bold">${niceDate(d.date)}</td><td class="py-2 px-4 font-bold ${c}">${d.pctMargin.toFixed(1)}%</td><td class="py-2 px-4 text-white/70">${fmtUSD(d.revenue)}</td><td class="py-2 px-4 text-white/70">${fmtUSD(d.totalExp)}</td><td class="py-2 px-4 text-white/70">${fmtUSD(d.margin)}</td><td class="py-2 px-4 text-[9px] ${c}">${d.pctMargin<0?'CRITICAL':'OK'}</td></tr>`;
+             });
+             return;
+         }
+      }
+
       dataToRender.slice(0,50).forEach(w => { const c = w.pctMargin<0?'text-rose-400':w.pctMargin<5?'text-amber-400':'text-emerald-400'; b.innerHTML += `<tr class="hover:bg-white/5 transition"><td class="py-2 px-4 text-white/90 text-[10px]">${niceDate(w.weekStart)} — ${niceDate(w.weekEnd)}</td><td class="py-2 px-4 font-bold ${c}">${w.pctMargin.toFixed(1)}%</td><td class="py-2 px-4 text-white/70">${fmtUSD(w.revenue)}</td><td class="py-2 px-4 text-white/70">${fmtUSD(w.totalExp)}</td><td class="py-2 px-4 text-white/70">${fmtUSD(w.margin)}</td><td class="py-2 px-4 text-[9px] ${c}">${w.pctMargin<0?'CRITICAL':'OK'}</td></tr>`; });
   }
   
