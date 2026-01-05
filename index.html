@@ -396,7 +396,6 @@
     DMT: { weekStart: "P", weekEnd: "Q", revenue: "Z", totalExp: "Y", margin: "AA", pctMargin: "AB", driverCount: "R", hoursWorked: "S" }
   };
 
-  // Define Explicit Sheet Lists for Region Mapping
   const REGION_SHEET_MAP = {
       DLX: {
           "CST.WKLY": "CST",
@@ -498,9 +497,8 @@
       const dObj = normalizeDate(asDate(wsVal));
       if (!dObj) continue; 
       
-      const dStart = dObj; 
-      const dEnd = new Date(dStart);
-      dEnd.setDate(dStart.getDate() + 6);
+      const dStart = asDate(row[idx.weekStart]);
+      const dEnd = asDate(row[idx.weekEnd]);
 
       const revenue = safeNum(row[idx.revenue]); 
       const totalExp = safeNum(row[idx.totalExp]); 
@@ -509,8 +507,8 @@
       if(pm <= 1.5 && pm >= -1.5) pm = pm * 100;
 
       out.push({ 
-          weekStart: dStart, 
-          weekEnd: dEnd,
+          weekStart: dStart || dObj, 
+          weekEnd: dEnd || new Date(dObj.getTime() + 6*86400000),
           revenue, totalExp, margin: safeNum(row[idx.margin]), pctMargin: pm 
       }); 
     } 
