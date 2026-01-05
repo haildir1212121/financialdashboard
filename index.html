@@ -124,7 +124,7 @@
             <div class="text-[9px] uppercase tracking-widest text-white/30 font-bold mb-2 pl-1">Display Mode</div>
             <div class="space-y-1">
               <button class="navbtn active group flex items-center gap-2" data-view="overview" onclick="setView('overview'); toggleSidebar(false)">
-                <svg class="w-3.5 h-3.5 opacity-60 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                <svg class="w-3.5 h-3.5 opacity-60 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
                 Overview
               </button>
               <button class="navbtn group flex items-center gap-2" data-view="drivers" onclick="setView('drivers'); toggleSidebar(false)">
@@ -398,7 +398,17 @@
 
   const REGION_LABELS = { 
     CST: "Coast", RBG: "Roseburg", EUG: "Eugene", OKRDG: "Oakridge", ALBNY: "Albany", DMT: "DMT", 
-    NV: "Nevada", PDX: "Portland", STR: "Stretcher" 
+    NV: "Nevada", PDX: "Portland", STR: "Stretcher", EOREGON: "E. Oregon"
+  };
+
+  const DMT_SHEET_MAP = {
+      "CST.WKLY": "CST",
+      "RBG.WKLY": "RBG",
+      "EUG.WKLY": "EUG",
+      "NEVADA": "NV",
+      "ALBANY/SALEM": "ALBNY",
+      "E.OREGON": "EOREGON",
+      "STRETCHER": "STR"
   };
 
   // GLOBAL STATE
@@ -424,7 +434,7 @@
   let driverIndex = {}; 
   let weekly = []; 
   let driverWeekly = [];     
-  let dailyHistory = []; // New: Stores aggregated daily data from Running Sheet
+  let dailyHistory = []; 
 
   let trendChart = null; 
   let areaBreakdownChart = null;
@@ -452,7 +462,16 @@
     return null;
   }
 
-  function normalizeDate(d) { if(!d) return null; const date = new Date(d); date.setHours(0,0,0,0); const day = date.getDay(); const diff = date.getDate() - day + (day === 0 ? -6 : 1); return new Date(date.setDate(diff)); }
+  function normalizeDate(d) { 
+      if(!d) return null; 
+      const date = new Date(d); 
+      date.setHours(0,0,0,0); 
+      const day = date.getDay(); 
+      // Force align to Sunday (0)
+      const diff = date.getDate() - day; 
+      return new Date(date.setDate(diff)); 
+  }
+  
   function niceDate(v){ const d = asDate(v); return d ? `${d.getUTCMonth()+1}/${d.getUTCDate()}/${d.getUTCFullYear()}` : ""; } 
   function sortWeeksDesc(arr){ return (arr||[]).slice().sort((a,b)=> { const da = asDate(a.weekEnd); const db = asDate(b.weekEnd); return (db?db.getTime():0) - (da?da.getTime():0); }); }
 
@@ -469,13 +488,14 @@
       const row = aoa[r] || []; 
       const wsVal = row[idx.weekStart]; 
       
-      // CRASH FIX: Check if date exists and is valid
       const dObj = normalizeDate(asDate(wsVal));
       if (!dObj) continue; 
       
-      // Exact alignment with Sheet columns P & Q
-      const dStart = asDate(row[idx.weekStart]);
-      const dEnd = asDate(row[idx.weekEnd]);
+      // Override: Force Week Start to Sunday, End to Saturday (+6 days)
+      // This ignores Excel's Monday-based convention to ensure cleaner UI
+      const dStart = dObj; 
+      const dEnd = new Date(dStart);
+      dEnd.setDate(dStart.getDate() + 6);
 
       const revenue = safeNum(row[idx.revenue]); 
       const totalExp = safeNum(row[idx.totalExp]); 
@@ -484,8 +504,8 @@
       if(pm <= 1.5 && pm >= -1.5) pm = pm * 100;
 
       out.push({ 
-          weekStart: dStart || dObj, // Fallback if col Q missing
-          weekEnd: dEnd || new Date(dObj.getTime() + 6*86400000),
+          weekStart: dStart, 
+          weekEnd: dEnd,
           revenue, totalExp, margin: safeNum(row[idx.margin]), pctMargin: pm 
       }); 
     } 
@@ -537,7 +557,6 @@
               const cur = map.get(key) || { date: r.date, revenue:0, margin:0, totalExp:0 };
               cur.revenue += r.revenue;
               cur.margin += r.margin;
-              // inferred expense if not present
               cur.totalExp += (r.revenue - r.margin);
               map.set(key, cur);
           });
@@ -589,21 +608,18 @@
         let regionSheets = [];
         let usedPrimary = false;
 
-        // Force both sources to look for "ConsolidatedWkly" first for global stats
         const primarySheetName = "ConsolidatedWkly"; 
 
         if (wb.Sheets[primarySheetName]) {
              rs["ALL"] = parseRegionSheet(wb.Sheets[primarySheetName]);
              usedPrimary = true;
              
-             // Keep DMT region logic for breakdowns
              if (key === "DMT") {
                  const runAgg = aggregateRunningSheetToRegionSeries(dIndex, key);
                  Object.keys(runAgg).forEach(k => rs[k] = runAgg[k]);
                  regionSheets = SCHEMAS.DMT.areas.map(a => ({ id: a.id, name: a.name, sheet: null }));
                  regionSheets.unshift({id:"ALL", name:"All Regions", sheet:null});
              } else {
-                 // DLX: Still use .wkly sheets for region breakdowns if available
                  regionSheets = buildRegionSheetsFromWorkbook(wb, key);
              }
         } 
@@ -629,7 +645,6 @@
         dataStore[key].REGION_SHEETS = regionSheets;
         dataStore[key].regionSeries = rs;
         dataStore[key].driverIndex = dIndex;
-        // Pre-calc daily history for table
         dataStore[key].dailyHistory = aggregateDailyHistory(dIndex);
         dataStore[key].loaded = true;
     } catch(e) { console.error(e); dataStore[key].loaded = false; }
