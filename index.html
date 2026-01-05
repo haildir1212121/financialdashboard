@@ -17,19 +17,19 @@
   <style>
     /* GLOBAL */
     html, body { height:100%; }
-    body { 
-      font-family: 'Inter', system-ui, sans-serif; 
-      background: #050505; 
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: #050505;
       background-image: radial-gradient(circle at 50% 0%, #16161a 0%, #050505 70%);
-      color: #e2e8f0; 
-      overflow: hidden; 
+      color: #e2e8f0;
+      overflow: hidden;
     }
 
     /* CARDS */
     .panel { background: rgba(10, 10, 10, 0.75); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.08); }
     .card  { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 4px 20px rgba(0,0,0,0.3); transition: all 0.2s ease; cursor: pointer; }
     .card:hover { border-color: rgba(255,255,255,0.12); background: rgba(255,255,255,0.05); transform: translateY(-1px); }
-    
+
     /* SCROLLBARS */
     .thin-scroll::-webkit-scrollbar{ width:5px; height:5px; }
     .thin-scroll::-webkit-scrollbar-track{ background: transparent; }
@@ -39,7 +39,7 @@
     .navbtn { width:100%; text-align:left; padding:8px 10px; border-radius:8px; border:1px solid transparent; transition: all 0.2s; color: #94a3b8; font-size: 0.8rem; }
     .navbtn:hover { background: rgba(255,255,255,0.05); color: #fff; }
     .navbtn.active { background: rgba(99, 102, 241, 0.15); border-color: rgba(99, 102, 241, 0.3); color: #818cf8; font-weight: 600; }
-    
+
     /* REGION BUTTONS */
     .region-btn { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 500; transition: all 0.2s; border: 1px solid transparent; color: rgba(255,255,255,0.6); }
     .region-btn:hover { background: rgba(255,255,255,0.05); color: #fff; }
@@ -48,12 +48,12 @@
     .view-hidden { opacity: 0; pointer-events: none; position: absolute; width: 100%; }
     .hiddenView { display:none !important; }
     .hidden { display: none !important; }
-    
+
     /* COMPONENTS */
     .chart-toggle { padding: 4px 8px; font-size: 10px; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: rgba(255,255,255,0.5); background: transparent; text-transform: uppercase; font-weight: 700; transition: all 0.2s; cursor: pointer; }
     .chart-toggle:hover { color: #fff; background: rgba(255,255,255,0.05); }
     .chart-toggle.active { background: rgba(99, 102, 241, 0.2); color: #a5b4fc; border-color: rgba(99, 102, 241, 0.4); }
-    
+
     .cycle-btn { display: flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #a5b4fc; background: rgba(99, 102, 241, 0.15); border: 1px solid rgba(99, 102, 241, 0.3); transition: all 0.2s; cursor: pointer; select-none: none; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1); }
     .cycle-btn:hover { background: rgba(99, 102, 241, 0.25); border-color: rgba(99, 102, 241, 0.5); color: #fff; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3); }
     .cycle-btn:active { transform: translateY(1px); }
@@ -67,1044 +67,1516 @@
     .modal-backdrop.open { opacity: 1; pointer-events: auto; background: rgba(0,0,0,0.85); }
     .modal-content { background: #111; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; width: 90%; max-width: 500px; padding: 24px; transform: scale(0.95); transition: transform 0.2s; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
     .modal-backdrop.open .modal-content { transform: scale(1); }
-    
+
     .info-icon { display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.3); color: rgba(255,255,255,0.5); font-size: 9px; margin-left: 6px; cursor: help; }
     .info-icon:hover { color: #fff; border-color: #fff; background: rgba(255,255,255,0.1); }
+
+    /* ICEE GATE (slides) */
+    .gate-bg {
+      background:
+        radial-gradient(1200px 600px at 25% 10%, rgba(99,102,241,0.22), transparent 60%),
+        radial-gradient(900px 500px at 80% 20%, rgba(16,185,129,0.18), transparent 60%),
+        radial-gradient(800px 700px at 55% 85%, rgba(168,85,247,0.16), transparent 60%),
+        linear-gradient(180deg, #050505 0%, #070707 100%);
+    }
+    .gate-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.10);
+      backdrop-filter: blur(18px);
+      box-shadow: 0 30px 80px rgba(0,0,0,0.55);
+    }
+    .gate-pill {
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(255,255,255,0.04);
+    }
+    .gate-btn {
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.06);
+      transition: all 0.2s;
+    }
+    .gate-btn:hover { background: rgba(255,255,255,0.10); border-color: rgba(255,255,255,0.18); }
+    .gate-btn.primary {
+      background: rgba(99,102,241,0.18);
+      border-color: rgba(99,102,241,0.35);
+      color: #c7d2fe;
+    }
+    .gate-btn.primary:hover { background: rgba(99,102,241,0.28); border-color: rgba(99,102,241,0.50); color: #fff; }
+    .gate-dot { width: 7px; height: 7px; border-radius: 999px; background: rgba(255,255,255,0.18); }
+    .gate-dot.active { background: rgba(129,140,248,0.95); box-shadow: 0 0 0 3px rgba(129,140,248,0.18); }
   </style>
 </head>
 
 <body>
-  <div id="appModal" class="modal-backdrop">
-    <div class="modal-content">
-      <div class="flex justify-between items-start mb-4">
-        <h3 id="modalTitle" class="text-lg font-bold text-white">Logic Explanation</h3>
-        <button onclick="closeModal()" class="text-white/50 hover:text-white"><svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
-      </div>
-      <div id="modalBody" class="text-sm text-white/80 space-y-4"></div>
-    </div>
-  </div>
-
-  <div class="mx-auto max-w-[1800px] h-full p-0 lg:p-4">
-    <div class="panel lg:rounded-2xl overflow-hidden h-full flex flex-col lg:flex-row shadow-2xl relative">
-
-      <div id="mobileOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/80 z-40 hidden lg:hidden backdrop-blur-sm transition-opacity"></div>
-
-      <aside id="sidebarPanel" class="fixed inset-y-0 left-0 z-50 w-[280px] lg:w-[260px] bg-[#080808] border-r border-white/10 flex flex-col h-full transform -translate-x-full lg:translate-x-0 lg:static transition-transform duration-300 shadow-2xl lg:shadow-none">
-        <div class="p-4 border-b border-white/5 flex items-center justify-between">
+  <!-- =========================
+       ICEE SLIDE GATE (loads first)
+       ========================= -->
+  <div id="iceeGate" class="fixed inset-0 z-[9999] gate-bg">
+    <div class="h-full w-full flex items-center justify-center p-4">
+      <div class="w-full max-w-5xl gate-card rounded-2xl overflow-hidden">
+        <!-- Top bar -->
+        <div class="px-5 py-4 border-b border-white/10 flex items-center justify-between">
           <div class="flex items-center gap-3">
-            <div class="h-9 w-9 rounded-lg bg-gradient-to-br from-indigo-600/30 to-purple-600/30 border border-white/10 grid place-items-center shadow-lg shadow-indigo-900/20">
-              <span id="brandBadge" class="font-extrabold tracking-wide text-indigo-400 text-xs">DLX</span>
+            <div class="h-9 w-9 rounded-lg bg-gradient-to-br from-indigo-600/30 to-purple-600/30 border border-white/10 grid place-items-center">
+              <span class="font-extrabold tracking-wide text-indigo-300 text-xs">DLX</span>
             </div>
             <div>
-              <div class="text-sm font-bold tracking-tight text-white">Dashboard</div>
-              <div class="text-[10px] text-white/40 font-medium">Management Console</div>
-            </div>
-          </div>
-          <button onclick="toggleSidebar()" class="lg:hidden text-white/50 hover:text-white">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-          </button>
-        </div>
-
-        <div class="flex-1 overflow-y-auto thin-scroll p-3 space-y-6">
-          <div>
-            <div class="text-[9px] uppercase tracking-widest text-white/30 font-bold mb-2 pl-1">Display Mode</div>
-            <div class="space-y-1">
-              <button class="navbtn active group flex items-center gap-2" data-view="overview" onclick="setView('overview'); toggleSidebar(false)">
-                <svg class="w-3.5 h-3.5 opacity-60 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
-                Overview
-              </button>
-              <button class="navbtn group flex items-center gap-2" data-view="drivers" onclick="setView('drivers'); toggleSidebar(false)">
-                 <svg class="w-3.5 h-3.5 opacity-60 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                 Drivers
-              </button>
-            </div>
-          </div>
-
-          <div>
-            <div class="flex items-center justify-between mb-2 pl-1">
-              <div class="text-[9px] uppercase tracking-widest text-white/30 font-bold">Filter Scope</div>
-              <div class="text-[9px] text-white/20" id="regionCountLabel">...</div>
-            </div>
-            <div id="regionListContainer" class="space-y-1"></div>
-          </div>
-        </div>
-
-        <div class="p-3 border-t border-white/5 bg-black/30">
-          <div class="text-[9px] text-white/30 mb-2 truncate" id="lastSyncLabel">Waiting for sync...</div>
-          <div class="flex gap-2">
-            <button id="refreshBtn" onclick="forceSync()" class="flex-1 rounded bg-white/5 border border-white/10 py-1.5 text-[10px] font-semibold text-white/70 hover:bg-white/10 hover:text-white transition">SYNC ALL</button>
-            <button id="exportBtn" onclick="exportData()" class="flex-1 rounded bg-white/5 border border-white/10 py-1.5 text-[10px] font-semibold text-white/70 hover:bg-white/10 hover:text-white transition">EXPORT</button>
-          </div>
-        </div>
-      </aside>
-
-      <section class="flex-1 flex flex-col h-full relative overflow-hidden bg-black/20 w-full">
-        <div class="p-4 border-b border-white/10 flex-shrink-0 z-10 bg-[#0a0a0a]/80 backdrop-blur-md">
-          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            
-            <div class="flex items-center gap-3 w-full md:w-auto">
-              <button onclick="toggleSidebar()" class="lg:hidden p-2 -ml-2 text-white/70 hover:text-white bg-white/5 rounded-lg border border-white/10">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
-              </button>
-              
-              <div>
-                <div id="dashTitle" class="text-lg font-bold tracking-tight text-white leading-tight">Performance</div>
-                <div id="activeContextLabel" class="text-xs font-medium text-indigo-400 mt-0.5 flex items-center gap-2">Global • Overview</div>
+              <div class="text-sm font-bold tracking-tight text-white leading-tight">
+                Dispatch Office Upgrade Proposal
+              </div>
+              <div id="gateSub" class="text-[10px] text-white/40 font-medium">
+                Required viewing before financial dashboard access
               </div>
             </div>
+          </div>
 
-            <div class="flex items-center gap-3 overflow-x-auto pb-1 md:pb-0">
-                
-                <button onclick="analyzeVariance()" class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg border border-indigo-500/30 bg-indigo-500/10 text-indigo-300 text-[11px] font-bold hover:bg-indigo-500/20 transition whitespace-nowrap">
-                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
-                    Analyze Variance
-                </button>
+          <div class="flex items-center gap-2">
+            <span id="gateSeenBadge" class="hidden sm:inline-flex gate-pill text-[10px] px-2 py-1 rounded-full text-white/60">
+              Previously viewed
+            </span>
+            <span class="hidden sm:inline-flex gate-pill text-[10px] px-2 py-1 rounded-full text-white/60">
+              Use ← → or click
+            </span>
+          </div>
+        </div>
 
-                <div class="flex items-center gap-2 flex-shrink-0">
-                <div class="text-[10px] uppercase tracking-widest text-white/30 font-bold hidden sm:block">Data</div>
-                <button id="dataToggleBtn" onclick="toggleDataSource()"
-                  class="bg-white/5 border border-white/10 text-white/80 text-[11px] font-semibold rounded-lg px-3 py-1 hover:bg-white/10 transition focus:outline-none focus:ring-2 focus:ring-indigo-500/40">
-                  <span id="dataToggleLabel">DLX</span>
+        <!-- Slide body -->
+        <div class="p-5 sm:p-8">
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-center">
+            <!-- Left: slide content -->
+            <div>
+              <div class="flex items-center gap-2 mb-3">
+                <span id="gateKicker" class="gate-pill inline-flex text-[10px] uppercase tracking-widest px-2 py-1 rounded-full text-indigo-300 font-bold">
+                  Slide 1
+                </span>
+                <span id="gateProgressText" class="text-[10px] text-white/35 font-semibold">
+                  1 / 8
+                </span>
+              </div>
+
+              <h1 id="gateTitle" class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-tight">
+                We would like an ICEE machine.
+              </h1>
+
+              <p id="gateLead" class="mt-3 text-sm text-white/70 leading-relaxed">
+                Dispatch is the voice of the company. Literally. We talk all day, solve everything, and keep operations moving.
+                This is a small, practical perk with outsized morale impact.
+              </p>
+
+              <div id="gateBullets" class="mt-5 space-y-2 text-sm text-white/75"></div>
+
+              <div class="mt-6 flex flex-wrap gap-2">
+                <a id="gateLinkBtn" href="#" target="_blank" rel="noopener noreferrer"
+                   class="gate-btn px-3 py-2 rounded-lg text-[12px] font-bold text-white/80 inline-flex items-center gap-2">
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                  </svg>
+                  View ICEE Machine Listing
+                </a>
+
+                <button id="gateReplayBtn" class="hidden gate-btn px-3 py-2 rounded-lg text-[12px] font-bold text-white/70"
+                        onclick="resetIceeGate()">
+                  Replay
                 </button>
               </div>
+            </div>
 
-              <button id="kpiCycleBtn" onclick="cycleKpiMode()" class="cycle-btn shadow-lg shadow-indigo-500/10 flex-shrink-0">
-                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
-                <span id="kpiCycleLabel">Weekly View</span>
-              </button>
+            <!-- Right: visual / cards -->
+            <div class="space-y-3">
+              <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <div class="flex items-center justify-between">
+                  <div class="text-[10px] uppercase tracking-widest text-white/40 font-bold">
+                    Quick Summary
+                  </div>
+                  <div id="gateTag" class="text-[10px] font-bold text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
+                    ROI: morale + retention
+                  </div>
+                </div>
+
+                <div class="mt-3 grid grid-cols-2 gap-3">
+                  <div class="rounded-xl bg-white/5 border border-white/10 p-3">
+                    <div class="text-[10px] text-white/40 font-bold uppercase tracking-wider">Problem</div>
+                    <div id="gateStatA" class="mt-1 text-sm font-bold text-white">Voice fatigue</div>
+                    <div id="gateStatASub" class="text-[10px] text-white/45">Phone-heavy role</div>
+                  </div>
+                  <div class="rounded-xl bg-white/5 border border-white/10 p-3">
+                    <div class="text-[10px] text-white/40 font-bold uppercase tracking-wider">Fix</div>
+                    <div id="gateStatB" class="mt-1 text-sm font-bold text-white">Cold slush drinks</div>
+                    <div id="gateStatBSub" class="text-[10px] text-white/45">Hydration + relief</div>
+                  </div>
+                </div>
+
+                <div class="mt-3 rounded-xl bg-indigo-500/10 border border-indigo-500/20 p-3">
+                  <div class="text-[10px] uppercase tracking-widest text-indigo-200/80 font-bold">The Ask</div>
+                  <div id="gateAskLine" class="mt-1 text-sm font-bold text-white">
+                    Approve: Office ICEE machine for Dispatch
+                  </div>
+                  <div id="gateAskSub" class="text-[10px] text-white/50">
+                    One-time purchase, ongoing supplies are minimal and controllable.
+                  </div>
+                </div>
+              </div>
+
+              <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <div class="text-[10px] uppercase tracking-widest text-white/40 font-bold mb-2">
+                  Product snapshot
+                </div>
+                <div class="grid grid-cols-2 gap-3 text-[12px] text-white/75">
+                  <div class="rounded-xl bg-white/5 border border-white/10 p-3">
+                    <div class="text-[10px] text-white/40 font-bold uppercase tracking-wider">Capacity</div>
+                    <div class="mt-1 font-semibold">1 quart</div>
+                  </div>
+                  <div class="rounded-xl bg-white/5 border border-white/10 p-3">
+                    <div class="text-[10px] text-white/40 font-bold uppercase tracking-wider">Operation</div>
+                    <div class="mt-1 font-semibold">Manual</div>
+                  </div>
+                  <div class="rounded-xl bg-white/5 border border-white/10 p-3">
+                    <div class="text-[10px] text-white/40 font-bold uppercase tracking-wider">Size</div>
+                    <div class="mt-1 font-semibold">7.5" × 6.5" × 18"</div>
+                  </div>
+                  <div class="rounded-xl bg-white/5 border border-white/10 p-3">
+                    <div class="text-[10px] text-white/40 font-bold uppercase tracking-wider">Care</div>
+                    <div class="mt-1 font-semibold">Hand wash</div>
+                  </div>
+                </div>
+                <div class="mt-2 text-[10px] text-white/35">
+                  Specs based on the product listing metadata (brand iscream, 1-quart capacity, 7.5" L × 6.5" W × 18" H, manual mode, hand wash). :contentReference[oaicite:0]{index=0}
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        <div class="flex-1 overflow-y-auto thin-scroll p-3 lg:p-4 scroll-smooth">
-
-          <div id="view-overview" class="view-container pb-20 space-y-3">
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-              <div class="card rounded-2xl p-4 relative overflow-hidden group" onclick="scrollToTable('revenue')">
-                <div class="absolute -right-6 -top-6 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl group-hover:bg-blue-500/20 transition"></div>
-                <div class="flex items-center gap-1 mb-1">
-                    <div class="text-[10px] uppercase tracking-wider text-white/50 font-bold">Total Revenue</div>
-                    <div class="info-icon" title="Aggregated from weekly sheets. Click to view history table.">i</div>
-                </div>
-                <div id="kpiRevenue" class="text-2xl font-bold text-white tracking-tight">—</div>
-                <div id="kpiRevenueLabel" class="text-[10px] text-white/30 mt-0.5">Current Week</div>
-              </div>
-              
-              <div class="card rounded-2xl p-4 relative overflow-hidden group" onclick="setTrendMode('net')">
-                <div class="absolute -right-6 -top-6 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl group-hover:bg-emerald-500/20 transition"></div>
-                <div class="flex items-center gap-1 mb-1">
-                    <div class="text-[10px] uppercase tracking-wider text-white/50 font-bold">Net Margin ($)</div>
-                    <div class="info-icon" title="Revenue - Total Expenses. Click to see Trend.">i</div>
-                </div>
-                <div id="kpiMargin" class="text-2xl font-bold tracking-tight text-white">—</div>
-                <div id="kpiMarginLabel" class="text-[10px] text-white/30 mt-0.5 truncate">Profit</div>
-              </div>
-              
-              <div class="card rounded-2xl p-4 relative overflow-hidden group" onclick="setTrendMode('pct')">
-                <div class="absolute -right-6 -top-6 w-24 h-24 bg-indigo-500/10 rounded-full blur-2xl group-hover:bg-indigo-500/20 transition"></div>
-                <div class="flex items-center gap-1 mb-1">
-                    <div class="text-[10px] uppercase tracking-wider text-white/50 font-bold">Margin (%)</div>
-                    <div class="info-icon" title="(Net Margin / Revenue) * 100. Click to see Trend.">i</div>
-                </div>
-                <div id="kpiPctMargin" class="text-2xl font-bold text-white tracking-tight">—</div>
-                <div id="kpiPctMarginLabel" class="text-[10px] text-white/30 mt-0.5 truncate">Efficiency</div>
-              </div>
-              
-              <div class="card rounded-2xl p-4 relative overflow-hidden group" onclick="showMathModal()">
-                <div class="absolute -right-6 -top-6 w-24 h-24 bg-purple-500/10 rounded-full blur-2xl group-hover:bg-purple-500/20 transition"></div>
-                <div class="flex items-center gap-1 mb-1">
-                    <div id="kpiProjectedTitle" class="text-[10px] uppercase tracking-wider text-white/50 font-bold">Projected Annual</div>
-                    <div class="info-icon" title="Click to see Run Rate math.">i</div>
-                </div>
-                <div class="mt-1">
-                   <div id="kpiProjected" class="text-2xl font-bold text-indigo-300 tracking-tight bg-indigo-500/15 border border-indigo-500/20 inline-block px-3 py-0.5 rounded-lg shadow-[0_0_15px_rgba(99,102,241,0.2)]">—</div>
-                </div>
-                <div id="kpiProjectedLabel" class="text-[10px] text-white/30 mt-1 truncate">Run Rate</div>
-              </div>
-            </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
-              <div class="card rounded-2xl p-4 lg:p-5 lg:col-span-2 flex flex-col">
-                <div class="flex flex-col sm:flex-row sm:items-end justify-between mb-4 gap-3">
-                   <div class="flex items-end gap-3">
-                      <div>
-                         <h3 class="text-xs font-bold text-white/50 uppercase tracking-widest mb-1">Trend Analysis</h3>
-                         <h4 id="trendBigNumber" class="text-3xl font-bold text-white leading-none">$0</h4>
-                      </div>
-                      <div id="trendPercent" class="text-sm font-bold mb-0.5 text-white/50">—%</div>
-                   </div>
-                   <div class="flex gap-1 bg-white/5 p-0.5 rounded-lg self-start sm:self-auto">
-                      <button class="chart-toggle active" id="btnTrendPct" onclick="setTrendMode('pct')">Margin %</button>
-                      <button class="chart-toggle" id="btnTrendNet" onclick="setTrendMode('net')">Net $</button>
-                      <button class="chart-toggle" id="btnTrendRev" onclick="setTrendMode('rev')">Rev $</button>
-                   </div>
-                </div>
-                <div class="relative flex-1 min-h-[250px]">
-                  <canvas id="trendChart"></canvas>
-                </div>
-              </div>
-
-              <div class="card rounded-2xl p-0 flex flex-col overflow-hidden h-[380px]">
-                <div class="p-3 border-b border-white/5 bg-white/5 flex flex-col gap-2">
-                  <div class="flex justify-between items-center">
-                    <div class="text-xs font-bold text-white">Breakdown</div>
-                    <div id="perfPeriodLabel" class="text-[10px] text-white/40">Viewed Period</div>
-                  </div>
-                  <div class="flex gap-4 mt-1">
-                    <button id="tabDrivers" class="tab-btn active" onclick="switchBreakdownTab('drivers')">Top Drivers</button>
-                    <button id="tabAreas" class="tab-btn" onclick="switchBreakdownTab('areas')">By Area</button>
-                  </div>
-                </div>
-                
-                <div class="flex-1 relative overflow-hidden">
-                    <div id="tabContentDrivers" class="absolute inset-0 overflow-y-auto thin-scroll p-3">
-                        <div class="text-[9px] uppercase tracking-widest text-emerald-400 font-bold mb-2">Top 10 Performers</div>
-                        <div id="topDriversList" class="space-y-1 mb-4"></div>
-                        <div class="text-[9px] uppercase tracking-widest text-rose-400 font-bold mb-2">Bottom 10 Performers</div>
-                        <div id="bottomDriversList" class="space-y-1"></div>
-                    </div>
-                    <div id="tabContentAreas" class="absolute inset-0 p-3 hidden">
-                        <canvas id="areaBreakdownChart"></canvas>
-                    </div>
-                </div>
-              </div>
-            </div>
-
-            <div id="historyTableCard" class="card rounded-2xl p-0 overflow-hidden flex flex-col max-h-[500px]">
-              <div class="p-3 border-b border-white/5 flex justify-between items-center bg-white/5">
-                <div class="font-bold text-xs">History</div>
-                <div class="text-[10px] text-white/40">Full Record</div>
-              </div>
-              <div class="thin-scroll overflow-x-auto overflow-y-auto flex-1">
-                <table class="w-full text-left text-xs border-collapse min-w-[600px]">
-                  <thead class="sticky top-0 bg-[#121212] text-white/40 uppercase tracking-wider z-10 shadow-lg font-semibold">
-                    <tr><th class="py-3 px-4">Period</th><th class="py-3 px-4">% Margin</th><th class="py-3 px-4">Revenue</th><th class="py-3 px-4">TL Exp</th><th class="py-3 px-4">Margin</th><th class="py-3 px-4">Signal</th></tr>
-                  </thead>
-                  <tbody id="lossTableBody" class="divide-y divide-white/5 text-white/80 font-mono"></tbody>
-                </table>
-              </div>
-            </div>
-          </div> 
-
-          <div id="view-drivers" class="view-hidden hiddenView pb-10">
-            <div id="driverTopPerformer" class="mb-3"></div>
-            <div class="grid grid-cols-1 xl:grid-cols-2 gap-3 h-full">
-              <div class="card rounded-2xl p-0 overflow-hidden flex flex-col max-h-[75vh]">
-                <div class="p-3 border-b border-white/5 bg-white/5">
-                  <div class="font-bold text-xs">Driver History</div>
-                  <div class="text-[10px] text-white/40">Aggregated Performance</div>
-                </div>
-                <div class="thin-scroll overflow-x-auto overflow-y-auto flex-1">
-                  <table class="w-full text-left text-xs min-w-[500px]">
-                    <thead class="sticky top-0 bg-[#121212] text-white/40 uppercase tracking-wider z-10">
-                      <tr><th class="py-2 px-4">Week</th><th class="py-2 px-4">% Margin</th><th class="py-2 px-4">Revenue</th><th class="py-2 px-4">Margin</th><th class="py-2 px-4">Hours</th></tr>
-                    </thead>
-                    <tbody id="driverWeeklyBody" class="divide-y divide-white/5 text-white/80 font-mono"></tbody>
-                  </table>
-                </div>
-              </div>
-              <div class="card rounded-2xl p-0 overflow-hidden flex flex-col h-auto">
-                <div class="p-3 border-b border-white/5 bg-white/5">
-                  <div class="font-bold text-xs">Region Breakdown</div>
-                  <div class="text-[10px] text-white/40">Latest Active Week</div>
-                </div>
-                <div class="thin-scroll overflow-x-auto overflow-y-auto flex-1">
-                  <table class="w-full text-left text-xs min-w-[400px]">
-                    <thead class="sticky top-0 bg-[#121212] text-white/40 uppercase tracking-wider z-10">
-                      <tr><th class="py-2 px-4">Region</th><th class="py-2 px-4">Revenue</th><th class="py-2 px-4">Margin</th><th class="py-2 px-4">Hours</th></tr>
-                    </thead>
-                    <tbody id="driverRegionBody" class="divide-y divide-white/5 text-white/80 font-mono"></tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
+        <!-- Bottom controls -->
+        <div class="px-5 py-4 border-t border-white/10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div class="flex items-center gap-2">
+            <div id="gateDots" class="flex items-center gap-2"></div>
           </div>
-        </div> 
-      </section>
+
+          <div class="flex items-center justify-between sm:justify-end gap-2">
+            <button id="gatePrev" class="gate-btn px-3 py-2 rounded-lg text-[12px] font-bold text-white/70">
+              ← Back
+            </button>
+            <button id="gateNext" class="gate-btn primary px-3 py-2 rounded-lg text-[12px] font-bold">
+              Next →
+            </button>
+            <button id="gateEnter" class="hidden gate-btn primary px-3 py-2 rounded-lg text-[12px] font-bold">
+              Enter Dashboard
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
-<script>
-  Chart.register(ChartDataLabels); 
+  <!-- =========================
+       DASHBOARD (hidden until gate completes)
+       ========================= -->
+  <div id="dashboardRoot" class="hidden h-full">
+    <div id="appModal" class="modal-backdrop">
+      <div class="modal-content">
+        <div class="flex justify-between items-start mb-4">
+          <h3 id="modalTitle" class="text-lg font-bold text-white">Logic Explanation</h3>
+          <button onclick="closeModal()" class="text-white/50 hover:text-white"><svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+        </div>
+        <div id="modalBody" class="text-sm text-white/80 space-y-4"></div>
+      </div>
+    </div>
 
-  const WORKER_URL_DLX = "https://withered-king-c48e.haildir12121.workers.dev/";
-  const WORKER_URL_DMT = "https://spring-grass-bbc2.haildir12121.workers.dev/";
+    <div class="mx-auto max-w-[1800px] h-full p-0 lg:p-4">
+      <div class="panel lg:rounded-2xl overflow-hidden h-full flex flex-col lg:flex-row shadow-2xl relative">
 
-  const DATA_SOURCES = {
-    DLX: { key: "DLX", label: "DLX", workerUrl: WORKER_URL_DLX },
-    DMT: { key: "DMT", label: "DMT", workerUrl: WORKER_URL_DMT }
-  };
+        <div id="mobileOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/80 z-40 hidden lg:hidden backdrop-blur-sm transition-opacity"></div>
 
-  const SCHEMAS = {
-    DLX: {
-      dataHeaderRowIndex0: 2, dateCol: "D",
-      areas: [
-        { id: "CST",   name: "Coast",    start: "E",  end: "O" },
-        { id: "RBG",   name: "Roseburg", start: "P",  end: "Z" },
-        { id: "EUG",   name: "Eugene",   start: "AA", end: "AK" },
-        { id: "OKRDG", name: "Oakridge", start: "AL", end: "AV" },
-        { id: "ALBNY", name: "Albany",   start: "AW", end: "BG" },
-        { id: "DMT",   name: "DMT",      start: "BR", end: "CB" }
-      ],
-      offsets: { driver:0, hours:1, payroll:2, fuel:3, insurance:4, maintenance:5, totalExp:7, revenue:8, margin:9 }
-    },
-    DMT: {
-      dataHeaderRowIndex0: 2, dateCol: "D",
-      areas: [
-        { id: "CST",   name: "Coast-DMT",  start: "E",  end: "N" },
-        { id: "RBG",   name: "Roseburg-DMT", start: "P",  end: "Y" },
-        { id: "EUG",   name: "Eugene DMT", start: "AA", end: "AJ" },
-        { id: "NV",    name: "Nevada",     start: "AL", end: "AU" },
-        { id: "ALBNY", name: "Albany/Salem", start: "AW", end: "BF" },
-        { id: "PDX",   name: "Portland",   start: "BG", end: "BP" },
-        { id: "STR",   name: "Stretcher",  start: "BR", end: "CA" }
-      ],
-      offsets: { driver:0, hours:1, payroll:2, fuel:3, insurance:4, maintenance:5, totalExp:7, revenue:8, margin:9 }
-    }
-  };
+        <aside id="sidebarPanel" class="fixed inset-y-0 left-0 z-50 w-[280px] lg:w-[260px] bg-[#080808] border-r border-white/10 flex flex-col h-full transform -translate-x-full lg:translate-x-0 lg:static transition-transform duration-300 shadow-2xl lg:shadow-none">
+          <div class="p-4 border-b border-white/5 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="h-9 w-9 rounded-lg bg-gradient-to-br from-indigo-600/30 to-purple-600/30 border border-white/10 grid place-items-center shadow-lg shadow-indigo-900/20">
+                <span id="brandBadge" class="font-extrabold tracking-wide text-indigo-400 text-xs">DLX</span>
+              </div>
+              <div>
+                <div class="text-sm font-bold tracking-tight text-white">Dashboard</div>
+                <div class="text-[10px] text-white/40 font-medium">Management Console</div>
+              </div>
+            </div>
+            <button onclick="toggleSidebar()" class="lg:hidden text-white/50 hover:text-white">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+          </div>
 
-  const COLMAPS = {
-    DLX: { weekStart: "P", weekEnd: "Q", revenue: "Z", totalExp: "Y", margin: "AA", pctMargin: "AB", driverCount: "R", hoursWorked: "S" }
-  };
+          <div class="flex-1 overflow-y-auto thin-scroll p-3 space-y-6">
+            <div>
+              <div class="text-[9px] uppercase tracking-widest text-white/30 font-bold mb-2 pl-1">Display Mode</div>
+              <div class="space-y-1">
+                <button class="navbtn active group flex items-center gap-2" data-view="overview" onclick="setView('overview'); toggleSidebar(false)">
+                  <svg class="w-3.5 h-3.5 opacity-60 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                  Overview
+                </button>
+                <button class="navbtn group flex items-center gap-2" data-view="drivers" onclick="setView('drivers'); toggleSidebar(false)">
+                   <svg class="w-3.5 h-3.5 opacity-60 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                   Drivers
+                </button>
+              </div>
+            </div>
 
-  const REGION_LABELS = { 
-    CST: "Coast", RBG: "Roseburg", EUG: "Eugene", OKRDG: "Oakridge", ALBNY: "Albany", DMT: "DMT", 
-    NV: "Nevada", PDX: "Portland", STR: "Stretcher" 
-  };
+            <div>
+              <div class="flex items-center justify-between mb-2 pl-1">
+                <div class="text-[9px] uppercase tracking-widest text-white/30 font-bold">Filter Scope</div>
+                <div class="text-[9px] text-white/20" id="regionCountLabel">...</div>
+              </div>
+              <div id="regionListContainer" class="space-y-1"></div>
+            </div>
+          </div>
 
-  // GLOBAL STATE
-  let activeDataSourceKey = localStorage.getItem("dash_data_source") || "DLX";
-  let activeRegionId = "ALL"; 
-  let activeView = "overview";
-  let activeDriver = "";
-  
-  // New state variables for drill-downs and math
-  let currentRunRateData = {}; 
-  let currentStats = {}; 
-  let prevStats = {}; 
-  let lastFilteredStartTime = 0;
-  let lastFilteredEndTime = 0;
+          <div class="p-3 border-t border-white/5 bg-black/30">
+            <div class="text-[9px] text-white/30 mb-2 truncate" id="lastSyncLabel">Waiting for sync...</div>
+            <div class="flex gap-2">
+              <button id="refreshBtn" onclick="forceSync()" class="flex-1 rounded bg-white/5 border border-white/10 py-1.5 text-[10px] font-semibold text-white/70 hover:bg-white/10 hover:text-white transition">SYNC ALL</button>
+              <button id="exportBtn" onclick="exportData()" class="flex-1 rounded bg-white/5 border border-white/10 py-1.5 text-[10px] font-semibold text-white/70 hover:bg-white/10 hover:text-white transition">EXPORT</button>
+            </div>
+            <!-- Optional: let boss re-open the pitch after entering -->
+            <button onclick="showIceeGate(true)" class="mt-2 w-full rounded bg-white/5 border border-white/10 py-1.5 text-[10px] font-semibold text-white/60 hover:bg-white/10 hover:text-white transition">
+              View ICEE Proposal Again
+            </button>
+          </div>
+        </aside>
 
-  const dataStore = {
-    DLX: { loaded: false, REGION_SHEETS: [], regionSeries: {}, driverIndex: {} },
-    DMT: { loaded: false, REGION_SHEETS: [], regionSeries: {}, driverIndex: {} }
-  };
-  
-  let regionSeries = {}; 
-  let driverIndex = {}; 
-  let weekly = []; 
-  let driverWeekly = [];     
+        <section class="flex-1 flex flex-col h-full relative overflow-hidden bg-black/20 w-full">
+          <div class="p-4 border-b border-white/10 flex-shrink-0 z-10 bg-[#0a0a0a]/80 backdrop-blur-md">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
 
-  let trendChart = null; 
-  let areaBreakdownChart = null;
-  let trendMode = "pct"; 
-  let kpiMode = "week"; 
+              <div class="flex items-center gap-3 w-full md:w-auto">
+                <button onclick="toggleSidebar()" class="lg:hidden p-2 -ml-2 text-white/70 hover:text-white bg-white/5 rounded-lg border border-white/10">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                </button>
 
-  function fmtUSD(n){ return Number(n||0).toLocaleString('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}); }
-  function safeNum(v){ if(typeof v === 'number') return isFinite(v)?v:0; const s = String(v).replace(/[^0-9.\-]/g,""); const n = parseFloat(s); return isFinite(n)?n:0; }
-  function colToIndex(col){ let n=0; const s=String(col).toUpperCase().trim(); for(let i=0;i<s.length;i++) n=n*26+(s.charCodeAt(i)-64); return n-1; }
-  
-  // FIX: Force UTC parsing for all dates to avoid timezone dropout
-  function asDate(v) {
-    if (v instanceof Date && !isNaN(v)) return v;
-    if (typeof v === "number" && isFinite(v)) {
-      // Excel serial date to JS Date (UTC)
-      const utcDays = Math.floor(v - 25569);
-      return new Date(utcDays * 86400 * 1000);
-    }
-    if (typeof v === "string") {
-        // Attempt to parse string. If it's "MM/DD/YYYY", force it to be UTC 00:00
-        const d = new Date(v);
-        if (isNaN(d.getTime())) return null;
-        // Adjust for timezone offset to effectively "shift" local time to UTC 00:00
-        return new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-    }
-    return null;
-  }
+                <div>
+                  <div id="dashTitle" class="text-lg font-bold tracking-tight text-white leading-tight">Performance</div>
+                  <div id="activeContextLabel" class="text-xs font-medium text-indigo-400 mt-0.5 flex items-center gap-2">Global • Overview</div>
+                </div>
+              </div>
 
-  function normalizeDate(d) { if(!d) return null; const date = new Date(d); date.setHours(0,0,0,0); const day = date.getDay(); const diff = date.getDate() - day + (day === 0 ? -6 : 1); return new Date(date.setDate(diff)); }
-  function niceDate(v){ const d = asDate(v); return d ? `${d.getUTCMonth()+1}/${d.getUTCDate()}/${d.getUTCFullYear()}` : ""; } 
-  function sortWeeksDesc(arr){ return (arr||[]).slice().sort((a,b)=> { const da = asDate(a.weekEnd); const db = asDate(b.weekEnd); return (db?db.getTime():0) - (da?da.getTime():0); }); }
+              <div class="flex items-center gap-3 overflow-x-auto pb-1 md:pb-0">
 
-  function parseRegionSheet(ws){ 
-    const map = COLMAPS.DLX;
-    const aoa = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" }); 
-    const idx = {}; for (const [k, col] of Object.entries(map)) idx[k] = colToIndex(col); 
-    let headerRow = 2; 
-    for (let r=0; r<Math.min(100, aoa.length); r++){ const row = aoa[r]||[]; if(String(row[idx.pctMargin]||"").includes("%")) { headerRow=r; break; } } 
-    const out = []; 
-    for (let r = headerRow + 1; r < aoa.length; r++){ 
-      const row = aoa[r] || []; 
-      const wsVal = row[idx.weekStart]; 
-      if (!wsVal) continue; 
-      const dObj = normalizeDate(asDate(wsVal));
-      const revenue = safeNum(row[idx.revenue]); 
-      const totalExp = safeNum(row[idx.totalExp]); 
-      if(Math.abs(revenue)<1 && Math.abs(totalExp)<1) continue; 
-      let pm = safeNum(row[idx.pctMargin]);
-      if(pm <= 1.5 && pm >= -1.5) pm = pm * 100;
-      out.push({ weekStart: dObj, weekEnd: asDate(row[idx.weekEnd]), revenue, totalExp, margin: safeNum(row[idx.margin]), pctMargin: pm }); 
-    } 
-    return sortWeeksDesc(out); 
-  }
+                  <button onclick="analyzeVariance()" class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg border border-indigo-500/30 bg-indigo-500/10 text-indigo-300 text-[11px] font-bold hover:bg-indigo-500/20 transition whitespace-nowrap">
+                      <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
+                      Analyze Variance
+                  </button>
 
-  function parseRunningSheet(ws, sourceKey){ 
-    const schema = SCHEMAS[sourceKey];
-    const aoa = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" }); 
-    const headerRow = schema.dataHeaderRowIndex0; 
-    const dateColIdx = colToIndex(schema.dateCol); 
-    const areas = schema.areas.map(a => ({...a, startIdx: colToIndex(a.start)})); 
-    for (const a of areas) { a.driverColIdx = a.startIdx; for (let c = a.startIdx; c <= colToIndex(a.end); c++) { if (String(aoa[headerRow]?.[c]||"").toLowerCase().trim() === "driver") { a.driverColIdx = c; break; } } } 
-    const out = {}; 
-    for (let r = headerRow + 1; r < aoa.length; r++){ 
-      const row = aoa[r] || []; 
-      const d = asDate(row[dateColIdx]); // Now uses force-UTC logic
-      if (!d) continue; 
-      for (const a of areas){ 
-        const base = a.driverColIdx; 
-        const name = String(row[base + schema.offsets.driver] || "").trim(); 
-        if (!name) continue; 
-        const revenue = safeNum(row[base + schema.offsets.revenue]); 
-        if (Math.abs(revenue)<0.1) continue; 
-        if (!out[name]) out[name] = { rows: [] }; 
-        out[name].rows.push({ date: d, region: a.name, regionId: a.id, revenue, margin: safeNum(row[base + schema.offsets.margin]), hours: safeNum(row[base + schema.offsets.hours]) }); 
-      } 
-    } 
-    return out; 
-  }
+                  <div class="flex items-center gap-2 flex-shrink-0">
+                  <div class="text-[10px] uppercase tracking-widest text-white/30 font-bold hidden sm:block">Data</div>
+                  <button id="dataToggleBtn" onclick="toggleDataSource()"
+                    class="bg-white/5 border border-white/10 text-white/80 text-[11px] font-semibold rounded-lg px-3 py-1 hover:bg-white/10 transition focus:outline-none focus:ring-2 focus:ring-indigo-500/40">
+                    <span id="dataToggleLabel">DLX</span>
+                  </button>
+                </div>
 
-  function sumRegionsByWeek(seriesById){ const map = new Map(); for (const [id, series] of Object.entries(seriesById)){ if (id === "ALL") continue; for (const w of series){ const key = w.weekStart.getTime(); const cur = map.get(key) || { weekStart: w.weekStart, weekEnd: w.weekEnd, revenue:0, totalExp:0, margin:0 }; cur.revenue += w.revenue; cur.totalExp += w.totalExp; cur.margin += w.margin; map.set(key, cur); } } const all = Array.from(map.values()); for(const w of all) w.pctMargin = w.revenue?((w.revenue-w.totalExp)/w.revenue)*100:0; return sortWeeksDesc(all); }
-  function getDriverWeekly(driverName){ const rows = driverIndex[driverName]?.rows || []; const map = new Map(); for (const r of rows){ const dt = normalizeDate(r.date); const key = dt.getTime(); const cur = map.get(key) || { weekStart: dt, revenue:0, margin:0, hoursWorked:0 }; cur.revenue += r.revenue; cur.margin += r.margin; cur.hoursWorked += r.hours; map.set(key, cur); } const out = sortWeeksDesc(Array.from(map.values())); for(const w of out) w.pctMargin = w.revenue?(w.margin/w.revenue)*100:0; return out; }
+                <button id="kpiCycleBtn" onclick="cycleKpiMode()" class="cycle-btn shadow-lg shadow-indigo-500/10 flex-shrink-0">
+                  <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
+                  <span id="kpiCycleLabel">Weekly View</span>
+                </button>
+              </div>
+            </div>
+          </div>
 
-  function aggregateRunningSheetToRegionSeries(dIndex, sourceKey) {
-      const rs = {};
-      const schema = SCHEMAS[sourceKey];
-      schema.areas.forEach(a => rs[a.id] = []);
-      const regionMaps = {}; 
-      Object.values(dIndex).forEach(driver => {
-          driver.rows.forEach(row => {
-              if(!regionMaps[row.regionId]) regionMaps[row.regionId] = new Map();
-              const ws = normalizeDate(row.date);
-              const key = ws.getTime();
-              const cur = regionMaps[row.regionId].get(key) || { weekStart: ws, weekEnd: new Date(ws.getTime() + 6*86400000), revenue:0, margin:0, totalExp:0 };
-              cur.revenue += row.revenue; cur.margin += row.margin; cur.totalExp += (row.revenue - row.margin); 
-              regionMaps[row.regionId].set(key, cur);
-          });
-      });
-      Object.keys(regionMaps).forEach(rid => {
-          const arr = Array.from(regionMaps[rid].values());
-          arr.forEach(w => w.pctMargin = w.revenue ? (w.margin/w.revenue)*100 : 0);
-          rs[rid] = sortWeeksDesc(arr);
-      });
-      return rs;
-  }
+          <div class="flex-1 overflow-y-auto thin-scroll p-3 lg:p-4 scroll-smooth">
 
-  async function forceSync() {
-    document.getElementById("lastSyncLabel").textContent = "Syncing all sources...";
-    await Promise.all([fetchDataForSource("DLX"), fetchDataForSource("DMT")]);
-    document.getElementById("lastSyncLabel").textContent = "Synced: " + new Date().toLocaleTimeString();
-    switchDataSourceDisplay(activeDataSourceKey);
-  }
-  
-  async function fetchDataForSource(key) {
-    try {
-        const res = await fetch(DATA_SOURCES[key].workerUrl, {cache:"no-store"});
-        const buf = await res.arrayBuffer();
-        const wb = XLSX.read(buf, {type:"array"});
-        const runWs = wb.Sheets["Running Sheet"];
-        const dIndex = runWs ? parseRunningSheet(runWs, key) : {};
+            <div id="view-overview" class="view-container pb-20 space-y-3">
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <div class="card rounded-2xl p-4 relative overflow-hidden group" onclick="scrollToTable('revenue')">
+                  <div class="absolute -right-6 -top-6 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl group-hover:bg-blue-500/20 transition"></div>
+                  <div class="flex items-center gap-1 mb-1">
+                      <div class="text-[10px] uppercase tracking-wider text-white/50 font-bold">Total Revenue</div>
+                      <div class="info-icon" title="Aggregated from weekly sheets. Click to view history table.">i</div>
+                  </div>
+                  <div id="kpiRevenue" class="text-2xl font-bold text-white tracking-tight">—</div>
+                  <div id="kpiRevenueLabel" class="text-[10px] text-white/30 mt-0.5">Current Week</div>
+                </div>
 
-        let rs = {};
-        let regionSheets = [];
+                <div class="card rounded-2xl p-4 relative overflow-hidden group" onclick="setTrendMode('net')">
+                  <div class="absolute -right-6 -top-6 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl group-hover:bg-emerald-500/20 transition"></div>
+                  <div class="flex items-center gap-1 mb-1">
+                      <div class="text-[10px] uppercase tracking-wider text-white/50 font-bold">Net Margin ($)</div>
+                      <div class="info-icon" title="Revenue - Total Expenses. Click to see Trend.">i</div>
+                  </div>
+                  <div id="kpiMargin" class="text-2xl font-bold tracking-tight text-white">—</div>
+                  <div id="kpiMarginLabel" class="text-[10px] text-white/30 mt-0.5 truncate">Profit</div>
+                </div>
 
-        if (key === "DLX") {
-            regionSheets = buildRegionSheetsFromWorkbook(wb, key);
-            for(const r of regionSheets) {
-                if(r.id==="ALL") continue;
-                const ws = wb.Sheets[r.sheet];
-                rs[r.id] = ws ? parseRegionSheet(ws) : [];
-            }
-            rs["ALL"] = sumRegionsByWeek(rs);
-        } else {
-            rs = aggregateRunningSheetToRegionSeries(dIndex, key);
-            rs["ALL"] = sumRegionsByWeek(rs);
-            regionSheets = SCHEMAS.DMT.areas.map(a => ({ id: a.id, name: a.name, sheet: null }));
-            regionSheets.unshift({id:"ALL", name:"All Regions", sheet:null});
+                <div class="card rounded-2xl p-4 relative overflow-hidden group" onclick="setTrendMode('pct')">
+                  <div class="absolute -right-6 -top-6 w-24 h-24 bg-indigo-500/10 rounded-full blur-2xl group-hover:bg-indigo-500/20 transition"></div>
+                  <div class="flex items-center gap-1 mb-1">
+                      <div class="text-[10px] uppercase tracking-wider text-white/50 font-bold">Margin (%)</div>
+                      <div class="info-icon" title="(Net Margin / Revenue) * 100. Click to see Trend.">i</div>
+                  </div>
+                  <div id="kpiPctMargin" class="text-2xl font-bold text-white tracking-tight">—</div>
+                  <div id="kpiPctMarginLabel" class="text-[10px] text-white/30 mt-0.5 truncate">Efficiency</div>
+                </div>
+
+                <div class="card rounded-2xl p-4 relative overflow-hidden group" onclick="showMathModal()">
+                  <div class="absolute -right-6 -top-6 w-24 h-24 bg-purple-500/10 rounded-full blur-2xl group-hover:bg-purple-500/20 transition"></div>
+                  <div class="flex items-center gap-1 mb-1">
+                      <div id="kpiProjectedTitle" class="text-[10px] uppercase tracking-wider text-white/50 font-bold">Projected Annual</div>
+                      <div class="info-icon" title="Click to see Run Rate math.">i</div>
+                  </div>
+                  <div class="mt-1">
+                     <div id="kpiProjected" class="text-2xl font-bold text-indigo-300 tracking-tight bg-indigo-500/15 border border-indigo-500/20 inline-block px-3 py-0.5 rounded-lg shadow-[0_0_15px_rgba(99,102,241,0.2)]">—</div>
+                  </div>
+                  <div id="kpiProjectedLabel" class="text-[10px] text-white/30 mt-1 truncate">Run Rate</div>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
+                <div class="card rounded-2xl p-4 lg:p-5 lg:col-span-2 flex flex-col">
+                  <div class="flex flex-col sm:flex-row sm:items-end justify-between mb-4 gap-3">
+                     <div class="flex items-end gap-3">
+                        <div>
+                           <h3 class="text-xs font-bold text-white/50 uppercase tracking-widest mb-1">Trend Analysis</h3>
+                           <h4 id="trendBigNumber" class="text-3xl font-bold text-white leading-none">$0</h4>
+                        </div>
+                        <div id="trendPercent" class="text-sm font-bold mb-0.5 text-white/50">—%</div>
+                     </div>
+                     <div class="flex gap-1 bg-white/5 p-0.5 rounded-lg self-start sm:self-auto">
+                        <button class="chart-toggle active" id="btnTrendPct" onclick="setTrendMode('pct')">Margin %</button>
+                        <button class="chart-toggle" id="btnTrendNet" onclick="setTrendMode('net')">Net $</button>
+                        <button class="chart-toggle" id="btnTrendRev" onclick="setTrendMode('rev')">Rev $</button>
+                     </div>
+                  </div>
+                  <div class="relative flex-1 min-h-[250px]">
+                    <canvas id="trendChart"></canvas>
+                  </div>
+                </div>
+
+                <div class="card rounded-2xl p-0 flex flex-col overflow-hidden h-[380px]">
+                  <div class="p-3 border-b border-white/5 bg-white/5 flex flex-col gap-2">
+                    <div class="flex justify-between items-center">
+                      <div class="text-xs font-bold text-white">Breakdown</div>
+                      <div id="perfPeriodLabel" class="text-[10px] text-white/40">Viewed Period</div>
+                    </div>
+                    <div class="flex gap-4 mt-1">
+                      <button id="tabDrivers" class="tab-btn active" onclick="switchBreakdownTab('drivers')">Top Drivers</button>
+                      <button id="tabAreas" class="tab-btn" onclick="switchBreakdownTab('areas')">By Area</button>
+                    </div>
+                  </div>
+
+                  <div class="flex-1 relative overflow-hidden">
+                      <div id="tabContentDrivers" class="absolute inset-0 overflow-y-auto thin-scroll p-3">
+                          <div class="text-[9px] uppercase tracking-widest text-emerald-400 font-bold mb-2">Top 10 Performers</div>
+                          <div id="topDriversList" class="space-y-1 mb-4"></div>
+                          <div class="text-[9px] uppercase tracking-widest text-rose-400 font-bold mb-2">Bottom 10 Performers</div>
+                          <div id="bottomDriversList" class="space-y-1"></div>
+                      </div>
+                      <div id="tabContentAreas" class="absolute inset-0 p-3 hidden">
+                          <canvas id="areaBreakdownChart"></canvas>
+                      </div>
+                  </div>
+                </div>
+              </div>
+
+              <div id="historyTableCard" class="card rounded-2xl p-0 overflow-hidden flex flex-col max-h-[500px]">
+                <div class="p-3 border-b border-white/5 flex justify-between items-center bg-white/5">
+                  <div class="font-bold text-xs">History</div>
+                  <div class="text-[10px] text-white/40">Full Record</div>
+                </div>
+                <div class="thin-scroll overflow-x-auto overflow-y-auto flex-1">
+                  <table class="w-full text-left text-xs border-collapse min-w-[600px]">
+                    <thead class="sticky top-0 bg-[#121212] text-white/40 uppercase tracking-wider z-10 shadow-lg font-semibold">
+                      <tr><th class="py-3 px-4">Period</th><th class="py-3 px-4">% Margin</th><th class="py-3 px-4">Revenue</th><th class="py-3 px-4">TL Exp</th><th class="py-3 px-4">Margin</th><th class="py-3 px-4">Signal</th></tr>
+                    </thead>
+                    <tbody id="lossTableBody" class="divide-y divide-white/5 text-white/80 font-mono"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <div id="view-drivers" class="view-hidden hiddenView pb-10">
+              <div id="driverTopPerformer" class="mb-3"></div>
+              <div class="grid grid-cols-1 xl:grid-cols-2 gap-3 h-full">
+                <div class="card rounded-2xl p-0 overflow-hidden flex flex-col max-h-[75vh]">
+                  <div class="p-3 border-b border-white/5 bg-white/5">
+                    <div class="font-bold text-xs">Driver History</div>
+                    <div class="text-[10px] text-white/40">Aggregated Performance</div>
+                  </div>
+                  <div class="thin-scroll overflow-x-auto overflow-y-auto flex-1">
+                    <table class="w-full text-left text-xs min-w-[500px]">
+                      <thead class="sticky top-0 bg-[#121212] text-white/40 uppercase tracking-wider z-10">
+                        <tr><th class="py-2 px-4">Week</th><th class="py-2 px-4">% Margin</th><th class="py-2 px-4">Revenue</th><th class="py-2 px-4">Margin</th><th class="py-2 px-4">Hours</th></tr>
+                      </thead>
+                      <tbody id="driverWeeklyBody" class="divide-y divide-white/5 text-white/80 font-mono"></tbody>
+                    </table>
+                  </div>
+                </div>
+                <div class="card rounded-2xl p-0 overflow-hidden flex flex-col h-auto">
+                  <div class="p-3 border-b border-white/5 bg-white/5">
+                    <div class="font-bold text-xs">Region Breakdown</div>
+                    <div class="text-[10px] text-white/40">Latest Active Week</div>
+                  </div>
+                  <div class="thin-scroll overflow-x-auto overflow-y-auto flex-1">
+                    <table class="w-full text-left text-xs min-w-[400px]">
+                      <thead class="sticky top-0 bg-[#121212] text-white/40 uppercase tracking-wider z-10">
+                        <tr><th class="py-2 px-4">Region</th><th class="py-2 px-4">Revenue</th><th class="py-2 px-4">Margin</th><th class="py-2 px-4">Hours</th></tr>
+                      </thead>
+                      <tbody id="driverRegionBody" class="divide-y divide-white/5 text-white/80 font-mono"></tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <script>
+      Chart.register(ChartDataLabels);
+
+      const WORKER_URL_DLX = "https://withered-king-c48e.haildir12121.workers.dev/";
+      const WORKER_URL_DMT = "https://spring-grass-bbc2.haildir12121.workers.dev/";
+
+      const DATA_SOURCES = {
+        DLX: { key: "DLX", label: "DLX", workerUrl: WORKER_URL_DLX },
+        DMT: { key: "DMT", label: "DMT", workerUrl: WORKER_URL_DMT }
+      };
+
+      const SCHEMAS = {
+        DLX: {
+          dataHeaderRowIndex0: 2, dateCol: "D",
+          areas: [
+            { id: "CST",   name: "Coast",    start: "E",  end: "O" },
+            { id: "RBG",   name: "Roseburg", start: "P",  end: "Z" },
+            { id: "EUG",   name: "Eugene",   start: "AA", end: "AK" },
+            { id: "OKRDG", name: "Oakridge", start: "AL", end: "AV" },
+            { id: "ALBNY", name: "Albany",   start: "AW", end: "BG" },
+            { id: "DMT",   name: "DMT",      start: "BR", end: "CB" }
+          ],
+          offsets: { driver:0, hours:1, payroll:2, fuel:3, insurance:4, maintenance:5, totalExp:7, revenue:8, margin:9 }
+        },
+        DMT: {
+          dataHeaderRowIndex0: 2, dateCol: "D",
+          areas: [
+            { id: "CST",   name: "Coast-DMT",  start: "E",  end: "N" },
+            { id: "RBG",   name: "Roseburg-DMT", start: "P",  end: "Y" },
+            { id: "EUG",   name: "Eugene DMT", start: "AA", end: "AJ" },
+            { id: "NV",    name: "Nevada",     start: "AL", end: "AU" },
+            { id: "ALBNY", name: "Albany/Salem", start: "AW", end: "BF" },
+            { id: "PDX",   name: "Portland",   start: "BG", end: "BP" },
+            { id: "STR",   name: "Stretcher",  start: "BR", end: "CA" }
+          ],
+          offsets: { driver:0, hours:1, payroll:2, fuel:3, insurance:4, maintenance:5, totalExp:7, revenue:8, margin:9 }
         }
-        
-        dataStore[key].REGION_SHEETS = regionSheets;
-        dataStore[key].regionSeries = rs;
-        dataStore[key].driverIndex = dIndex;
-        dataStore[key].loaded = true;
-    } catch(e) { console.error(e); dataStore[key].loaded = false; }
-  }
+      };
 
-  function buildRegionSheetsFromWorkbook(wb, key){
-      if(key === "DMT") return [];
-      const wklySheets = (wb.SheetNames||[]).filter(n => /\.Wkly$/i.test(n));
-      const preferred = ["CST","EUG","RBG","OKRDG","ALBNY","DMT","NV","PDX"];
-      const out = [{id:"ALL", name:"All Regions", sheet:null}];
-      preferred.forEach(p => { if(wklySheets.find(n=>n.toUpperCase().includes(p))) out.push({id:p, name:REGION_LABELS[p]||p, sheet:wklySheets.find(n=>n.toUpperCase().includes(p))}); });
-      return out;
-  }
+      const COLMAPS = {
+        DLX: { weekStart: "P", weekEnd: "Q", revenue: "Z", totalExp: "Y", margin: "AA", pctMargin: "AB", driverCount: "R", hoursWorked: "S" }
+      };
 
-  // --- UI INTERACTION ---
-  function showMathModal() {
-      const d = currentRunRateData;
-      let html = `
-        <div class="mb-4">
-            <div class="text-xs uppercase text-white/40 font-bold mb-1">Formula</div>
-            <div class="font-mono bg-white/5 p-2 rounded text-indigo-300">
-                (Actual Margin / Weeks Counted) × Total Weeks
-            </div>
-        </div>
-        <div class="grid grid-cols-2 gap-4 mb-4">
-            <div class="bg-white/5 p-3 rounded">
-                <div class="text-xs text-white/50">Weeks Counted</div>
-                <div class="text-xl font-bold text-white">${d.count}</div>
-            </div>
-            <div class="bg-white/5 p-3 rounded">
-                <div class="text-xs text-white/50">Total Period Weeks</div>
-                <div class="text-xl font-bold text-white">${d.totalWeeks}</div>
-            </div>
-            <div class="bg-white/5 p-3 rounded">
-                <div class="text-xs text-white/50">Avg Weekly Margin</div>
-                <div class="text-xl font-bold text-emerald-400">${fmtUSD(d.avg)}</div>
-            </div>
-            <div class="bg-white/5 p-3 rounded">
-                <div class="text-xs text-white/50">Projected Total</div>
-                <div class="text-xl font-bold text-indigo-400">${fmtUSD(d.projected)}</div>
-            </div>
-        </div>
-        <div class="text-[10px] text-white/30 italic">
-            * Note: Data from year 2020 is excluded from calculations to prevent skewing.
-            Dates are normalized to UTC.
-        </div>
-      `;
-      openModal("Projection Math", html);
-  }
+      const REGION_LABELS = {
+        CST: "Coast", RBG: "Roseburg", EUG: "Eugene", OKRDG: "Oakridge", ALBNY: "Albany", DMT: "DMT",
+        NV: "Nevada", PDX: "Portland", STR: "Stretcher"
+      };
 
-  function scrollToTable(type) {
-      const el = document.getElementById("historyTableCard");
-      el.scrollIntoView({ behavior: "smooth" });
-      el.classList.add("ring-2", "ring-indigo-500");
-      setTimeout(() => el.classList.remove("ring-2", "ring-indigo-500"), 1500);
-      
-      // Re-render table with strict filter if needed
-      renderTable(true); 
-  }
+      // GLOBAL STATE
+      let activeDataSourceKey = localStorage.getItem("dash_data_source") || "DLX";
+      let activeRegionId = "ALL";
+      let activeView = "overview";
+      let activeDriver = "";
 
-  function analyzeVariance() {
-      const diffRev = currentStats.rev - prevStats.rev;
-      const diffExp = (currentStats.rev - currentStats.marg) - (prevStats.rev - prevStats.marg);
-      const diffMarg = currentStats.marg - prevStats.marg;
-      
-      // Calculate Driver Contributors
-      const driverDiffs = [];
-      Object.keys(driverIndex).forEach(dName => {
-          let curr = 0, prev = 0;
-          driverIndex[dName].rows.forEach(r => {
-              const t = r.date.getTime() + 518400000;
-              if (t >= lastFilteredStartTime && t <= lastFilteredEndTime) curr += r.margin;
-              // We need prevStart/End from renderOverview. Hack: store globally or re-calc.
-              // Let's rely on prevStats calculated in renderOverview but we need the dates.
-              // For simplicity, let's just show top contributors to CURRENT period vs global avg?
-              // No, user wants variance. Let's recalculate prev dates.
-          });
-          // This part is complex without proper state management. 
-          // Simplified: Just show the main numeric breakdown for now.
-      });
+      // New state variables for drill-downs and math
+      let currentRunRateData = {};
+      let currentStats = {};
+      let prevStats = {};
+      let lastFilteredStartTime = 0;
+      let lastFilteredEndTime = 0;
 
-      let html = `
-        <div class="grid grid-cols-3 gap-3 mb-6">
-            <div class="bg-white/5 p-3 rounded text-center">
-                <div class="text-xs text-white/50 mb-1">Revenue Change</div>
-                <div class="text-lg font-bold ${diffRev>=0?'text-emerald-400':'text-rose-400'}">
-                    ${diffRev>=0?'+':''}${fmtUSD(diffRev)}
-                </div>
-            </div>
-            <div class="bg-white/5 p-3 rounded text-center">
-                <div class="text-xs text-white/50 mb-1">Expense Change</div>
-                <div class="text-lg font-bold ${diffExp<=0?'text-emerald-400':'text-rose-400'}">
-                    ${diffExp>=0?'+':''}${fmtUSD(diffExp)}
-                </div>
-                <div class="text-[9px] text-white/30">(Lower is better)</div>
-            </div>
-            <div class="bg-white/5 p-3 rounded text-center border border-white/10">
-                <div class="text-xs text-white/50 mb-1">Net Margin Impact</div>
-                <div class="text-lg font-bold ${diffMarg>=0?'text-emerald-400':'text-rose-400'}">
-                    ${diffMarg>=0?'+':''}${fmtUSD(diffMarg)}
-                </div>
-            </div>
-        </div>
-        <div class="text-xs text-white/60 mb-2">
-            <strong>Analysis:</strong> Comparing ${niceDate(new Date(lastFilteredStartTime))} - ${niceDate(new Date(lastFilteredEndTime))} vs Previous Period.
-        </div>
-        <div class="text-[10px] text-white/30">
-            * Driver-level variance breakdown coming in v2.
-        </div>
-      `;
-      openModal("Variance Analysis", html);
-  }
+      const dataStore = {
+        DLX: { loaded: false, REGION_SHEETS: [], regionSeries: {}, driverIndex: {} },
+        DMT: { loaded: false, REGION_SHEETS: [], regionSeries: {}, driverIndex: {} }
+      };
 
-  function openModal(title, content) {
-      document.getElementById("modalTitle").textContent = title;
-      document.getElementById("modalBody").innerHTML = content;
-      document.getElementById("appModal").classList.add("open");
-  }
-  window.closeModal = function() {
-      document.getElementById("appModal").classList.remove("open");
-  }
+      let regionSeries = {};
+      let driverIndex = {};
+      let weekly = [];
+      let driverWeekly = [];
 
-  // --- MOBILE SIDEBAR TOGGLE ---
-  window.toggleSidebar = function(forceState) {
-      const sb = document.getElementById("sidebarPanel");
-      const overlay = document.getElementById("mobileOverlay");
-      if(!sb || !overlay) return;
-      
-      const isHidden = sb.classList.contains("-translate-x-full");
-      const shouldOpen = forceState !== undefined ? forceState : isHidden;
+      let trendChart = null;
+      let areaBreakdownChart = null;
+      let trendMode = "pct";
+      let kpiMode = "week";
 
-      if(shouldOpen) {
-          sb.classList.remove("-translate-x-full");
-          overlay.classList.remove("hidden");
-      } else {
-          sb.classList.add("-translate-x-full");
-          overlay.classList.add("hidden");
-      }
-  };
+      function fmtUSD(n){ return Number(n||0).toLocaleString('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}); }
+      function safeNum(v){ if(typeof v === 'number') return isFinite(v)?v:0; const s = String(v).replace(/[^0-9.\-]/g,""); const n = parseFloat(s); return isFinite(n)?n:0; }
+      function colToIndex(col){ let n=0; const s=String(col).toUpperCase().trim(); for(let i=0;i<s.length;i++) n=n*26+(s.charCodeAt(i)-64); return n-1; }
 
-  window.toggleDataSource = function() { switchDataSourceDisplay(activeDataSourceKey === "DLX" ? "DMT" : "DLX"); };
-  
-  function switchDataSourceDisplay(key) {
-      activeDataSourceKey = key; localStorage.setItem("dash_data_source", key);
-      document.getElementById("dataToggleLabel").textContent = key; document.getElementById("brandBadge").textContent = key; document.title = `NEMT Dashboard — ${key}`;
-      activeRegionId = "ALL"; activeDriver = "";
-      if (dataStore[key].loaded) { regionSeries = dataStore[key].regionSeries; driverIndex = dataStore[key].driverIndex; window.REGION_SHEETS = dataStore[key].REGION_SHEETS; applyData(); } 
-      else { fetchDataForSource(key).then(() => switchDataSourceDisplay(key)); }
-  }
-
-  function applyData() {
-      let raw = [];
-      if(activeDriver) {
-         driverWeekly = getDriverWeekly(activeDriver);
-         raw = driverWeekly;
-      } else {
-         raw = regionSeries[activeRegionId] || [];
+      // FIX: Force UTC parsing for all dates to avoid timezone dropout
+      function asDate(v) {
+        if (v instanceof Date && !isNaN(v)) return v;
+        if (typeof v === "number" && isFinite(v)) {
+          // Excel serial date to JS Date (UTC)
+          const utcDays = Math.floor(v - 25569);
+          return new Date(utcDays * 86400 * 1000);
+        }
+        if (typeof v === "string") {
+            const d = new Date(v);
+            if (isNaN(d.getTime())) return null;
+            return new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+        }
+        return null;
       }
 
-      // GLOBAL 2020 FILTER:
-      // Remove any data point where the Year is 2020.
-      weekly = sortWeeksDesc(raw).filter(w => {
-          const d = asDate(w.weekEnd);
-          return d && d.getUTCFullYear() !== 2020;
-      });
+      function normalizeDate(d) { if(!d) return null; const date = new Date(d); date.setHours(0,0,0,0); const day = date.getDay(); const diff = date.getDate() - day + (day === 0 ? -6 : 1); return new Date(date.setDate(diff)); }
+      function niceDate(v){ const d = asDate(v); return d ? `${d.getUTCMonth()+1}/${d.getUTCDate()}/${d.getUTCFullYear()}` : ""; }
+      function sortWeeksDesc(arr){ return (arr||[]).slice().sort((a,b)=> { const da = asDate(a.weekEnd); const db = asDate(b.weekEnd); return (db?db.getTime():0) - (da?da.getTime():0); }); }
 
-      renderRegionList();
-      if(activeView === "overview") renderOverview();
-      updateContextLabel();
-  }
-
-  function renderRegionList(){
-    const sheets = dataStore[activeDataSourceKey].REGION_SHEETS || [];
-    const container = document.getElementById("regionListContainer"); container.innerHTML = ""; 
-    document.getElementById("regionCountLabel").textContent = `${Math.max(0, sheets.length - 1)} Regions`;
-    const isAll = (activeRegionId === "ALL");
-    const allBtn = document.createElement("button"); allBtn.className = `region-btn ${isAll ? 'active' : ''}`; allBtn.onclick = () => { selectRegion("ALL"); toggleSidebar(false); }; allBtn.innerHTML = `<span>View All</span><span class="text-[10px] opacity-50">Global</span>`; container.appendChild(allBtn);
-    sheets.forEach(r => { if(r.id === "ALL") return; const isActive = (activeRegionId === r.id); const btn = document.createElement("button"); btn.className = `region-btn ${isActive ? 'active' : ''}`; btn.onclick = () => { selectRegion(r.id); toggleSidebar(false); }; btn.innerHTML = `<span>${r.name}</span><svg class="w-3 h-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>`; container.appendChild(btn); });
-  }
-
-  function renderOverview(){
-    if(!weekly.length) return;
-    const latestDate = asDate(weekly[0].weekEnd);
-    // Use UTC for anchor date calculations to avoid timezone shifts (e.g. Dec 31 vs Jan 1)
-    const y = latestDate.getUTCFullYear(); 
-    const m = latestDate.getUTCMonth(); 
-    const q = Math.floor(m/3);
-    
-    let startTime, endTime, prevStartTime, prevEndTime, label;
-    let isBarChart = false;
-    let curr = {}, prev = {};
-    let runRateMargin = 0, runRateRevenue = 0;
-    
-    // Default Titles
-    let projTitle = "Projected Annual";
-    let projLabel = "Run Rate";
-    let totalWeeks = 52;
-
-    if (kpiMode === 'week') {
-        const w0 = weekly[0];
-        const w1 = weekly[1] || { revenue:0, margin:0, pctMargin:0 };
-        curr = { rev: w0.revenue, marg: w0.margin, pct: w0.pctMargin, count: 1 };
-        prev = { rev: w1.revenue, marg: w1.margin, pct: w1.pctMargin };
-        startTime = asDate(w0.weekStart).getTime(); endTime = asDate(w0.weekEnd).getTime();
-        label = "Current Week";
-        runRateMargin = curr.marg * 52;
-        runRateRevenue = curr.rev * 52;
-        projTitle = "Projected Annual";
-        projLabel = "Est. Annual Run Rate";
-        
-    } else {
-        if (kpiMode.includes('q')) {
-            isBarChart = true; 
-            const targetQ = kpiMode === 'this_q' ? q : q-1;
-            const targetY = kpiMode === 'last_q' && targetQ < 0 ? y-1 : y;
-            const finalQ = targetQ < 0 ? 3 : targetQ;
-            // Use UTC dates for filtering to match Excel serial dates
-            startTime = Date.UTC(targetY, finalQ * 3, 1); 
-            endTime = Date.UTC(targetY, (finalQ * 3) + 3, 0, 23, 59, 59);
-            
-            prevStartTime = Date.UTC(targetY, (finalQ-1)*3, 1); 
-            prevEndTime = Date.UTC(targetY, ((finalQ-1)*3)+3, 0, 23, 59, 59);
-            if(finalQ-1 < 0) { 
-                prevStartTime = Date.UTC(targetY-1, 9, 1); 
-                prevEndTime = Date.UTC(targetY-1, 12, 0, 23, 59, 59); 
-            }
-            label = kpiMode === 'this_q' ? "QTD" : "Last Qtr";
-            
-            // Dynamic Label Logic
-            projTitle = kpiMode === 'this_q' ? "Projected Quarter" : "Quarter Total";
-            projLabel = kpiMode === 'this_q' ? "Est. Quarter Run Rate" : "Actual";
-            totalWeeks = 13;
-            
-        } else { 
-            isBarChart = true;
-            const targetY = kpiMode === 'this_y' ? y : y-1;
-            startTime = Date.UTC(targetY, 0, 1); 
-            endTime = Date.UTC(targetY, 11, 31, 23, 59, 59);
-            
-            prevStartTime = Date.UTC(targetY-1, 0, 1); 
-            prevEndTime = Date.UTC(targetY-1, 11, 31, 23, 59, 59);
-            label = kpiMode === 'this_y' ? "YTD" : "Last Year";
-            
-            // Dynamic Label Logic
-            projTitle = kpiMode === 'this_y' ? "Projected Annual" : "Annual Total";
-            projLabel = kpiMode === 'this_y' ? "Est. Annual Run Rate" : "Actual";
-            totalWeeks = 52;
+      function parseRegionSheet(ws){
+        const map = COLMAPS.DLX;
+        const aoa = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
+        const idx = {}; for (const [k, col] of Object.entries(map)) idx[k] = colToIndex(col);
+        let headerRow = 2;
+        for (let r=0; r<Math.min(100, aoa.length); r++){ const row = aoa[r]||[]; if(String(row[idx.pctMargin]||"").includes("%")) { headerRow=r; break; } }
+        const out = [];
+        for (let r = headerRow + 1; r < aoa.length; r++){
+          const row = aoa[r] || [];
+          const wsVal = row[idx.weekStart];
+          if (!wsVal) continue;
+          const dObj = normalizeDate(asDate(wsVal));
+          const revenue = safeNum(row[idx.revenue]);
+          const totalExp = safeNum(row[idx.totalExp]);
+          if(Math.abs(revenue)<1 && Math.abs(totalExp)<1) continue;
+          let pm = safeNum(row[idx.pctMargin]);
+          if(pm <= 1.5 && pm >= -1.5) pm = pm * 100;
+          out.push({ weekStart: dObj, weekEnd: asDate(row[idx.weekEnd]), revenue, totalExp, margin: safeNum(row[idx.margin]), pctMargin: pm });
         }
+        return sortWeeksDesc(out);
+      }
 
-        const getStats = (s, e) => {
-            let rev=0, marg=0, count=0;
-            weekly.forEach(w => {
-                const t = asDate(w.weekEnd).getTime();
-                // Add buffer for potential ms misalignment
-                if (t >= s && t <= e + 1000) { 
-                    rev+=w.revenue; marg+=w.margin; count++;
+      function parseRunningSheet(ws, sourceKey){
+        const schema = SCHEMAS[sourceKey];
+        const aoa = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
+        const headerRow = schema.dataHeaderRowIndex0;
+        const dateColIdx = colToIndex(schema.dateCol);
+        const areas = schema.areas.map(a => ({...a, startIdx: colToIndex(a.start)}));
+        for (const a of areas) { a.driverColIdx = a.startIdx; for (let c = a.startIdx; c <= colToIndex(a.end); c++) { if (String(aoa[headerRow]?.[c]||"").toLowerCase().trim() === "driver") { a.driverColIdx = c; break; } } }
+        const out = {};
+        for (let r = headerRow + 1; r < aoa.length; r++){
+          const row = aoa[r] || [];
+          const d = asDate(row[dateColIdx]);
+          if (!d) continue;
+          for (const a of areas){
+            const base = a.driverColIdx;
+            const name = String(row[base + schema.offsets.driver] || "").trim();
+            if (!name) continue;
+            const revenue = safeNum(row[base + schema.offsets.revenue]);
+            if (Math.abs(revenue)<0.1) continue;
+            if (!out[name]) out[name] = { rows: [] };
+            out[name].rows.push({ date: d, region: a.name, regionId: a.id, revenue, margin: safeNum(row[base + schema.offsets.margin]), hours: safeNum(row[base + schema.offsets.hours]) });
+          }
+        }
+        return out;
+      }
+
+      function sumRegionsByWeek(seriesById){
+        const map = new Map();
+        for (const [id, series] of Object.entries(seriesById)){
+          if (id === "ALL") continue;
+          for (const w of series){
+            const key = w.weekStart.getTime();
+            const cur = map.get(key) || { weekStart: w.weekStart, weekEnd: w.weekEnd, revenue:0, totalExp:0, margin:0 };
+            cur.revenue += w.revenue;
+            cur.totalExp += w.totalExp;
+            cur.margin += w.margin;
+            map.set(key, cur);
+          }
+        }
+        const all = Array.from(map.values());
+        for(const w of all) w.pctMargin = w.revenue?((w.revenue-w.totalExp)/w.revenue)*100:0;
+        return sortWeeksDesc(all);
+      }
+
+      function getDriverWeekly(driverName){
+        const rows = driverIndex[driverName]?.rows || [];
+        const map = new Map();
+        for (const r of rows){
+          const dt = normalizeDate(r.date);
+          const key = dt.getTime();
+          const cur = map.get(key) || { weekStart: dt, revenue:0, margin:0, hoursWorked:0 };
+          cur.revenue += r.revenue;
+          cur.margin += r.margin;
+          cur.hoursWorked += r.hours;
+          map.set(key, cur);
+        }
+        const out = sortWeeksDesc(Array.from(map.values()));
+        for(const w of out) w.pctMargin = w.revenue?(w.margin/w.revenue)*100:0;
+        return out;
+      }
+
+      function aggregateRunningSheetToRegionSeries(dIndex, sourceKey) {
+          const rs = {};
+          const schema = SCHEMAS[sourceKey];
+          schema.areas.forEach(a => rs[a.id] = []);
+          const regionMaps = {};
+          Object.values(dIndex).forEach(driver => {
+              driver.rows.forEach(row => {
+                  if(!regionMaps[row.regionId]) regionMaps[row.regionId] = new Map();
+                  const ws = normalizeDate(row.date);
+                  const key = ws.getTime();
+                  const cur = regionMaps[row.regionId].get(key) || { weekStart: ws, weekEnd: new Date(ws.getTime() + 6*86400000), revenue:0, margin:0, totalExp:0 };
+                  cur.revenue += row.revenue; cur.margin += row.margin; cur.totalExp += (row.revenue - row.margin);
+                  regionMaps[row.regionId].set(key, cur);
+              });
+          });
+          Object.keys(regionMaps).forEach(rid => {
+              const arr = Array.from(regionMaps[rid].values());
+              arr.forEach(w => w.pctMargin = w.revenue ? (w.margin/w.revenue)*100 : 0);
+              rs[rid] = sortWeeksDesc(arr);
+          });
+          return rs;
+      }
+
+      async function forceSync() {
+        document.getElementById("lastSyncLabel").textContent = "Syncing all sources...";
+        await Promise.all([fetchDataForSource("DLX"), fetchDataForSource("DMT")]);
+        document.getElementById("lastSyncLabel").textContent = "Synced: " + new Date().toLocaleTimeString();
+        switchDataSourceDisplay(activeDataSourceKey);
+      }
+
+      async function fetchDataForSource(key) {
+        try {
+            const res = await fetch(DATA_SOURCES[key].workerUrl, {cache:"no-store"});
+            const buf = await res.arrayBuffer();
+            const wb = XLSX.read(buf, {type:"array"});
+            const runWs = wb.Sheets["Running Sheet"];
+            const dIndex = runWs ? parseRunningSheet(runWs, key) : {};
+
+            let rs = {};
+            let regionSheets = [];
+
+            if (key === "DLX") {
+                regionSheets = buildRegionSheetsFromWorkbook(wb, key);
+                for(const r of regionSheets) {
+                    if(r.id==="ALL") continue;
+                    const ws = wb.Sheets[r.sheet];
+                    rs[r.id] = ws ? parseRegionSheet(ws) : [];
                 }
-            });
-            return { rev, marg, pct: rev? (marg/rev)*100 : 0, count };
-        };
-        curr = getStats(startTime, endTime);
-        prev = getStats(prevStartTime, prevEndTime);
-
-        // Run Rate Logic
-        if (kpiMode === 'this_y') {
-             runRateMargin = curr.count > 0 ? (curr.marg / curr.count) * 52 : 0;
-             runRateRevenue = curr.count > 0 ? (curr.rev / curr.count) * 52 : 0;
-        } else if (kpiMode === 'this_q') {
-             runRateMargin = curr.count > 0 ? (curr.marg / curr.count) * 13 : 0;
-             runRateRevenue = curr.count > 0 ? (curr.rev / curr.count) * 13 : 0;
-        } else {
-             runRateMargin = curr.marg;
-             runRateRevenue = curr.rev;
-        }
-    }
-
-    // Save for drill-downs
-    currentStats = curr;
-    prevStats = prev;
-    lastFilteredStartTime = startTime;
-    lastFilteredEndTime = endTime;
-    currentRunRateData = { 
-        count: curr.count, 
-        totalWeeks, 
-        avg: curr.count > 0 ? curr.marg / curr.count : 0,
-        projected: runRateMargin 
-    };
-
-    // UPDATE KPIS
-    document.getElementById("kpiRevenue").textContent = fmtUSD(curr.rev);
-    document.getElementById("kpiRevenueLabel").textContent = label + " Revenue";
-    document.getElementById("kpiMargin").textContent = fmtUSD(curr.marg);
-    const margDiff = curr.marg - prev.marg;
-    document.getElementById("kpiMarginLabel").innerHTML = `<span class="${margDiff>=0?'text-emerald-400':'text-rose-400'}">${margDiff>=0?'▲':'▼'} ${fmtUSD(Math.abs(margDiff))}</span> <span class="text-white/30">vs prior</span>`;
-    document.getElementById("kpiPctMargin").textContent = curr.pct.toFixed(1) + "%";
-    const pctDiff = curr.pct - prev.pct;
-    document.getElementById("kpiPctMarginLabel").innerHTML = `<span class="${pctDiff>=0?'text-emerald-400':'text-rose-400'}">${pctDiff>=0?'▲':'▼'} ${Math.abs(pctDiff).toFixed(1)}%</span> <span class="text-white/30">pts vs prior</span>`;
-    
-    // UPDATE PROJECTED KPI
-    document.getElementById("kpiProjected").textContent = fmtUSD(runRateMargin);
-    document.getElementById("kpiProjectedTitle").textContent = projTitle;
-    document.getElementById("kpiProjectedLabel").textContent = projLabel;
-
-    // UPDATE CHARTS
-    renderTrendChart(isBarChart, startTime, endTime, runRateMargin, runRateRevenue);
-    renderAreaBreakdown(startTime, endTime); 
-    renderPerformanceList(startTime, endTime + 86400000); 
-    renderTable(true); // pass true to use filtered dates if needed, or update logic inside
-    updateContextLabel();
-  }
-
-  // Helper to create striped pattern for the projection bar
-  function getDiagonalPattern(color) {
-      const canvas = document.createElement('canvas');
-      canvas.width = 10;
-      canvas.height = 10;
-      const ctx = canvas.getContext('2d');
-      ctx.fillStyle = color;
-      ctx.fillRect(0,0,10,10);
-      ctx.strokeStyle = 'rgba(255,255,255,0.2)';
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(0, 10);
-      ctx.lineTo(10, 0);
-      ctx.stroke();
-      return ctx.createPattern(canvas, 'repeat');
-  }
-
-  function renderTrendChart(isBar, startDate, endDate, runRateMargin, runRateRevenue){
-    const canvas = document.getElementById("trendChart"); 
-    if(trendChart) trendChart.destroy();
-    let labels=[], datasets=[];
-    
-    if(isBar) {
-        // Prepare groups
-        const groups = {};
-        weekly.forEach(w => {
-            const d = asDate(w.weekEnd);
-            let sortKey = "";
-            let displayLabel = "";
-            
-            // Use UTC methods for chart grouping to align with filters
-            if(kpiMode.includes('y')) {
-                sortKey = d.getUTCFullYear().toString();
-                displayLabel = sortKey;
+                rs["ALL"] = sumRegionsByWeek(rs);
             } else {
-                const q = Math.floor(d.getUTCMonth()/3)+1;
-                const yy = d.getUTCFullYear().toString().substr(2);
-                sortKey = `${d.getUTCFullYear()}-Q${q}`;
-                displayLabel = `Q${q} '${yy}`;
+                rs = aggregateRunningSheetToRegionSeries(dIndex, key);
+                rs["ALL"] = sumRegionsByWeek(rs);
+                regionSheets = SCHEMAS.DMT.areas.map(a => ({ id: a.id, name: a.name, sheet: null }));
+                regionSheets.unshift({id:"ALL", name:"All Regions", sheet:null});
             }
-            
-            if(!groups[sortKey]) groups[sortKey] = { label: displayLabel, rev:0, marg:0 };
-            groups[sortKey].rev += w.revenue; groups[sortKey].marg += w.margin;
-        });
 
-        // 1. SORT CHRONOLOGICALLY (ASCENDING) -> Oldest First
-        let sortedKeys = Object.keys(groups).sort(); 
-        
-        // 2. LIMIT TO LAST 8 QUARTERS if in quarterly mode
-        if (kpiMode.includes('q') && sortedKeys.length > 8) {
-            sortedKeys = sortedKeys.slice(sortedKeys.length - 8);
+            dataStore[key].REGION_SHEETS = regionSheets;
+            dataStore[key].regionSeries = rs;
+            dataStore[key].driverIndex = dIndex;
+            dataStore[key].loaded = true;
+        } catch(e) { console.error(e); dataStore[key].loaded = false; }
+      }
+
+      function buildRegionSheetsFromWorkbook(wb, key){
+          if(key === "DMT") return [];
+          const wklySheets = (wb.SheetNames||[]).filter(n => /\.Wkly$/i.test(n));
+          const preferred = ["CST","EUG","RBG","OKRDG","ALBNY","DMT","NV","PDX"];
+          const out = [{id:"ALL", name:"All Regions", sheet:null}];
+          preferred.forEach(p => { if(wklySheets.find(n=>n.toUpperCase().includes(p))) out.push({id:p, name:REGION_LABELS[p]||p, sheet:wklySheets.find(n=>n.toUpperCase().includes(p))}); });
+          return out;
+      }
+
+      // --- UI INTERACTION ---
+      function showMathModal() {
+          const d = currentRunRateData;
+          let html = `
+            <div class="mb-4">
+                <div class="text-xs uppercase text-white/40 font-bold mb-1">Formula</div>
+                <div class="font-mono bg-white/5 p-2 rounded text-indigo-300">
+                    (Actual Margin / Weeks Counted) × Total Weeks
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <div class="bg-white/5 p-3 rounded">
+                    <div class="text-xs text-white/50">Weeks Counted</div>
+                    <div class="text-xl font-bold text-white">${d.count}</div>
+                </div>
+                <div class="bg-white/5 p-3 rounded">
+                    <div class="text-xs text-white/50">Total Period Weeks</div>
+                    <div class="text-xl font-bold text-white">${d.totalWeeks}</div>
+                </div>
+                <div class="bg-white/5 p-3 rounded">
+                    <div class="text-xs text-white/50">Avg Weekly Margin</div>
+                    <div class="text-xl font-bold text-emerald-400">${fmtUSD(d.avg)}</div>
+                </div>
+                <div class="bg-white/5 p-3 rounded">
+                    <div class="text-xs text-white/50">Projected Total</div>
+                    <div class="text-xl font-bold text-indigo-400">${fmtUSD(d.projected)}</div>
+                </div>
+            </div>
+            <div class="text-[10px] text-white/30 italic">
+                * Note: Data from year 2020 is excluded from calculations to prevent skewing.
+                Dates are normalized to UTC.
+            </div>
+          `;
+          openModal("Projection Math", html);
+      }
+
+      function scrollToTable(type) {
+          const el = document.getElementById("historyTableCard");
+          el.scrollIntoView({ behavior: "smooth" });
+          el.classList.add("ring-2", "ring-indigo-500");
+          setTimeout(() => el.classList.remove("ring-2", "ring-indigo-500"), 1500);
+          renderTable(true);
+      }
+
+      function analyzeVariance() {
+          const diffRev = currentStats.rev - prevStats.rev;
+          const diffExp = (currentStats.rev - currentStats.marg) - (prevStats.rev - prevStats.marg);
+          const diffMarg = currentStats.marg - prevStats.marg;
+
+          let html = `
+            <div class="grid grid-cols-3 gap-3 mb-6">
+                <div class="bg-white/5 p-3 rounded text-center">
+                    <div class="text-xs text-white/50 mb-1">Revenue Change</div>
+                    <div class="text-lg font-bold ${diffRev>=0?'text-emerald-400':'text-rose-400'}">
+                        ${diffRev>=0?'+':''}${fmtUSD(diffRev)}
+                    </div>
+                </div>
+                <div class="bg-white/5 p-3 rounded text-center">
+                    <div class="text-xs text-white/50 mb-1">Expense Change</div>
+                    <div class="text-lg font-bold ${diffExp<=0?'text-emerald-400':'text-rose-400'}">
+                        ${diffExp>=0?'+':''}${fmtUSD(diffExp)}
+                    </div>
+                    <div class="text-[9px] text-white/30">(Lower is better)</div>
+                </div>
+                <div class="bg-white/5 p-3 rounded text-center border border-white/10">
+                    <div class="text-xs text-white/50 mb-1">Net Margin Impact</div>
+                    <div class="text-lg font-bold ${diffMarg>=0?'text-emerald-400':'text-rose-400'}">
+                        ${diffMarg>=0?'+':''}${fmtUSD(diffMarg)}
+                    </div>
+                </div>
+            </div>
+            <div class="text-xs text-white/60 mb-2">
+                <strong>Analysis:</strong> Comparing ${niceDate(new Date(lastFilteredStartTime))} - ${niceDate(new Date(lastFilteredEndTime))} vs Previous Period.
+            </div>
+            <div class="text-[10px] text-white/30">
+                * Driver-level variance breakdown coming in v2.
+            </div>
+          `;
+          openModal("Variance Analysis", html);
+      }
+
+      function openModal(title, content) {
+          document.getElementById("modalTitle").textContent = title;
+          document.getElementById("modalBody").innerHTML = content;
+          document.getElementById("appModal").classList.add("open");
+      }
+      window.closeModal = function() {
+          document.getElementById("appModal").classList.remove("open");
+      }
+
+      // --- MOBILE SIDEBAR TOGGLE ---
+      window.toggleSidebar = function(forceState) {
+          const sb = document.getElementById("sidebarPanel");
+          const overlay = document.getElementById("mobileOverlay");
+          if(!sb || !overlay) return;
+
+          const isHidden = sb.classList.contains("-translate-x-full");
+          const shouldOpen = forceState !== undefined ? forceState : isHidden;
+
+          if(shouldOpen) {
+              sb.classList.remove("-translate-x-full");
+              overlay.classList.remove("hidden");
+          } else {
+              sb.classList.add("-translate-x-full");
+              overlay.classList.add("hidden");
+          }
+      };
+
+      window.toggleDataSource = function() { switchDataSourceDisplay(activeDataSourceKey === "DLX" ? "DMT" : "DLX"); };
+
+      function switchDataSourceDisplay(key) {
+          activeDataSourceKey = key; localStorage.setItem("dash_data_source", key);
+          document.getElementById("dataToggleLabel").textContent = key; document.getElementById("brandBadge").textContent = key; document.title = `NEMT Dashboard — ${key}`;
+          activeRegionId = "ALL"; activeDriver = "";
+          if (dataStore[key].loaded) { regionSeries = dataStore[key].regionSeries; driverIndex = dataStore[key].driverIndex; window.REGION_SHEETS = dataStore[key].REGION_SHEETS; applyData(); }
+          else { fetchDataForSource(key).then(() => switchDataSourceDisplay(key)); }
+      }
+
+      function applyData() {
+          let raw = [];
+          if(activeDriver) {
+             driverWeekly = getDriverWeekly(activeDriver);
+             raw = driverWeekly;
+          } else {
+             raw = regionSeries[activeRegionId] || [];
+          }
+
+          // GLOBAL 2020 FILTER:
+          weekly = sortWeeksDesc(raw).filter(w => {
+              const d = asDate(w.weekEnd);
+              return d && d.getUTCFullYear() !== 2020;
+          });
+
+          renderRegionList();
+          if(activeView === "overview") renderOverview();
+          updateContextLabel();
+      }
+
+      function renderRegionList(){
+        const sheets = dataStore[activeDataSourceKey].REGION_SHEETS || [];
+        const container = document.getElementById("regionListContainer"); container.innerHTML = "";
+        document.getElementById("regionCountLabel").textContent = `${Math.max(0, sheets.length - 1)} Regions`;
+        const isAll = (activeRegionId === "ALL");
+        const allBtn = document.createElement("button"); allBtn.className = `region-btn ${isAll ? 'active' : ''}`; allBtn.onclick = () => { selectRegion("ALL"); toggleSidebar(false); }; allBtn.innerHTML = `<span>View All</span><span class="text-[10px] opacity-50">Global</span>`; container.appendChild(allBtn);
+        sheets.forEach(r => { if(r.id === "ALL") return; const isActive = (activeRegionId === r.id); const btn = document.createElement("button"); btn.className = `region-btn ${isActive ? 'active' : ''}`; btn.onclick = () => { selectRegion(r.id); toggleSidebar(false); }; btn.innerHTML = `<span>${r.name}</span><svg class="w-3 h-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>`; container.appendChild(btn); });
+      }
+
+      function renderOverview(){
+        if(!weekly.length) return;
+        const latestDate = asDate(weekly[0].weekEnd);
+        const y = latestDate.getUTCFullYear();
+        const m = latestDate.getUTCMonth();
+        const q = Math.floor(m/3);
+
+        let startTime, endTime, prevStartTime, prevEndTime, label;
+        let isBarChart = false;
+        let curr = {}, prev = {};
+        let runRateMargin = 0, runRateRevenue = 0;
+
+        // Default Titles
+        let projTitle = "Projected Annual";
+        let projLabel = "Run Rate";
+        let totalWeeks = 52;
+
+        if (kpiMode === 'week') {
+            const w0 = weekly[0];
+            const w1 = weekly[1] || { revenue:0, margin:0, pctMargin:0 };
+            curr = { rev: w0.revenue, marg: w0.margin, pct: w0.pctMargin, count: 1 };
+            prev = { rev: w1.revenue, marg: w1.margin, pct: w1.pctMargin };
+            startTime = asDate(w0.weekStart).getTime(); endTime = asDate(w0.weekEnd).getTime();
+            label = "Current Week";
+            runRateMargin = curr.marg * 52;
+            runRateRevenue = curr.rev * 52;
+            projTitle = "Projected Annual";
+            projLabel = "Est. Annual Run Rate";
+
+        } else {
+            if (kpiMode.includes('q')) {
+                isBarChart = true;
+                const targetQ = kpiMode === 'this_q' ? q : q-1;
+                const targetY = kpiMode === 'last_q' && targetQ < 0 ? y-1 : y;
+                const finalQ = targetQ < 0 ? 3 : targetQ;
+                startTime = Date.UTC(targetY, finalQ * 3, 1);
+                endTime = Date.UTC(targetY, (finalQ * 3) + 3, 0, 23, 59, 59);
+
+                prevStartTime = Date.UTC(targetY, (finalQ-1)*3, 1);
+                prevEndTime = Date.UTC(targetY, ((finalQ-1)*3)+3, 0, 23, 59, 59);
+                if(finalQ-1 < 0) {
+                    prevStartTime = Date.UTC(targetY-1, 9, 1);
+                    prevEndTime = Date.UTC(targetY-1, 12, 0, 23, 59, 59);
+                }
+                label = kpiMode === 'this_q' ? "QTD" : "Last Qtr";
+
+                projTitle = kpiMode === 'this_q' ? "Projected Quarter" : "Quarter Total";
+                projLabel = kpiMode === 'this_q' ? "Est. Quarter Run Rate" : "Actual";
+                totalWeeks = 13;
+
+            } else {
+                isBarChart = true;
+                const targetY = kpiMode === 'this_y' ? y : y-1;
+                startTime = Date.UTC(targetY, 0, 1);
+                endTime = Date.UTC(targetY, 11, 31, 23, 59, 59);
+
+                prevStartTime = Date.UTC(targetY-1, 0, 1);
+                prevEndTime = Date.UTC(targetY-1, 11, 31, 23, 59, 59);
+                label = kpiMode === 'this_y' ? "YTD" : "Last Year";
+
+                projTitle = kpiMode === 'this_y' ? "Projected Annual" : "Annual Total";
+                projLabel = kpiMode === 'this_y' ? "Est. Annual Run Rate" : "Actual";
+                totalWeeks = 52;
+            }
+
+            const getStats = (s, e) => {
+                let rev=0, marg=0, count=0;
+                weekly.forEach(w => {
+                    const t = asDate(w.weekEnd).getTime();
+                    if (t >= s && t <= e + 1000) {
+                        rev+=w.revenue; marg+=w.margin; count++;
+                    }
+                });
+                return { rev, marg, pct: rev? (marg/rev)*100 : 0, count };
+            };
+            curr = getStats(startTime, endTime);
+            prev = getStats(prevStartTime, prevEndTime);
+
+            if (kpiMode === 'this_y') {
+                 runRateMargin = curr.count > 0 ? (curr.marg / curr.count) * 52 : 0;
+                 runRateRevenue = curr.count > 0 ? (curr.rev / curr.count) * 52 : 0;
+            } else if (kpiMode === 'this_q') {
+                 runRateMargin = curr.count > 0 ? (curr.marg / curr.count) * 13 : 0;
+                 runRateRevenue = curr.count > 0 ? (curr.rev / curr.count) * 13 : 0;
+            } else {
+                 runRateMargin = curr.marg;
+                 runRateRevenue = curr.rev;
+            }
         }
 
-        labels = sortedKeys.map(k => groups[k].label);
-        
-        // Identify "Current" Period Key based on LATEST DATA DATE, NOT TODAY
-        const latestWeek = weekly[0];
-        const latestDate = asDate(latestWeek.weekEnd);
-        let currentKey = "";
-        if(kpiMode.includes('y')) currentKey = latestDate.getUTCFullYear().toString();
-        else currentKey = `${latestDate.getUTCFullYear()}-Q${Math.floor(latestDate.getUTCMonth()/3)+1}`;
+        // Save for drill-downs
+        currentStats = curr;
+        prevStats = prev;
+        lastFilteredStartTime = startTime;
+        lastFilteredEndTime = endTime;
+        currentRunRateData = {
+            count: curr.count,
+            totalWeeks,
+            avg: curr.count > 0 ? curr.marg / curr.count : 0,
+            projected: runRateMargin
+        };
 
-        // Base Data (Actuals)
-        const baseData = sortedKeys.map(k => {
-            const grp = groups[k];
-            return trendMode==='pct' ? (grp.marg/grp.rev)*100 : (trendMode==='rev'?grp.rev:grp.marg);
-        });
+        // UPDATE KPIS
+        document.getElementById("kpiRevenue").textContent = fmtUSD(curr.rev);
+        document.getElementById("kpiRevenueLabel").textContent = label + " Revenue";
+        document.getElementById("kpiMargin").textContent = fmtUSD(curr.marg);
+        const margDiff = curr.marg - prev.marg;
+        document.getElementById("kpiMarginLabel").innerHTML = `<span class="${margDiff>=0?'text-emerald-400':'text-rose-400'}">${margDiff>=0?'▲':'▼'} ${fmtUSD(Math.abs(margDiff))}</span> <span class="text-white/30">vs prior</span>`;
+        document.getElementById("kpiPctMargin").textContent = curr.pct.toFixed(1) + "%";
+        const pctDiff = curr.pct - prev.pct;
+        document.getElementById("kpiPctMarginLabel").innerHTML = `<span class="${pctDiff>=0?'text-emerald-400':'text-rose-400'}">${pctDiff>=0?'▲':'▼'} ${Math.abs(pctDiff).toFixed(1)}%</span> <span class="text-white/30">pts vs prior</span>`;
 
-        // Determine correct Run Rate to use based on mode
-        let activeRunRate = 0;
-        if(trendMode === 'net') activeRunRate = runRateMargin;
-        if(trendMode === 'rev') activeRunRate = runRateRevenue;
+        // UPDATE PROJECTED KPI
+        document.getElementById("kpiProjected").textContent = fmtUSD(runRateMargin);
+        document.getElementById("kpiProjectedTitle").textContent = projTitle;
+        document.getElementById("kpiProjectedLabel").textContent = projLabel;
 
-        // Projected Data (Top Stack)
-        const projectedData = sortedKeys.map((k, i) => {
-            // Only add projection to the *Current* period key if valid mode & positive delta
-            if(k === currentKey && activeRunRate > baseData[i]) {
-                return activeRunRate; // Side-by-side displays FULL run rate
+        // UPDATE CHARTS
+        renderTrendChart(isBarChart, startTime, endTime, runRateMargin, runRateRevenue);
+        renderAreaBreakdown(startTime, endTime);
+        renderPerformanceList(startTime, endTime + 86400000);
+        renderTable(true);
+        updateContextLabel();
+      }
+
+      // Helper to create striped pattern for the projection bar
+      function getDiagonalPattern(color) {
+          const canvas = document.createElement('canvas');
+          canvas.width = 10;
+          canvas.height = 10;
+          const ctx = canvas.getContext('2d');
+          ctx.fillStyle = color;
+          ctx.fillRect(0,0,10,10);
+          ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(0, 10);
+          ctx.lineTo(10, 0);
+          ctx.stroke();
+          return ctx.createPattern(canvas, 'repeat');
+      }
+
+      function renderTrendChart(isBar, startDate, endDate, runRateMargin, runRateRevenue){
+        const canvas = document.getElementById("trendChart");
+        if(trendChart) trendChart.destroy();
+        let labels=[], datasets=[];
+
+        if(isBar) {
+            const groups = {};
+            weekly.forEach(w => {
+                const d = asDate(w.weekEnd);
+                let sortKey = "";
+                let displayLabel = "";
+
+                if(kpiMode.includes('y')) {
+                    sortKey = d.getUTCFullYear().toString();
+                    displayLabel = sortKey;
+                } else {
+                    const q = Math.floor(d.getUTCMonth()/3)+1;
+                    const yy = d.getUTCFullYear().toString().substr(2);
+                    sortKey = `${d.getUTCFullYear()}-Q${q}`;
+                    displayLabel = `Q${q} '${yy}`;
+                }
+
+                if(!groups[sortKey]) groups[sortKey] = { label: displayLabel, rev:0, marg:0 };
+                groups[sortKey].rev += w.revenue; groups[sortKey].marg += w.margin;
+            });
+
+            let sortedKeys = Object.keys(groups).sort();
+            if (kpiMode.includes('q') && sortedKeys.length > 8) {
+                sortedKeys = sortedKeys.slice(sortedKeys.length - 8);
             }
-            return null;
-        });
 
-        const colorActual = "#10b981"; // Emerald
-        const colorProjected = "#818cf8"; // Indigo
+            labels = sortedKeys.map(k => groups[k].label);
 
-        // DATASET 1: Actuals
-        datasets.push({
-            label: "Actual",
-            data: baseData,
-            backgroundColor: colorActual,
-            borderColor: colorActual,
-            borderWidth: 1,
-            // No stack property = grouped/side-by-side
-        });
+            const latestWeek = weekly[0];
+            const latestDate = asDate(latestWeek.weekEnd);
+            let currentKey = "";
+            if(kpiMode.includes('y')) currentKey = latestDate.getUTCFullYear().toString();
+            else currentKey = `${latestDate.getUTCFullYear()}-Q${Math.floor(latestDate.getUTCMonth()/3)+1}`;
 
-        // DATASET 2: Projected (Only visible for current period)
-        if(trendMode !== 'pct') {
+            const baseData = sortedKeys.map(k => {
+                const grp = groups[k];
+                return trendMode==='pct' ? (grp.marg/grp.rev)*100 : (trendMode==='rev'?grp.rev:grp.marg);
+            });
+
+            let activeRunRate = 0;
+            if(trendMode === 'net') activeRunRate = runRateMargin;
+            if(trendMode === 'rev') activeRunRate = runRateRevenue;
+
+            const projectedData = sortedKeys.map((k, i) => {
+                if(k === currentKey && activeRunRate > baseData[i]) {
+                    return activeRunRate;
+                }
+                return null;
+            });
+
+            const colorActual = "#10b981";
+            const colorProjected = "#818cf8";
+
             datasets.push({
-                label: "Projected Total",
-                data: projectedData,
-                backgroundColor: getDiagonalPattern(colorProjected),
-                borderColor: colorProjected,
+                label: "Actual",
+                data: baseData,
+                backgroundColor: colorActual,
+                borderColor: colorActual,
                 borderWidth: 1,
-                // No stack property = grouped/side-by-side
+            });
+
+            if(trendMode !== 'pct') {
+                datasets.push({
+                    label: "Projected Total",
+                    data: projectedData,
+                    backgroundColor: getDiagonalPattern(colorProjected),
+                    borderColor: colorProjected,
+                    borderWidth: 1,
+                });
+            }
+
+        } else {
+            const subset = weekly.slice(0, 16).reverse();
+            labels = subset.map(w => niceDate(w.weekEnd));
+            const data = subset.map(w => trendMode==='pct' ? w.pctMargin : (trendMode==='rev'?w.revenue:w.margin));
+            const color = trendMode==='pct'?'#818cf8':(trendMode==='net'?'#10b981':'#3b82f6');
+
+            datasets.push({
+                label: trendMode,
+                data: data,
+                backgroundColor: 'rgba(129, 140, 248, 0.1)',
+                borderColor: color,
+                borderWidth: 2,
+                tension: 0.3,
+                fill: true
             });
         }
 
-    } else {
-        // Line Chart (Weekly)
-        const subset = weekly.slice(0, 16).reverse(); 
-        labels = subset.map(w => niceDate(w.weekEnd));
-        const data = subset.map(w => trendMode==='pct' ? w.pctMargin : (trendMode==='rev'?w.revenue:w.margin));
-        const color = trendMode==='pct'?'#818cf8':(trendMode==='net'?'#10b981':'#3b82f6');
-        
-        datasets.push({
-            label: trendMode,
-            data: data,
-            backgroundColor: 'rgba(129, 140, 248, 0.1)',
-            borderColor: color,
-            borderWidth: 2,
-            tension: 0.3,
-            fill: true
-        });
-    }
+        const ctx = canvas.getContext("2d");
 
-    const ctx = canvas.getContext("2d");
-    
-    trendChart = new Chart(ctx, {
-        type: isBar ? 'bar' : 'line',
-        data: { labels, datasets },
-        options: {
-            responsive: true, maintainAspectRatio: false,
-            plugins: { 
-                legend: { display: false }, 
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            let label = context.dataset.label || '';
-                            if (label) { label += ': '; }
-                            if (context.parsed.y !== null) { label += fmtUSD(context.parsed.y); }
-                            return label;
+        trendChart = new Chart(ctx, {
+            type: isBar ? 'bar' : 'line',
+            data: { labels, datasets },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) { label += ': '; }
+                                if (context.parsed.y !== null) { label += fmtUSD(context.parsed.y); }
+                                return label;
+                            }
+                        }
+                    },
+                    datalabels: {
+                        color: '#fff',
+                        anchor: isBar ? 'end' : 'top',
+                        align: isBar ? 'top' : 'top',
+                        offset: 4,
+                        font: { size: 10, weight: 'bold' },
+                        formatter: (v, ctx) => {
+                            if (v === null) return null;
+                            return trendMode==='pct' ? v.toFixed(1)+'%' : fmtUSD(v);
                         }
                     }
                 },
-                datalabels: { 
-                    color: '#fff', 
-                    anchor: isBar ? 'end' : 'top', 
-                    align: isBar ? 'top' : 'top', 
-                    offset: 4, 
-                    font: { size: 10, weight: 'bold' }, 
-                    formatter: (v, ctx) => {
-                        if (v === null) return null;
-                        return trendMode==='pct' ? v.toFixed(1)+'%' : fmtUSD(v);
-                    } 
-                } 
-            },
-            scales: { 
-                // Explicitly disable stacking to ensure side-by-side
-                x: { grid: { display:false }, ticks: { color:'#64748b', font:{size:10} }, stacked: false }, 
-                y: { grid: { color:'rgba(255,255,255,0.05)' }, ticks: { color:'#64748b', font:{size:10} }, stacked: false } 
-            },
-            layout: { padding: { top: 20 } }
+                scales: {
+                    x: { grid: { display:false }, ticks: { color:'#64748b', font:{size:10} }, stacked: false },
+                    y: { grid: { color:'rgba(255,255,255,0.05)' }, ticks: { color:'#64748b', font:{size:10} }, stacked: false }
+                },
+                layout: { padding: { top: 20 } }
+            }
+        });
+
+        let latestVal = 0;
+        if(datasets[0] && datasets[0].data.length > 0) {
+            latestVal = datasets[0].data[datasets[0].data.length-1];
         }
-    });
-    
-    // Big number at top
-    // If bar, show last actual.
-    // If line, show last point.
-    let latestVal = 0;
-    // Safety check for empty data
-    if(datasets[0] && datasets[0].data.length > 0) {
-        latestVal = datasets[0].data[datasets[0].data.length-1];
-    }
-    
-    document.getElementById("trendBigNumber").textContent = trendMode==='pct' ? latestVal.toFixed(1)+'%' : fmtUSD(latestVal);
-  }
 
-  function renderAreaBreakdown(startDate, endDate) {
-      const canvas = document.getElementById("areaBreakdownChart");
-      if(areaBreakdownChart) areaBreakdownChart.destroy();
-      const areaMap = {};
-      Object.keys(driverIndex).forEach(dName => { driverIndex[dName].rows.forEach(r => { 
-          // FIX: Add 6 days to align driver dates (Week Start) to Week End for filtering
-          const t = r.date.getTime() + 518400000; 
-          if(t >= startDate && t <= endDate) { if(!areaMap[r.region]) areaMap[r.region] = 0; areaMap[r.region] += r.margin; } }); });
-      const sorted = Object.entries(areaMap).sort((a,b) => b[1] - a[1]);
-      areaBreakdownChart = new Chart(canvas, {
-          type: 'bar', indexAxis: 'y',
-          data: { labels: sorted.map(x=>x[0]), datasets: [{ data: sorted.map(x=>x[1]), backgroundColor: sorted.map(x=>x[1]>=0?'#10b981':'#f43f5e'), borderRadius: 4 }] },
-          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, datalabels: { color: '#fff', anchor: 'end', align: 'end', offset: 0, font: { size: 9 }, formatter: (v) => fmtUSD(v) } }, scales: { x: { display: false }, y: { ticks: { color: '#e2e8f0', font: { size: 10 } }, grid: { display: false } } }, layout: { padding: { right: 40 } } }
-      });
-  }
+        document.getElementById("trendBigNumber").textContent = trendMode==='pct' ? latestVal.toFixed(1)+'%' : fmtUSD(latestVal);
+      }
 
-  function switchBreakdownTab(tab) {
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      document.getElementById(tab==='drivers'?'tabDrivers':'tabAreas').classList.add('active');
-      document.getElementById('tabContentDrivers').classList.toggle('hidden', tab!=='drivers');
-      document.getElementById('tabContentAreas').classList.toggle('hidden', tab!=='areas');
-  }
-
-  function renderPerformanceList(s, e){
-      const topDiv = document.getElementById("topDriversList"); topDiv.innerHTML = "";
-      const botDiv = document.getElementById("bottomDriversList"); botDiv.innerHTML = "";
-      const perf = {};
-      Object.keys(driverIndex).forEach(d => { 
-          driverIndex[d].rows.forEach(r => { 
-              // FIX: Add 6 days to align driver dates (Week Start) to Week End for filtering
+      function renderAreaBreakdown(startDate, endDate) {
+          const canvas = document.getElementById("areaBreakdownChart");
+          if(areaBreakdownChart) areaBreakdownChart.destroy();
+          const areaMap = {};
+          Object.keys(driverIndex).forEach(dName => { driverIndex[dName].rows.forEach(r => {
               const t = r.date.getTime() + 518400000;
-              // Check bounds (inclusive)
-              if(t >= s && t <= e && (activeRegionId==='ALL' || r.regionId===activeRegionId)) { 
-                  if(!perf[d]) perf[d]=0; perf[d]+=r.margin; 
-              } 
-          }); 
-      });
-      const sorted = Object.entries(perf).sort((a,b) => b[1] - a[1]);
-      if(!sorted.length) { topDiv.innerHTML = "<div class='text-white/30 text-[10px]'>No data</div>"; return; }
-      const row = (n,v,c) => `<div class="flex justify-between items-center text-[10px] bg-white/5 px-2 py-1 rounded border border-white/5"><span class="text-white/90 truncate w-24">${n}</span><span class="font-bold ${c}">${fmtUSD(v)}</span></div>`;
-      sorted.slice(0,10).forEach(x => topDiv.innerHTML += row(x[0], x[1], 'text-emerald-400'));
-      sorted.slice(-10).reverse().forEach(x => botDiv.innerHTML += row(x[0], x[1], 'text-rose-400'));
-  }
-
-  function renderTable(useFilter=false){ 
-      const b = document.getElementById("lossTableBody"); b.innerHTML = "";
-      
-      let dataToRender = weekly;
-      // If we clicked drilldown, filter the table rows
-      if (useFilter && lastFilteredStartTime > 0) {
-          dataToRender = weekly.filter(w => {
-              const t = asDate(w.weekEnd).getTime();
-              return t >= lastFilteredStartTime && t <= lastFilteredEndTime + 86400000;
+              if(t >= startDate && t <= endDate) { if(!areaMap[r.region]) areaMap[r.region] = 0; areaMap[r.region] += r.margin; } }); });
+          const sorted = Object.entries(areaMap).sort((a,b) => b[1] - a[1]);
+          areaBreakdownChart = new Chart(canvas, {
+              type: 'bar', indexAxis: 'y',
+              data: { labels: sorted.map(x=>x[0]), datasets: [{ data: sorted.map(x=>x[1]), backgroundColor: sorted.map(x=>x[1]>=0?'#10b981':'#f43f5e'), borderRadius: 4 }] },
+              options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, datalabels: { color: '#fff', anchor: 'end', align: 'end', offset: 0, font: { size: 9 }, formatter: (v) => fmtUSD(v) } }, scales: { x: { display: false }, y: { ticks: { color: '#e2e8f0', font: { size: 10 } }, grid: { display: false } } }, layout: { padding: { right: 40 } } }
           });
       }
 
-      dataToRender.slice(0,50).forEach(w => {
-          const c = w.pctMargin<0?'text-rose-400':w.pctMargin<5?'text-amber-400':'text-emerald-400';
-          b.innerHTML += `<tr class="hover:bg-white/5 transition"><td class="py-2 px-4 text-white/90 text-[10px]">${niceDate(w.weekEnd)}</td><td class="py-2 px-4 font-bold ${c}">${w.pctMargin.toFixed(1)}%</td><td class="py-2 px-4 text-white/70">${fmtUSD(w.revenue)}</td><td class="py-2 px-4 text-white/70">${fmtUSD(w.totalExp)}</td><td class="py-2 px-4 text-white/70">${fmtUSD(w.margin)}</td><td class="py-2 px-4 text-[9px] ${c}">${w.pctMargin<0?'CRITICAL':'OK'}</td></tr>`;
+      function switchBreakdownTab(tab) {
+          document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+          document.getElementById(tab==='drivers'?'tabDrivers':'tabAreas').classList.add('active');
+          document.getElementById('tabContentDrivers').classList.toggle('hidden', tab!=='drivers');
+          document.getElementById('tabContentAreas').classList.toggle('hidden', tab!=='areas');
+      }
+
+      function renderPerformanceList(s, e){
+          const topDiv = document.getElementById("topDriversList"); topDiv.innerHTML = "";
+          const botDiv = document.getElementById("bottomDriversList"); botDiv.innerHTML = "";
+          const perf = {};
+          Object.keys(driverIndex).forEach(d => {
+              driverIndex[d].rows.forEach(r => {
+                  const t = r.date.getTime() + 518400000;
+                  if(t >= s && t <= e && (activeRegionId==='ALL' || r.regionId===activeRegionId)) {
+                      if(!perf[d]) perf[d]=0; perf[d]+=r.margin;
+                  }
+              });
+          });
+          const sorted = Object.entries(perf).sort((a,b) => b[1] - a[1]);
+          if(!sorted.length) { topDiv.innerHTML = "<div class='text-white/30 text-[10px]'>No data</div>"; return; }
+          const row = (n,v,c) => `<div class="flex justify-between items-center text-[10px] bg-white/5 px-2 py-1 rounded border border-white/5"><span class="text-white/90 truncate w-24">${n}</span><span class="font-bold ${c}">${fmtUSD(v)}</span></div>`;
+          sorted.slice(0,10).forEach(x => topDiv.innerHTML += row(x[0], x[1], 'text-emerald-400'));
+          sorted.slice(-10).reverse().forEach(x => botDiv.innerHTML += row(x[0], x[1], 'text-rose-400'));
+      }
+
+      function renderTable(useFilter=false){
+          const b = document.getElementById("lossTableBody"); b.innerHTML = "";
+
+          let dataToRender = weekly;
+          if (useFilter && lastFilteredStartTime > 0) {
+              dataToRender = weekly.filter(w => {
+                  const t = asDate(w.weekEnd).getTime();
+                  return t >= lastFilteredStartTime && t <= lastFilteredEndTime + 86400000;
+              });
+          }
+
+          dataToRender.slice(0,50).forEach(w => {
+              const c = w.pctMargin<0?'text-rose-400':w.pctMargin<5?'text-amber-400':'text-emerald-400';
+              b.innerHTML += `<tr class="hover:bg-white/5 transition"><td class="py-2 px-4 text-white/90 text-[10px]">${niceDate(w.weekEnd)}</td><td class="py-2 px-4 font-bold ${c}">${w.pctMargin.toFixed(1)}%</td><td class="py-2 px-4 text-white/70">${fmtUSD(w.revenue)}</td><td class="py-2 px-4 text-white/70">${fmtUSD(w.totalExp)}</td><td class="py-2 px-4 text-white/70">${fmtUSD(w.margin)}</td><td class="py-2 px-4 text-[9px] ${c}">${w.pctMargin<0?'CRITICAL':'OK'}</td></tr>`;
+          });
+      }
+
+      function updateContextLabel(){
+          const el = document.getElementById("activeContextLabel");
+          const rName = (dataStore[activeDataSourceKey].REGION_SHEETS || []).find(r=>r.id===activeRegionId)?.name || "Global";
+          el.innerHTML = `<span class="text-indigo-400 font-semibold">${rName}</span> <span class="text-white/30 mx-1">/</span> <span class="text-white">${activeView==='drivers'?'Drivers':'Overview'}</span>`;
+      }
+
+      window.cycleKpiMode = function() {
+          const modes = ['week', 'this_q', 'last_q', 'this_y', 'last_y'];
+          const labels = {'week':'Weekly View', 'this_q':'This Quarter', 'last_q':'Last Quarter', 'this_y':'Year to Date', 'last_y':'Last Year'};
+          let idx = modes.indexOf(kpiMode);
+          kpiMode = modes[(idx+1)%modes.length];
+          document.getElementById("kpiCycleLabel").textContent = labels[kpiMode];
+          renderOverview();
+      };
+
+      window.setTrendMode = function(m){ trendMode=m; ['pct','net','rev'].forEach(x=>document.getElementById('btnTrend'+x.charAt(0).toUpperCase()+x.slice(1)).classList.toggle('active', x===m)); renderOverview(); };
+      window.selectRegion = function(id){ activeRegionId=id; activeDriver=""; applyData(); };
+      window.setView = function(v){ activeView=v; document.getElementById("view-overview").classList.toggle("hiddenView", v!=="overview"); document.getElementById("view-drivers").classList.toggle("hiddenView", v!=="drivers"); updateContextLabel(); applyData(); };
+      window.exportData = function() { XLSX.writeFile(XLSX.utils.json_to_sheet(weekly), "Dashboard_Export.xlsx"); };
+
+      forceSync();
+    </script>
+  </div>
+
+  <!-- =========================
+       ICEE GATE SCRIPT
+       ========================= -->
+  <script>
+    // ICEE machine link you provided
+    const ICEE_LINK = "https://www.amazon.com/iscream-Genuine-Brand-Counter-Top-Slushie/dp/B07XM9BPKH/ref=sr_1_3_mod_primary_new";
+
+    const GATE_LS_KEY = "icee_gate_seen_v1";
+    const slides = [
+      {
+        kicker: "Slide 1",
+        title: "Dispatch keeps the whole operation stitched together.",
+        lead:
+          "If the business is the engine, dispatch is the wiring harness. We coordinate drivers, riders, brokers, billing details, and emergencies all day, every day.",
+        bullets: [
+          "High volume calls, nonstop context switching",
+          "We fix issues before they become expensive problems",
+          "We protect revenue by preventing missed trips and failures"
+        ],
+        tag: { text: "Core Ops", tone: "indigo" },
+        statA: ["All-day phones", "Voice fatigue is real"],
+        statB: ["Simple relief", "Cold slush drinks help"],
+        ask: ["Approve: ICEE machine for Dispatch", "Small cost, big morale lift"]
+      },
+      {
+        kicker: "Slide 2",
+        title: "Our throats take a beating. That’s the job.",
+        lead:
+          "Dispatch is basically professional talking. Ice-cold drinks are a practical throat-soothing perk during long call blocks.",
+        bullets: [
+          "Cold drinks help with sore throats and dry office air",
+          "Keeps people hydrated (which also reduces burnout)",
+          "Fewer “I’m losing my voice” days = better continuity"
+        ],
+        tag: { text: "Health-ish", tone: "emerald" },
+        statA: ["Pain point", "Sore throats / dry voice"],
+        statB: ["Relief", "Cold, easy, fast"]
+      },
+      {
+        kicker: "Slide 3",
+        title: "Morale and retention, without the corporate circus.",
+        lead:
+          "You can spend big money replacing burned-out staff, or you can make the workplace mildly better for the people holding the line.",
+        bullets: [
+          "Visible appreciation goes further than another ‘good job’",
+          "Small perks reduce friction and improve mood",
+          "Hiring + training costs dwarf a one-time purchase"
+        ],
+        tag: { text: "Retention", tone: "purple" },
+        statA: ["Costly", "Turnover & training"],
+        statB: ["Cheap fix", "Better daily experience"]
+      },
+      {
+        kicker: "Slide 4",
+        title: "Performance impact: fewer distractions, better focus.",
+        lead:
+          "When dispatch is stressed, mistakes happen. A calmer room improves call quality, coordination, and response speed.",
+        bullets: [
+          "Helps reset during hectic periods (weather, late rides, cancellations)",
+          "Creates a small ‘pause’ habit that reduces snap decisions",
+          "Better mood = better customer tone (and fewer escalations)"
+        ],
+        tag: { text: "Ops Quality", tone: "indigo" },
+        statA: ["Risk", "Errors under stress"],
+        statB: ["Benefit", "Calmer, steadier team"]
+      },
+      {
+        kicker: "Slide 5",
+        title: "The company can afford it.",
+        lead:
+          "You already have margin dollars. We’re not asking for a yacht, we’re asking for cold sugar water with ice. Let’s be serious.",
+        bullets: [
+          "One-time purchase vs. recurring margin dollars",
+          "Supplies can be controlled (approved syrups, scheduled cleaning)",
+          "It’s a tiny fraction of what dispatch helps protect daily"
+        ],
+        tag: { text: "Affordability", tone: "emerald" },
+        statA: ["Reality", "Margins exist"],
+        statB: ["Ask", "Small, controlled expense"],
+        ask: ["Approve: ICEE machine for Dispatch", "This is the easy win"]
+      },
+      {
+        kicker: "Slide 6",
+        title: "Product: Counter-top ICEE at home slushie maker.",
+        lead:
+          "Compact counter-top size, manual operation, easy cleaning and simple footprint. Not a commercial monstrosity.",
+        bullets: [
+          "Capacity: 1 quart",
+          "Size: 7.5\" L × 6.5\" W × 18\" H",
+          "Manual operation; hand wash care"
+        ],
+        tag: { text: "Practical", tone: "indigo" },
+        statA: ["Footprint", "Small counter space"],
+        statB: ["Usage", "Simple operation"],
+        ask: ["Open the listing and approve purchase", "Link is on every slide"]
+      },
+      {
+        kicker: "Slide 7",
+        title: "Implementation plan: keep it clean, keep it sane.",
+        lead:
+          "Yes, humans can turn a nice perk into a sticky disaster. So we add a basic plan.",
+        bullets: [
+          "Weekly cleaning checklist (assigned rotation)",
+          "Approved syrups only (avoid chaos)",
+          "Limit usage to break times during peak hours"
+        ],
+        tag: { text: "Responsible", tone: "amber" },
+        statA: ["Concern", "Mess & maintenance"],
+        statB: ["Answer", "Checklist + rotation"]
+      },
+      {
+        kicker: "Slide 8",
+        title: "Decision: approve the ICEE machine for Dispatch.",
+        lead:
+          "Dispatch is building the financial dashboard, keeping ops stable, and being the front line voice. This is a fair, affordable perk.",
+        bullets: [
+          "Practical throat relief for phone-heavy work",
+          "Morale/retention benefit at a tiny cost",
+          "Simple implementation and controls"
+        ],
+        tag: { text: "Approve it", tone: "emerald" },
+        statA: ["Dispatch", "Workload + responsibility"],
+        statB: ["Request", "ICEE machine"],
+        ask: ["Click ‘Enter Dashboard’ to continue", "…and then approve the purchase."]
+      }
+    ];
+
+    let slideIdx = 0;
+    const gateEl = document.getElementById("iceeGate");
+    const dashEl = document.getElementById("dashboardRoot");
+
+    const els = {
+      kicker: document.getElementById("gateKicker"),
+      progressText: document.getElementById("gateProgressText"),
+      title: document.getElementById("gateTitle"),
+      lead: document.getElementById("gateLead"),
+      bullets: document.getElementById("gateBullets"),
+      tag: document.getElementById("gateTag"),
+      statA: document.getElementById("gateStatA"),
+      statASub: document.getElementById("gateStatASub"),
+      statB: document.getElementById("gateStatB"),
+      statBSub: document.getElementById("gateStatBSub"),
+      askLine: document.getElementById("gateAskLine"),
+      askSub: document.getElementById("gateAskSub"),
+      linkBtn: document.getElementById("gateLinkBtn"),
+      dots: document.getElementById("gateDots"),
+      prev: document.getElementById("gatePrev"),
+      next: document.getElementById("gateNext"),
+      enter: document.getElementById("gateEnter"),
+      seenBadge: document.getElementById("gateSeenBadge"),
+      replayBtn: document.getElementById("gateReplayBtn"),
+    };
+
+    els.linkBtn.href = ICEE_LINK;
+
+    function toneClasses(tone) {
+      if (tone === "emerald") return "text-emerald-300 bg-emerald-500/10 border-emerald-500/20";
+      if (tone === "purple")  return "text-purple-300 bg-purple-500/10 border-purple-500/20";
+      if (tone === "amber")   return "text-amber-300 bg-amber-500/10 border-amber-500/20";
+      return "text-indigo-200/80 bg-indigo-500/10 border-indigo-500/20";
+    }
+
+    function renderDots() {
+      els.dots.innerHTML = "";
+      slides.forEach((_, i) => {
+        const d = document.createElement("div");
+        d.className = "gate-dot" + (i === slideIdx ? " active" : "");
+        d.title = `Slide ${i+1}`;
+        d.style.cursor = "pointer";
+        d.onclick = () => { slideIdx = i; renderSlide(); };
+        els.dots.appendChild(d);
       });
-  }
-  
-  function updateContextLabel(){ 
-      const el = document.getElementById("activeContextLabel"); 
-      const rName = (dataStore[activeDataSourceKey].REGION_SHEETS || []).find(r=>r.id===activeRegionId)?.name || "Global"; 
-      el.innerHTML = `<span class="text-indigo-400 font-semibold">${rName}</span> <span class="text-white/30 mx-1">/</span> <span class="text-white">${activeView==='drivers'?'Drivers':'Overview'}</span>`; 
-  }
-  
-  window.cycleKpiMode = function() {
-      const modes = ['week', 'this_q', 'last_q', 'this_y', 'last_y'];
-      const labels = {'week':'Weekly View', 'this_q':'This Quarter', 'last_q':'Last Quarter', 'this_y':'Year to Date', 'last_y':'Last Year'};
-      let idx = modes.indexOf(kpiMode);
-      kpiMode = modes[(idx+1)%modes.length];
-      document.getElementById("kpiCycleLabel").textContent = labels[kpiMode];
-      renderOverview();
-  };
+    }
 
-  window.setTrendMode = function(m){ trendMode=m; ['pct','net','rev'].forEach(x=>document.getElementById('btnTrend'+x.charAt(0).toUpperCase()+x.slice(1)).classList.toggle('active', x===m)); renderOverview(); };
-  window.selectRegion = function(id){ activeRegionId=id; activeDriver=""; applyData(); };
-  window.setView = function(v){ activeView=v; document.getElementById("view-overview").classList.toggle("hiddenView", v!=="overview"); document.getElementById("view-drivers").classList.toggle("hiddenView", v!=="drivers"); updateContextLabel(); applyData(); };
-  window.exportData = function() { XLSX.writeFile(XLSX.utils.json_to_sheet(weekly), "Dashboard_Export.xlsx"); };
+    function renderSlide() {
+      const s = slides[slideIdx];
 
-  forceSync();
-</script>
+      els.kicker.textContent = s.kicker || `Slide ${slideIdx+1}`;
+      els.progressText.textContent = `${slideIdx + 1} / ${slides.length}`;
+      els.title.textContent = s.title;
+      els.lead.textContent = s.lead;
+
+      // Bullets
+      els.bullets.innerHTML = (s.bullets || []).map(b => `
+        <div class="flex items-start gap-2">
+          <span class="mt-1 h-2 w-2 rounded-full bg-indigo-400/70 flex-shrink-0"></span>
+          <div class="leading-relaxed">${b}</div>
+        </div>
+      `).join("");
+
+      // Tag
+      const tag = s.tag || { text: "Proposal", tone: "indigo" };
+      els.tag.className = `text-[10px] font-bold px-2 py-0.5 rounded-full border ${toneClasses(tag.tone)}`;
+      els.tag.textContent = tag.text;
+
+      // Stats
+      const a = s.statA || ["Problem", "Voice fatigue"];
+      const b = s.statB || ["Fix", "Cold slush drinks"];
+      els.statA.textContent = a[0];
+      els.statASub.textContent = a[1] || "";
+      els.statB.textContent = b[0];
+      els.statBSub.textContent = b[1] || "";
+
+      // Ask
+      const ask = s.ask || ["Approve: ICEE machine for Dispatch", "One-time purchase; controlled supplies."];
+      els.askLine.textContent = ask[0] || "";
+      els.askSub.textContent = ask[1] || "";
+
+      // Buttons
+      els.prev.disabled = slideIdx === 0;
+      els.prev.classList.toggle("opacity-40", slideIdx === 0);
+      els.prev.classList.toggle("pointer-events-none", slideIdx === 0);
+
+      const last = slideIdx === slides.length - 1;
+      els.next.classList.toggle("hidden", last);
+      els.enter.classList.toggle("hidden", !last);
+
+      renderDots();
+    }
+
+    function nextSlide() {
+      if (slideIdx < slides.length - 1) { slideIdx++; renderSlide(); }
+    }
+    function prevSlide() {
+      if (slideIdx > 0) { slideIdx--; renderSlide(); }
+    }
+
+    els.next.addEventListener("click", nextSlide);
+    els.prev.addEventListener("click", prevSlide);
+    els.enter.addEventListener("click", () => {
+      localStorage.setItem(GATE_LS_KEY, "1");
+      hideIceeGate();
+    });
+
+    // Keyboard navigation
+    window.addEventListener("keydown", (e) => {
+      if (!gateEl || gateEl.classList.contains("hidden")) return;
+      if (e.key === "ArrowRight" || e.key === "Enter" || e.key === " ") { e.preventDefault(); nextSlide(); }
+      if (e.key === "ArrowLeft") { e.preventDefault(); prevSlide(); }
+    });
+
+    // Touch swipe (basic)
+    let touchX = null;
+    gateEl.addEventListener("touchstart", (e) => { touchX = e.touches[0].clientX; }, { passive: true });
+    gateEl.addEventListener("touchend", (e) => {
+      if (touchX == null) return;
+      const dx = (e.changedTouches[0].clientX - touchX);
+      touchX = null;
+      if (Math.abs(dx) < 40) return;
+      if (dx < 0) nextSlide();
+      else prevSlide();
+    }, { passive: true });
+
+    function hideIceeGate() {
+      gateEl.classList.add("hidden");
+      dashEl.classList.remove("hidden");
+      document.body.style.overflow = "hidden"; // keep your dashboard behavior
+    }
+
+    function showIceeGate(forceFromDashboard = false) {
+      gateEl.classList.remove("hidden");
+      dashEl.classList.add("hidden");
+      if (forceFromDashboard) {
+        slideIdx = 0;
+        renderSlide();
+      }
+    }
+    window.showIceeGate = showIceeGate;
+
+    function resetIceeGate() {
+      localStorage.removeItem(GATE_LS_KEY);
+      slideIdx = 0;
+      els.seenBadge.classList.add("hidden");
+      renderSlide();
+    }
+    window.resetIceeGate = resetIceeGate;
+
+    // Init
+    const seen = localStorage.getItem(GATE_LS_KEY) === "1";
+    if (seen) {
+      els.seenBadge.classList.remove("hidden");
+      els.replayBtn.classList.remove("hidden");
+      // still show gate, but let them know it's been viewed
+    }
+    renderSlide();
+  </script>
 </body>
 </html>
