@@ -359,7 +359,7 @@
                  <div class="p-4 border-b border-white/5 bg-white/5 flex justify-between items-center">
                     <div>
                         <div class="font-bold text-sm text-white">Driver Leaderboard</div>
-                        <div class="text-[10px] text-white/40">Performance Ranking • Click row to drill down</div>
+                        <div class="text-[10px] text-white/40" id="driverDateRangeLabel">All Time</div>
                     </div>
                     <div id="driverCountBadge" class="text-[10px] bg-white/10 px-2 py-1 rounded text-white/70">0 Drivers</div>
                  </div>
@@ -418,12 +418,12 @@
 
   window.selectRegion = function(id){ activeRegionId=id; activeDriver=""; setView("overview"); applyData(); };
   window.selectDriver = function(rid, d){ activeRegionId=rid; activeDriver=d; setView("drivers"); applyData(); };
-  window.clearDriverSelection = function() { activeDriver=""; applyData(); };
+  window.clearDriverSelection = function() { activeDriver=""; setView("drivers"); applyData(); };
   
   window.cycleKpiMode = function() {
       const modes = ['week', 'this_q', 'last_q', 'this_y', 'last_y']; const labels = {'week':'Weekly View', 'this_q':'This Quarter', 'last_q':'Last Quarter', 'this_y':'Year to Date', 'last_y':'Last Year'};
       let idx = modes.indexOf(kpiMode); kpiMode = modes[(idx+1)%modes.length];
-      document.getElementById("kpiCycleLabel").textContent = labels[kpiMode]; renderOverview();
+      document.getElementById("kpiCycleLabel").textContent = labels[kpiMode]; applyData();
   };
   window.setTrendMode = function(m){ trendMode=m; ['pct','net','rev'].forEach(x=>document.getElementById('btnTrend'+x.charAt(0).toUpperCase()+x.slice(1)).classList.toggle('active', x===m)); renderOverview(); };
   window.setView = function(v){ activeView=v; document.getElementById("view-overview").classList.toggle("hiddenView", v!=="overview"); document.getElementById("view-drivers").classList.toggle("hiddenView", v!=="drivers"); updateContextLabel(); applyData(); };
@@ -772,7 +772,7 @@
     sheets.forEach(r => { if(r.id === "ALL") return; const isActive = (activeRegionId === r.id); const btn = document.createElement("button"); btn.className = `region-btn ${isActive ? 'active' : ''}`; btn.onclick = () => { selectRegion(r.id); toggleSidebar(false); }; btn.innerHTML = `<span>${r.name}</span><svg class="w-3 h-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>`; container.appendChild(btn); });
   }
 
-  // --- DRIVER VIEW CHARTS ---
+  // --- DRIVER VIEW LOGIC ---
   function renderDriversView() {
       const topTitle = document.getElementById("driverTopPerformer");
       const backBtn = document.getElementById("driverBackBtn");
@@ -832,56 +832,67 @@
                       x: { title: { display: true, text: 'Hours Worked', color: '#666' }, grid:{color:'rgba(255,255,255,0.05)'} }, 
                       y: { title: { display: true, text: 'Net Margin', color: '#666' }, grid:{color:'rgba(255,255,255,0.05)'} } 
                   }
-          }
-      });
-
-      const b = document.getElementById("driverWeeklyBody"); b.innerHTML = "";
-      driverWeekly.slice(0,50).forEach(w => {
-          b.innerHTML += `<tr class="hover:bg-white/5 border-b border-white/5"><td class="py-2 px-4 text-white/70">${niceDate(w.weekEnd)}</td><td class="py-2 px-4 font-bold ${w.pctMargin<0?'text-rose-400':'text-emerald-400'}">${w.pctMargin.toFixed(1)}%</td><td class="py-2 px-4 text-white/70">${fmtUSD(w.revenue)}</td><td class="py-2 px-4 font-medium text-white">${fmtUSD(w.margin)}</td><td class="py-2 px-4 text-white/50">${w.hoursWorked?.toFixed(1)||'-'}</td></tr>`;
-      });
-  } else {
-      // LEADERBOARD LOGIC
-      topTitle.innerHTML = "";
-      backBtn.classList.add("hidden");
-      specificView.classList.add("hidden");
-      leaderboardView.classList.remove("hidden");
-
-      const dList = [];
-      // Safety check: driverIndex might be empty if Running Sheet missing
-      if(driverIndex && Object.keys(driverIndex).length > 0) {
-          Object.entries(driverIndex).forEach(([name, d]) => {
-              let rev=0, marg=0, hrs=0;
-              d.rows.forEach(r => {
-                  rev += r.revenue;
-                  marg += r.margin;
-                  hrs += (r.hours || 0);
-              });
-              dList.push({ name, rev, marg, hrs, pct: rev?(marg/rev)*100:0 });
+              }
           });
-      }
-      
-      dList.sort((a,b) => b.marg - a.marg);
-      document.getElementById("driverCountBadge").textContent = `${dList.length} Drivers`;
-      const tb = document.getElementById("driverLeaderboardBody"); tb.innerHTML = "";
-      
-      if(dList.length === 0) {
-          tb.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-white/30">No driver data found. Check "Running Sheet" source.</td></tr>`;
+
+          // RENDER HISTORY TABLE
+          const b = document.getElementById("driverWeeklyBody"); b.innerHTML = "";
+          driverWeekly.slice(0,50).forEach(w => {
+              b.innerHTML += `<tr class="hover:bg-white/5 border-b border-white/5"><td class="py-2 px-4 text-white/70">${niceDate(w.weekEnd)}</td><td class="py-2 px-4 font-bold ${w.pctMargin<0?'text-rose-400':'text-emerald-400'}">${w.pctMargin.toFixed(1)}%</td><td class="py-2 px-4 text-white/70">${fmtUSD(w.revenue)}</td><td class="py-2 px-4 font-medium text-white">${fmtUSD(w.margin)}</td><td class="py-2 px-4 text-white/50">${w.hoursWorked?.toFixed(1)||'-'}</td></tr>`;
+          });
       } else {
-          dList.slice(0,100).forEach((d, i) => {
-              tb.innerHTML += `
-                <tr class="hover:bg-white/5 border-b border-white/5 cursor-pointer transition" onclick="selectDriver('${activeRegionId}', '${d.name}')">
-                    <td class="py-3 px-4 text-white/30">${i+1}</td>
-                    <td class="py-3 px-4 font-semibold text-white/90">${d.name}</td>
-                    <td class="py-3 px-4 text-right text-white/70">${fmtUSD(d.rev)}</td>
-                    <td class="py-3 px-4 text-right font-bold text-white">${fmtUSD(d.marg)}</td>
-                    <td class="py-3 px-4 text-right ${d.pct<0?'text-rose-400':'text-emerald-400'}">${d.pct.toFixed(1)}%</td>
-                    <td class="py-3 px-4 text-right text-white/50">${d.hrs.toFixed(1)}</td>
-                </tr>
-              `;
-          });
+          // SHOW LEADERBOARD (No driver selected)
+          topTitle.innerHTML = "";
+          backBtn.classList.add("hidden");
+          specificView.classList.add("hidden");
+          leaderboardView.classList.remove("hidden");
+
+          const dList = [];
+          
+          // Check if driverIndex exists (might fail if Running Sheet is missing)
+          if(driverIndex && Object.keys(driverIndex).length > 0) {
+              Object.entries(driverIndex).forEach(([name, d]) => {
+                  let rev=0, marg=0, hrs=0;
+                  d.rows.forEach(r => {
+                      // Filter by Date Range (Linked to KPI Cycle)
+                      const t = r.date.getTime() + 518400000;
+                      if(lastFilteredStartTime > 0 && (t < lastFilteredStartTime || t > lastFilteredEndTime)) return;
+                      
+                      rev += r.revenue;
+                      marg += r.margin;
+                      hrs += (r.hours || 0);
+                  });
+                  if (rev > 0 || marg !== 0) dList.push({ name, rev, marg, hrs, pct: rev?(marg/rev)*100:0 });
+              });
+          }
+          
+          dList.sort((a,b) => b.marg - a.marg);
+          
+          // Update Date Label
+          const dateLabel = lastFilteredStartTime > 0 ? `${niceDate(new Date(lastFilteredStartTime))} - ${niceDate(new Date(lastFilteredEndTime))}` : "All Time";
+          document.getElementById("driverDateRangeLabel").textContent = dateLabel;
+          
+          document.getElementById("driverCountBadge").textContent = `${dList.length} Drivers`;
+          const tb = document.getElementById("driverLeaderboardBody"); tb.innerHTML = "";
+          
+          if(dList.length === 0) {
+              tb.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-white/30">No driver data found for this period. Try changing date filter.</td></tr>`;
+          } else {
+              dList.slice(0,100).forEach((d, i) => {
+                  tb.innerHTML += `
+                    <tr class="hover:bg-white/5 border-b border-white/5 cursor-pointer transition" onclick="selectDriver('${activeRegionId}', '${d.name}')">
+                        <td class="py-3 px-4 text-white/30">${i+1}</td>
+                        <td class="py-3 px-4 font-semibold text-white/90">${d.name}</td>
+                        <td class="py-3 px-4 text-right text-white/70">${fmtUSD(d.rev)}</td>
+                        <td class="py-3 px-4 text-right font-bold text-white">${fmtUSD(d.marg)}</td>
+                        <td class="py-3 px-4 text-right ${d.pct<0?'text-rose-400':'text-emerald-400'}">${d.pct.toFixed(1)}%</td>
+                        <td class="py-3 px-4 text-right text-white/50">${d.hrs.toFixed(1)}</td>
+                    </tr>
+                  `;
+              });
+          }
       }
   }
-}
 
   // --- SEARCH LOGIC ---
   function handleSearch(val) {
