@@ -396,19 +396,26 @@
     DMT: { weekStart: "P", weekEnd: "Q", revenue: "Z", totalExp: "Y", margin: "AA", pctMargin: "AB", driverCount: "R", hoursWorked: "S" }
   };
 
-  const REGION_LABELS = { 
-    CST: "Coast", RBG: "Roseburg", EUG: "Eugene", OKRDG: "Oakridge", ALBNY: "Albany", DMT: "DMT", 
-    NV: "Nevada", PDX: "Portland", STR: "Stretcher", EOREGON: "E. Oregon"
-  };
-
-  const DMT_SHEET_MAP = {
-      "CST.WKLY": "CST",
-      "RBG.WKLY": "RBG",
-      "EUG.WKLY": "EUG",
-      "NEVADA": "NV",
-      "ALBANY/SALEM": "ALBNY",
-      "E.OREGON": "EOREGON",
-      "STRETCHER": "STR"
+  // Define Explicit Sheet Lists for Region Mapping
+  const REGION_SHEET_MAP = {
+      DLX: {
+          "CST.WKLY": "CST",
+          "RBG.WKLY": "RBG",
+          "EUG.WKLY": "EUG",
+          "OKRDG.WKLY": "OKRDG",
+          "ALBNY.WKLY": "ALBNY",
+          "MDVCR.WKLY": "MDVCR",
+          "DMT.WKLY": "DMT"
+      },
+      DMT: {
+          "CST.WKLY": "CST",
+          "RBG.WKLY": "RBG",
+          "EUG.WKLY": "EUG",
+          "NEVADA": "NV",
+          "ALBANY/SALEM": "ALBNY",
+          "E.OREGON": "EOREGON",
+          "STRETCHER": "STR"
+      }
   };
 
   // GLOBAL STATE
@@ -491,8 +498,6 @@
       const dObj = normalizeDate(asDate(wsVal));
       if (!dObj) continue; 
       
-      // Override: Force Week Start to Sunday, End to Saturday (+6 days)
-      // This ignores Excel's Monday-based convention to ensure cleaner UI
       const dStart = dObj; 
       const dEnd = new Date(dStart);
       dEnd.setDate(dStart.getDate() + 6);
@@ -614,32 +619,27 @@
              rs["ALL"] = parseRegionSheet(wb.Sheets[primarySheetName]);
              usedPrimary = true;
              
-             if (key === "DMT") {
-                 const runAgg = aggregateRunningSheetToRegionSeries(dIndex, key);
-                 Object.keys(runAgg).forEach(k => rs[k] = runAgg[k]);
-                 regionSheets = SCHEMAS.DMT.areas.map(a => ({ id: a.id, name: a.name, sheet: null }));
-                 regionSheets.unshift({id:"ALL", name:"All Regions", sheet:null});
-             } else {
-                 regionSheets = buildRegionSheetsFromWorkbook(wb, key);
-             }
+             // Look for Region Sheets based on specific mapping
+             const map = REGION_SHEET_MAP[key];
+             regionSheets = [];
+             regionSheets.push({id:"ALL", name:"All Regions", sheet:null});
+             
+             Object.entries(map).forEach(([sheetName, regionId]) => {
+                 // Try strict case first, then loose
+                 let actualSheet = wb.SheetNames.find(n => n.toUpperCase() === sheetName.toUpperCase());
+                 if(actualSheet && wb.Sheets[actualSheet]) {
+                     rs[regionId] = parseRegionSheet(wb.Sheets[actualSheet]);
+                     regionSheets.push({ id: regionId, name: actualSheet, sheet: actualSheet });
+                 }
+             });
         } 
         
         if (!usedPrimary) {
-            // Fallback
-            if (key === "DLX") {
-                regionSheets = buildRegionSheetsFromWorkbook(wb, key);
-                for(const r of regionSheets) {
-                    if(r.id==="ALL") continue;
-                    const ws = wb.Sheets[r.sheet];
-                    rs[r.id] = ws ? parseRegionSheet(ws) : [];
-                }
-                rs["ALL"] = sumRegionsByWeek(rs);
-            } else {
-                rs = aggregateRunningSheetToRegionSeries(dIndex, key);
-                rs["ALL"] = sumRegionsByWeek(rs);
-                regionSheets = SCHEMAS.DMT.areas.map(a => ({ id: a.id, name: a.name, sheet: null }));
-                regionSheets.unshift({id:"ALL", name:"All Regions", sheet:null});
-            }
+            // Fallback (Legacy)
+            rs = aggregateRunningSheetToRegionSeries(dIndex, key);
+            rs["ALL"] = sumRegionsByWeek(rs);
+            regionSheets = SCHEMAS[key].areas.map(a => ({ id: a.id, name: a.name, sheet: null }));
+            regionSheets.unshift({id:"ALL", name:"All Regions", sheet:null});
         }
         
         dataStore[key].REGION_SHEETS = regionSheets;
