@@ -152,7 +152,6 @@
 </head>
 
 <body>
-  <!-- Generic App Modal (math/variance/etc) -->
   <div id="appModal" class="modal-backdrop">
     <div class="modal-content">
       <div class="flex justify-between items-start mb-4">
@@ -167,7 +166,6 @@
     </div>
   </div>
 
-  <!-- Search Modal -->
   <div id="searchModal" class="modal-backdrop">
     <div class="modal-content">
       <div class="flex items-start justify-between gap-4">
@@ -203,7 +201,6 @@
   <div class="mx-auto h-full p-2 lg:p-4 bg-slate-900">
     <div class="shell lg:rounded-[28px] h-full overflow-hidden flex shadow-2xl">
 
-      <!-- Sidebar -->
       <aside id="sidebarPanel"
              class="w-[320px] lg:w-[290px] border-r border-white/10 bg-black/20 hidden lg:flex flex-col">
         <div class="p-5 border-b border-white/10">
@@ -242,6 +239,13 @@
                 </svg>
                 Drivers
               </button>
+              <button class="navbtn flex items-center gap-2" data-view="livelogs" onclick="setView('livelogs')">
+                <svg class="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                iCabbi Live Logs
+              </button>
+
             </div>
           </div>
 
@@ -269,9 +273,7 @@
         </div>
       </aside>
 
-      <!-- Main -->
       <section class="flex-1 flex flex-col overflow-hidden">
-        <!-- Top Bar -->
         <div class="p-4 lg:p-6 border-b border-white/10 bg-black/15">
           <div class="flex items-center justify-between gap-4">
             <div class="min-w-0">
@@ -312,7 +314,6 @@
             </div>
           </div>
 
-          <!-- PILLBAR = DATE CYCLE (replaces KPI cycle button) -->
           <div class="mt-5 flex flex-wrap items-center justify-between gap-3">
             <div class="pillbar rounded-full p-1 flex items-center gap-1 overflow-x-auto thin-scroll">
               <button class="pilltab" data-kpimode="week" onclick="setKpiMode('week')">1 Week</button>
@@ -333,10 +334,8 @@
           </div>
         </div>
 
-        <!-- Content -->
         <div class="flex-1 overflow-y-auto thin-scroll p-4 lg:p-6 space-y-4">
 
-          <!-- OVERVIEW -->
           <div id="view-overview" class="space-y-4 pb-10">
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div class="panel rounded-3xl p-5 cursor-pointer" onclick="scrollToTable('revenue')">
@@ -429,7 +428,6 @@
             </div>
           </div>
 
-          <!-- DRIVERS -->
           <div id="view-drivers" class="hiddenView pb-10 space-y-4">
             <div class="flex justify-between items-end mb-2">
               <div id="driverTopPerformer"></div>
@@ -517,6 +515,56 @@
                     </tr>
                   </thead>
                   <tbody id="driverLeaderboardBody" class="divide-y divide-white/10 text-white/80 font-mono"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div id="view-livelogs" class="hiddenView pb-10 space-y-4">
+            <div class="flex items-center justify-between">
+              <div>
+                <h2 class="text-xl font-black text-white">Live Trip Feed</h2>
+                <div id="liveLogStatus" class="text-[11px] text-white/40 font-mono">Waiting for data...</div>
+              </div>
+              <button onclick="fetchLiveLogs()" class="text-[10px] uppercase font-black tracking-widest text-indigo-200 hover:text-white bg-white/5 px-4 py-2 rounded-2xl border border-white/10 transition">
+                Refresh Now
+              </button>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div class="panel rounded-3xl p-5">
+                <div class="text-[11px] uppercase tracking-widest text-white/40 font-black">Trips Logged</div>
+                <div id="logCount" class="mt-2 text-2xl font-black text-white">—</div>
+              </div>
+              <div class="panel rounded-3xl p-5">
+                <div class="text-[11px] uppercase tracking-widest text-white/40 font-black">Total Fare</div>
+                <div id="logTotalFare" class="mt-2 text-2xl font-black text-emerald-300">—</div>
+              </div>
+              <div class="panel rounded-3xl p-5">
+                <div class="text-[11px] uppercase tracking-widest text-white/40 font-black">Total Miles</div>
+                <div id="logTotalMiles" class="mt-2 text-2xl font-black text-indigo-200">—</div>
+              </div>
+            </div>
+
+            <div class="panel rounded-3xl p-0 overflow-hidden flex flex-col max-h-[70vh]">
+              <div class="p-4 border-b border-white/10 bg-white/3">
+                <div class="font-black text-sm text-white">Booking Stream</div>
+                <div class="text-[11px] text-white/40 font-mono">Real-time Webhook Data</div>
+              </div>
+              <div class="thin-scroll overflow-x-auto overflow-y-auto flex-1">
+                <table class="w-full text-left text-xs min-w-[800px]">
+                  <thead class="sticky top-0 bg-[#11131a] text-white/50 uppercase tracking-wider z-10 font-black">
+                    <tr>
+                      <th class="py-3 px-4">Time</th>
+                      <th class="py-3 px-4">Booking ID</th>
+                      <th class="py-3 px-4">Account</th>
+                      <th class="py-3 px-4">Driver</th>
+                      <th class="py-3 px-4">Site</th>
+                      <th class="py-3 px-4 text-right">Miles</th>
+                      <th class="py-3 px-4 text-right">Fare</th>
+                    </tr>
+                  </thead>
+                  <tbody id="liveLogsBody" class="divide-y divide-white/10 text-white/80 font-mono"></tbody>
                 </table>
               </div>
             </div>
@@ -716,13 +764,33 @@
   // VIEW / FILTER API
   window.setView = function(v){
     activeView = v;
+    
+    // Toggle Visibility
     document.getElementById("view-overview").classList.toggle("hiddenView", v !== "overview");
     document.getElementById("view-drivers").classList.toggle("hiddenView", v !== "drivers");
-    // nav highlight
-    document.querySelectorAll("[data-view]").forEach(btn => btn.classList.toggle("active", btn.getAttribute("data-view") === v));
+    document.getElementById("view-livelogs").classList.toggle("hiddenView", v !== "livelogs");
+    
+    // Nav Highlighting
+    document.querySelectorAll("[data-view]").forEach(btn => 
+      btn.classList.toggle("active", btn.getAttribute("data-view") === v)
+    );
+
+    // Context Label
     updateContextLabel();
-    applyData();
+
+    // Logic Handling
+    if(v === "livelogs") {
+      fetchLiveLogs(); // Initial fetch
+      // Poll every 30 seconds
+      if(liveLogInterval) clearInterval(liveLogInterval);
+      liveLogInterval = setInterval(fetchLiveLogs, 30000); 
+    } else {
+      // clear interval if leaving the page
+      if(liveLogInterval) clearInterval(liveLogInterval);
+      applyData(); 
+    }
   };
+  
   window.selectRegion = function(id){ activeRegionId = id; activeDriver = ""; setView("overview"); applyData(); };
   window.selectDriver = function(rid, d){ activeRegionId = rid; activeDriver = d; setView("drivers"); applyData(); };
   window.clearDriverSelection = function(){ activeDriver = ""; setView("drivers"); applyData(); };
@@ -1049,7 +1117,13 @@
   function updateContextLabel(){
     const el = document.getElementById("activeContextLabel");
     const rName = (dataStore[activeDataSourceKey].REGION_SHEETS || []).find(r=>r.id===activeRegionId)?.name || "Global";
-    el.innerHTML = `<span class="text-white/85 font-bold">${rName}</span> <span class="text-white/25 mx-2">/</span> <span class="text-white">${activeView==='drivers'?'Drivers':'Overview'}</span>`;
+    
+    // Simple mapping for view names
+    let viewName = "Overview";
+    if(activeView === 'drivers') viewName = 'Drivers';
+    if(activeView === 'livelogs') viewName = 'Live Logs';
+
+    el.innerHTML = `<span class="text-white/85 font-bold">${rName}</span> <span class="text-white/25 mx-2">/</span> <span class="text-white">${viewName}</span>`;
   }
 
   // CORE: apply data
@@ -1620,6 +1694,125 @@
     }
   }
 
+  // --- ICABBI LIVE LOGS LOGIC ---
+  const LOGS_URL = "https://shy-fire-00be.haildir12121.workers.dev/webhook/icabbi";
+  let liveLogInterval = null;
+
+  async function fetchLiveLogs() {
+    const statusEl = document.getElementById("liveLogStatus");
+    statusEl.textContent = "Fetching...";
+    
+    try {
+      const res = await fetch(LOGS_URL);
+      
+      // 1. Check if the server actually found the resource
+      if (!res.ok) {
+        throw new Error(`Server returned ${res.status} ${res.statusText}`);
+      }
+
+      // 2. Safely parse JSON
+      let data;
+      try {
+        data = await res.json();
+      } catch (jsonError) {
+        throw new Error("Invalid JSON received from server");
+      }
+      
+      // Safety check if data is just one object
+      if (!Array.isArray(data)) data = [data];
+
+      renderLiveLogs(data);
+      statusEl.textContent = "Updated: " + new Date().toLocaleTimeString();
+    } catch (e) {
+      console.warn("Live Log Error:", e); // Log warning instead of crashing
+      statusEl.textContent = "Connection Error (Check Worker)";
+      
+      // clear the table if we can't get data
+      document.getElementById("liveLogsBody").innerHTML = `
+        <tr><td colspan="7" class="p-4 text-center text-white/40">
+          <div class="font-bold">Unable to load data</div>
+          <div class="text-[10px] font-mono mt-1 text-rose-300">${e.message}</div>
+        </td></tr>`;
+    }
+  }
+
+  function renderLiveLogs(data) {
+    const tbody = document.getElementById("liveLogsBody");
+    tbody.innerHTML = "";
+
+    let totalFare = 0;
+    let totalMiles = 0;
+
+    // Filter out debug/empty rows if any exist
+    const validRows = data.filter(r => r.booking_id || r.driver || r.fare);
+
+    // Sort by Date (Newest First)
+    validRows.sort((a, b) => {
+      const dateA = a.date ? new Date(a.date) : new Date(0);
+      const dateB = b.date ? new Date(b.date) : new Date(0);
+      return dateB - dateA;
+    });
+
+    validRows.forEach(row => {
+      // Clean up numbers
+      const fare = safeNum(row.fare);
+      const miles = safeNum(row.miles);
+      totalFare += fare;
+      totalMiles += miles;
+
+      // --- DATE FIX ---
+      let timeStr = "Just Now";
+      let dateClass = "text-emerald-300"; // Green for new/live
+      
+      if (row.date) {
+        const d = new Date(row.date);
+        // Check if date is valid
+        if (!isNaN(d.getTime())) {
+           // If date is valid, format it nicely
+           timeStr = d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+           dateClass = "text-white/60";
+           
+           // If it's from a different day, show the date too
+           const now = new Date();
+           if(d.getDate() !== now.getDate()) {
+             timeStr = d.toLocaleDateString() + ' ' + timeStr;
+           }
+        }
+      }
+
+      // Handle missing/empty fields gracefully
+      const bookingId = row.booking_id ? `#${row.booking_id}` : '<span class="text-white/20">—</span>';
+      const accountName = row.account_name || 'Cash';
+      const accountRef = row.account_number || '';
+      const driverName = row.driver || '<span class="text-white/30 italic">Unassigned</span>';
+      const siteName = row.site || '';
+
+      tbody.innerHTML += `
+        <tr class="hover:bg-white/5 transition border-b border-white/5 last:border-0">
+          <td class="py-3 px-4 ${dateClass} font-mono text-[11px]">${timeStr}</td>
+          <td class="py-3 px-4 font-bold text-indigo-300">${bookingId}</td>
+          <td class="py-3 px-4">
+            <div class="font-bold text-white/90 text-[11px]">${accountName}</div>
+            ${accountRef ? `<div class="text-[10px] text-white/40 font-mono">${accountRef}</div>` : ''}
+          </td>
+          <td class="py-3 px-4 text-white/80 text-[11px]">${driverName}</td>
+          <td class="py-3 px-4 text-white/40 text-[10px] uppercase tracking-wider font-bold">${siteName}</td>
+          <td class="py-3 px-4 text-right font-mono text-white/60 text-[11px]">${miles.toFixed(1)} mi</td>
+          <td class="py-3 px-4 text-right font-mono font-black text-emerald-300 text-[11px]">${fmtUSD(fare)}</td>
+        </tr>
+      `;
+    });
+
+    // If no data, show a placeholder
+    if (validRows.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-white/20 italic text-xs">Waiting for live trips...</td></tr>`;
+    }
+
+    // Update Cards
+    document.getElementById("logCount").textContent = validRows.length;
+    document.getElementById("logTotalFare").textContent = fmtUSD(totalFare);
+    document.getElementById("logTotalMiles").textContent = totalMiles.toFixed(1);
+  }
   // BOOT
   (function init(){
     // apply mode highlight immediately
