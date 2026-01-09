@@ -473,24 +473,32 @@
                 </div>
 
                 <div class="panel rounded-3xl p-0 overflow-hidden flex flex-col">
-                  <div class="p-4 border-b border-white/10 bg-white/3">
-                    <div class="font-black text-sm text-white">Region Breakdown</div>
-                    <div class="text-[11px] text-white/40 font-mono">Latest Active Week</div>
-                  </div>
-                  <div class="thin-scroll overflow-x-auto overflow-y-auto flex-1">
-                    <table class="w-full text-left text-xs min-w-[480px]">
-                      <thead class="sticky top-0 bg-[#11131a] text-white/50 uppercase tracking-wider z-10 font-black">
-                        <tr>
-                          <th class="py-3 px-4">Region</th>
-                          <th class="py-3 px-4">Revenue</th>
-                          <th class="py-3 px-4">Margin</th>
-                          <th class="py-3 px-4">Hours</th>
-                        </tr>
-                      </thead>
-                      <tbody id="driverRegionBody" class="divide-y divide-white/10 text-white/80 font-mono"></tbody>
-                    </table>
-                  </div>
-                </div>
+  <div class="p-4 border-b border-white/10 bg-white/3 flex justify-between items-center">
+    <div>
+      <div class="font-black text-sm text-white">Live Mileage Tracker</div>
+      <div id="driverMileageHeader" class="text-[11px] text-white/40 font-mono">Synced from iCabbi</div>
+    </div>
+    <button onclick="fetchLiveLogs()" class="text-white/30 hover:text-white">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+      </svg>
+    </button>
+  </div>
+  <div class="thin-scroll overflow-x-auto overflow-y-auto flex-1">
+    <table class="w-full text-left text-xs min-w-[400px]">
+      <thead class="sticky top-0 bg-[#11131a] text-white/50 uppercase tracking-wider z-10 font-black">
+        <tr>
+          <th class="py-3 px-4">Time</th>
+          <th class="py-3 px-4">Account</th>
+          <th class="py-3 px-4 text-right">Miles</th>
+          <th class="py-3 px-4 text-right">Fare</th>
+        </tr>
+      </thead>
+      <tbody id="driverMileageBody" class="divide-y divide-white/10 text-white/80 font-mono">
+        </tbody>
+    </table>
+  </div>
+</div>
               </div>
             </div>
 
@@ -646,6 +654,7 @@
   let regionSeries = {};
   let driverIndex = {};
   let weekly = [];
+  let allLiveLogs = [];
   let driverWeekly = [];
   let dailyHistory = [];
 
@@ -1648,7 +1657,12 @@
             <td class="py-3 px-4 text-white/55">${(w.hoursWorked||0).toFixed(1)}</td>
           </tr>`;
       });
-
+renderDriverMileage();
+      
+      // 2. If we don't have data yet, fetch it in background
+      if(!window.allLiveLogs || window.allLiveLogs.length === 0) {
+        fetchLiveLogs();
+      }
     } else {
       topTitle.innerHTML = "";
       backBtn.classList.add("hidden");
@@ -1699,41 +1713,89 @@
   let liveLogInterval = null;
 
   async function fetchLiveLogs() {
+    // Only update status if we are actually looking at the Live Logs view
     const statusEl = document.getElementById("liveLogStatus");
-    statusEl.textContent = "Fetching...";
+    if(statusEl) statusEl.textContent = "Fetching...";
     
     try {
       const res = await fetch(LOGS_URL);
-      
-      // 1. Check if the server actually found the resource
-      if (!res.ok) {
-        throw new Error(`Server returned ${res.status} ${res.statusText}`);
-      }
+      if (!res.ok) throw new Error("Server Error");
 
-      // 2. Safely parse JSON
-      let data;
-      try {
-        data = await res.json();
-      } catch (jsonError) {
-        throw new Error("Invalid JSON received from server");
-      }
+      let data = [];
+      try { data = await res.json(); } catch(e){}
       
-      // Safety check if data is just one object
       if (!Array.isArray(data)) data = [data];
 
-      renderLiveLogs(data);
-      statusEl.textContent = "Updated: " + new Date().toLocaleTimeString();
+      // STORE GLOBALLY SO DRIVER VIEW CAN USE IT
+      window.allLiveLogs = data; 
+
+      // If we are on the Live Logs screen, render the main table
+      if(activeView === 'livelogs') {
+        renderLiveLogs(data);
+        if(statusEl) statusEl.textContent = "Updated: " + new Date().toLocaleTimeString();
+      }
+      // If we are on the Driver screen, update the mini-table
+      else if(activeView === 'drivers' && activeDriver) {
+        renderDriverMileage();
+      }
+
     } catch (e) {
-      console.warn("Live Log Error:", e); // Log warning instead of crashing
-      statusEl.textContent = "Connection Error (Check Worker)";
-      
-      // clear the table if we can't get data
-      document.getElementById("liveLogsBody").innerHTML = `
-        <tr><td colspan="7" class="p-4 text-center text-white/40">
-          <div class="font-bold">Unable to load data</div>
-          <div class="text-[10px] font-mono mt-1 text-rose-300">${e.message}</div>
-        </td></tr>`;
+      console.warn(e);
+      if(statusEl) statusEl.textContent = "Connection Error";
     }
+  }
+// Helper to match names like "Smith, John" (Excel) with "John Smith" (iCabbi)
+  function isSameDriver(excelName, icabbiName) {
+    if(!excelName || !icabbiName) return false;
+    const n1 = excelName.toLowerCase().replace(/[^a-z]/g, '');
+    const n2 = icabbiName.toLowerCase().replace(/[^a-z]/g, '');
+    // Check if one contains the other
+    return n1.includes(n2) || n2.includes(n1);
+  }
+
+  function renderDriverMileage() {
+    const tbody = document.getElementById("driverMileageBody");
+    if(!tbody) return;
+    
+    tbody.innerHTML = "";
+
+    // Filter logs for THIS driver
+    const myLogs = window.allLiveLogs.filter(log => isSameDriver(activeDriver, log.driver));
+    
+    // Sort Newest First
+    myLogs.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    let totalMiles = 0;
+    
+    myLogs.slice(0, 50).forEach(row => {
+      const miles = safeNum(row.miles);
+      const fare = safeNum(row.fare);
+      totalMiles += miles;
+      
+      // Date formatting
+      let timeStr = "Recent";
+      if(row.date) {
+        const d = new Date(row.date);
+        if(!isNaN(d)) timeStr = d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+      }
+
+      tbody.innerHTML += `
+        <tr class="hover:bg-white/5 border-b border-white/10 last:border-0">
+          <td class="py-3 px-4 text-white/60 text-[10px] font-mono">${timeStr}</td>
+          <td class="py-3 px-4 text-white/90 text-[11px] font-bold">${row.account_name || 'Cash'}</td>
+          <td class="py-3 px-4 text-right text-indigo-200 font-mono text-[11px]">${miles.toFixed(1)} mi</td>
+          <td class="py-3 px-4 text-right text-emerald-300 font-mono text-[11px] font-bold">${fmtUSD(fare)}</td>
+        </tr>
+      `;
+    });
+
+    if(myLogs.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-white/30 italic text-xs">No iCabbi logs found for this driver.</td></tr>`;
+    }
+    
+    // Update the header count
+    const headerEl = document.getElementById("driverMileageHeader");
+    if(headerEl) headerEl.textContent = `Recent Activity (${myLogs.length} trips / ${totalMiles.toFixed(1)} mi)`;
   }
 
   function renderLiveLogs(data) {
